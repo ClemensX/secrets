@@ -10,6 +10,9 @@ import io.vertx.core.http.HttpServerOptions;
  */
 public class Server extends AbstractVerticle {
 
+  // listening port
+  private static int port = 5000; 
+	
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) {
     Runner.runExample(Server.class);
@@ -26,6 +29,7 @@ public class Server extends AbstractVerticle {
           "<h1>Hello from vert.x!</h1>" +
           "<p>version = " + req.version() + "</p>" +
           "</body></html>");
-    }).listen(8080);
+    }).listen(port);
+    System.out.println("Server started and listening on " + port);
   }
 }
