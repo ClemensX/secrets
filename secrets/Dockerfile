@@ -9,3 +9,5 @@ WORKDIR /usr/myapp
 CMD ["java", "-cp",  "./secrets-0.0.1-SNAPSHOT-jar-with-dependencies.jar", "de.fehrprice.secrets.Server"]
 #CMD java -cp ./secrets-0.0.1-SNAPSHOT.jar de.fehrprice.secrets.App
 #CMD ["java", "-version"]
+
+#gcloud container clusters get-credentials cluster-1 --zone europe-west4-a --project divine-glazing-211610
