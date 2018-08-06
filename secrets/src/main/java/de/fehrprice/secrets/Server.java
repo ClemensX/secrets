@@ -26,7 +26,7 @@ public class Server extends AbstractVerticle {
 
     server.requestHandler(req -> {
       req.response().putHeader("content-type", "text/html").end("<html><body>" +
-          "<h1>Hello from vert.x on Kub!</h1>" +
+          "<h1>Secrets Container</h1>" +
           "<p>version = " + req.version() + "</p>" +
           "</body></html>");
     }).listen(port);
