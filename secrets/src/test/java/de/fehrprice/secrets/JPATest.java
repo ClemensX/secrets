@@ -19,7 +19,7 @@ import de.fehrprice.secrets.entity.User;
 /**
  * Unit test for simple App.
  */
-public class AppTest {
+public class JPATest {
 
 	public static final String PERSISTENCE_UNIT_NAME = "hsqldb-mem-test1";
 
