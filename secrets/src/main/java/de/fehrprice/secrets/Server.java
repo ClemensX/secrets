@@ -6,6 +6,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.StaticHandler;
 
 
 /*
@@ -27,6 +28,9 @@ public class Server extends AbstractVerticle {
     HttpServer server =
       vertx.createHttpServer(new HttpServerOptions());
     Router router = Router.router(vertx);
+    
+    // handle static resources:
+    router.route("/static/*").handler(StaticHandler.create());
     
     Route route1 = router.route("/secrets/").handler(routingContext -> {
 
