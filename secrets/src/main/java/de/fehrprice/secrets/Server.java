@@ -29,10 +29,11 @@ public class Server extends AbstractVerticle {
       vertx.createHttpServer(new HttpServerOptions());
     Router router = Router.router(vertx);
     
-    // handle static resources:
-    router.route("/static/*").handler(StaticHandler.create());
+    // handle main application via static resources:
+    router.route("/secrets/*").handler(StaticHandler.create());
     
-    Route route1 = router.route("/secrets/").handler(routingContext -> {
+    // handle backend calls:
+    Route route1 = router.route("/secretsbackend/").handler(routingContext -> {
 
     	  HttpServerResponse response = routingContext.response();
     	  // enable chunked responses because we will be adding data as
@@ -44,36 +45,9 @@ public class Server extends AbstractVerticle {
 
     	  response.write("<html><body>" +
     	          "<h1>Secrets Container</h1>" +
-    	          "<p><h3>Handle... </h3></p>");
-
-    	  // Call the next matching route after a 5 second delay
-    	  routingContext.vertx().setTimer(1000, tid -> routingContext.next());
-    	});
-
-    	Route route2 = router.route("/secrets/").handler(routingContext -> {
-
-    	  HttpServerResponse response = routingContext.response();
-    	  response.write("<p><h3>...your secrets... </h3></p>");
-
-    	  // Call the next matching route after a 5 second delay
-    	  routingContext.vertx().setTimer(1000, tid -> routingContext.next());
-    	});
-
-    	Route route3 = router.route("/secrets/").handler(routingContext -> {
-
-    	  HttpServerResponse response = routingContext.response();
-    	  response.write("<p><h3>...securely!</h3></p>" +
-  	          "</body></html>");
-
-    	  // Now end the response
+    	          "<p><h3>...this is the backend...</h3></p>");
     	  routingContext.response().end();
-    	});   	
-//    	// write response and end
-//    	response.end("<html><body>" +
-//          "<h1>Secrets Container</h1>" +
-//          "<p>version = " + routingContext.request().version() + "</p>" +
-//          "</body></html>");
-//    });
+    	});
 
     server.requestHandler(router::accept).listen(port);
     System.out.println("Server started and listening on " + port);
