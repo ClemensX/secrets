@@ -30,10 +30,16 @@ public class Server extends AbstractVerticle {
     Router router = Router.router(vertx);
     
     // handle main application via static resources:
-    router.route("/secrets/*").handler(StaticHandler.create());
+    router.route("/secrets/*").handler(StaticHandler.create().setIndexPage("/secrets/index.html"));
     
+    // reroute short URL to proper start page:
+    Route route1 = router.route("/secrets").handler(routingContext -> {
+    	  HttpServerResponse response = routingContext.response();
+    	  response.putHeader("location", "/secrets/index.html").setStatusCode(302).end();
+    	});
+
     // handle backend calls:
-    Route route1 = router.route("/secretsbackend/").handler(routingContext -> {
+    Route route2 = router.route("/secretsbackend/").handler(routingContext -> {
 
     	  HttpServerResponse response = routingContext.response();
     	  // enable chunked responses because we will be adding data as
