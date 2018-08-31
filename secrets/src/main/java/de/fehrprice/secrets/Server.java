@@ -41,19 +41,27 @@ public class Server extends AbstractVerticle {
     // handle backend calls:
     Route route2 = router.route("/secretsbackend/").handler(routingContext -> {
 
-    	  HttpServerResponse response = routingContext.response();
-    	  // enable chunked responses because we will be adding data as
-    	  // we execute over other handlers. This is only required once and
-    	  // only if several handlers do output.
-    	  response.putHeader("content-type", "text/html");
-    	  response.setChunked(true);
-    	  //response.putHeader("X-Content-Type-Options", "nosniff");
+  	  HttpServerResponse response = routingContext.response();
+  	  // enable chunked responses because we will be adding data as
+  	  // we execute over other handlers. This is only required once and
+  	  // only if several handlers do output.
+  	  response.putHeader("content-type", "text/html");
+  	  response.setChunked(true);
+  	  //response.putHeader("X-Content-Type-Options", "nosniff");
 
-    	  response.write("<html><body>" +
-    	          "<h1>Secrets Container</h1>" +
-    	          "<p><h3>...this is the backend...</h3></p>");
-    	  routingContext.response().end();
-    	});
+  	  response.write("<html><body>" +
+  	          "<h1>Secrets Container</h1>" +
+  	          "<p><h3>...this is the backend...</h3></p>");
+  	  routingContext.response().end();
+  	});
+
+    router.route("/secretsbackend/status").handler(routingContext -> {
+  	  HttpServerResponse response = routingContext.response();
+  	  response.putHeader("content-type", "text/plain");
+  	  response.setChunked(true);
+  	  response.write(RestServer.status());
+  	  routingContext.response().end();
+  	});
 
     server.requestHandler(router::accept).listen(port);
     System.out.println("Server started and listening on " + port);
