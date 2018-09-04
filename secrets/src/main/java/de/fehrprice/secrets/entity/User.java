@@ -8,9 +8,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import javax.persistence.TypedQuery;
 
 @Entity
+@Table(name = "myuser") // user is not an allowed table name with postgresql
 @NamedQuery(name = User.Query_GetAllEntities,
             query = "select u from User u" 
             )
