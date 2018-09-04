@@ -12,9 +12,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import de.fehrprice.secrets.entity.User;
 
 public class DB {
+	
+	private static final Logger logger = LogManager.getLogger(DB.class.getName());
 
 	public static final String PERSISTENCE_UNIT_NAME = "secretsdb";
 	//public static final String PERSISTENCE_UNIT_NAME = "hsqldb-mem-test1";
@@ -25,11 +30,11 @@ public class DB {
 		Map<String, String> props = new HashMap<String, String>();
 		props.put("eclipselink.logging.level", "INFO"); // FINE, INFO, WARNING
 		//props.put("javax.persistence.jdbc.url", "jdbc:hsqldb:file:target/testdb42XXX;shutdown=true");
-		System.out.println("initiate db");
+		logger.trace("initiate db");
         EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, props);
-		System.out.println("emf = " + emf);
+        logger.trace("emf = " + emf);
 		EntityManager em = emf.createEntityManager();
-		System.out.println("em  = " + em);
+		logger.trace("em  = " + em);
 		
         // write entity within new transaction
 		em.getTransaction().begin();
@@ -41,8 +46,11 @@ public class DB {
 		// now read list of users and verify:
 		List<User> users = User.getAllEntities(em);
 		User testUser = users.get(0);
-		System.out.println("User has auto created id " + testUser.getId());
-		
+		logger.trace("User has auto created id " + testUser.getId());
+		em.close();
+		logger.trace("em closed");
+		em = emf.createEntityManager();
+		logger.trace("another em  = " + em);
 		em.close();
 		return "ok";
 	}
