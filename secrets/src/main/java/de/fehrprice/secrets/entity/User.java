@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
+import javax.persistence.Query;
 import javax.persistence.Table;
 import javax.persistence.TypedQuery;
 
@@ -16,8 +17,12 @@ import javax.persistence.TypedQuery;
 @NamedQuery(name = User.Query_GetAllEntities,
             query = "select u from User u" 
             )
+@NamedQuery(name = User.Query_CountAllEntities,
+			query = "select count(u) from User u" 
+			)
 public class User {
 	public static final String Query_GetAllEntities = "GetAllEntities";
+	public static final String Query_CountAllEntities = "CountAllEntities";
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -44,6 +49,11 @@ public class User {
 	public static List<User> getAllEntities(EntityManager em) {
 		TypedQuery<User> all = em.createNamedQuery(Query_GetAllEntities, User.class);
 		return all.getResultList();
+	}
+	public static long countAllEntities(EntityManager em) {
+		Query query = em.createNamedQuery(Query_CountAllEntities);
+		long count = (long) query.getSingleResult();
+		return count;
 	}
 	
 }

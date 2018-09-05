@@ -25,17 +25,27 @@ public class DB {
 	//public static final String PERSISTENCE_UNIT_NAME = "hsqldb-mem-test1";
 	// 
 
-	public static String status() {
-		if (false) return jdbcStatus();
+	private static EntityManagerFactory emf = null;
+	
+	public static EntityManagerFactory getEntityManagerFactory() {
+		if (emf != null && emf.isOpen()) {
+			return emf;
+		}
+		// emf not open or not initialized, create new one:
 		Map<String, String> props = new HashMap<String, String>();
 		props.put("eclipselink.logging.level", "INFO"); // FINE, INFO, WARNING
 		//props.put("javax.persistence.jdbc.url", "jdbc:hsqldb:file:target/testdb42XXX;shutdown=true");
-		logger.trace("initiate db");
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, props);
+		logger.trace("initiate EntityManagerFactory for persistence unit " + PERSISTENCE_UNIT_NAME);
+        emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, props);
         logger.trace("emf = " + emf);
+        return emf;
+	}
+	
+	public static String status() {
+        EntityManagerFactory emf = getEntityManagerFactory();
 		EntityManager em = emf.createEntityManager();
 		logger.trace("em  = " + em);
-		
+
         // write entity within new transaction
 		em.getTransaction().begin();
 		User user = new User();
@@ -51,8 +61,9 @@ public class DB {
 		logger.trace("em closed");
 		em = emf.createEntityManager();
 		logger.trace("another em  = " + em);
+		long count = User.countAllEntities(em);
 		em.close();
-		return "ok";
+		return "ok (" + count + " users)";
 	}
 
 	private static String jdbcStatus() {
