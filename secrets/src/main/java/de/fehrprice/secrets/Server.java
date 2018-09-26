@@ -56,12 +56,20 @@ public class Server extends AbstractVerticle {
   	});
 
     router.route("/secretsbackend/status").handler(routingContext -> {
-  	  HttpServerResponse response = routingContext.response();
-  	  response.putHeader("content-type", "text/plain");
-  	  response.setChunked(true);
-  	  response.write(RestServer.status());
-  	  routingContext.response().end();
-  	});
+    	  HttpServerResponse response = routingContext.response();
+    	  response.putHeader("content-type", "text/plain");
+    	  response.setChunked(true);
+    	  response.write(RestServer.status());
+    	  routingContext.response().end();
+    	});
+
+    router.route("/secretsbackend/statuscrypto").handler(routingContext -> {
+    	  HttpServerResponse response = routingContext.response();
+    	  response.putHeader("content-type", "text/plain");
+    	  response.setChunked(true);
+    	  response.write(RestServer.statusCrypto());
+    	  routingContext.response().end();
+    	});
 
     server.requestHandler(router::accept).listen(port);
     System.out.println("Server started and listening on " + port);
