@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.client.WebClient;
@@ -28,6 +29,7 @@ public class CryptoLibTest {
 
 		Checkpoint serverStarted = testContext.checkpoint();
 		Checkpoint responseReceived = testContext.checkpoint();
+		Checkpoint initClientSent = testContext.checkpoint();
 		// Use the underlying vertx instance
 		Vertx vertx = Vertx.vertx();
 		HttpServer server = vertx.createHttpServer(new HttpServerOptions());
@@ -59,6 +61,21 @@ public class CryptoLibTest {
 					}
 				});
 
+		Buffer buffer = Buffer.buffer("this is a request body");
+		client.post(port, "localhost", "/rest").as(BodyCodec.string())
+		.sendBuffer(buffer, ar -> {
+			if (ar.failed()) {
+				testContext.failNow(ar.cause());
+			} else {
+				//assertThat(response.body()).isEqualTo("Plop");
+				//assertTrue(ar.result().body().contains("Secrets Container"));
+				System.out.println("received after post:" + ar.result().body());
+				//testContext.completeNow();
+				//testContext.failNow(null);
+				initClientSent.flag();
+			}
+		});
+		
 		assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
 		if (testContext.failed()) {
 			throw testContext.causeOfFailure();
