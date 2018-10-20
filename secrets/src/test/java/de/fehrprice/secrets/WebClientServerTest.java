@@ -7,13 +7,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import de.fehrprice.crypto.AES;
-import de.fehrprice.crypto.Conv;
-import de.fehrprice.crypto.Curve25519;
-import de.fehrprice.crypto.Ed25519;
-import de.fehrprice.crypto.RandomSeed;
-import de.fehrprice.net.ECConnection;
-import de.fehrprice.net.Session;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServer;
@@ -29,16 +22,17 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class CryptoLibTest {
+public class WebClientServerTest {
 
 	// listening port
-	private static int port = 5020;
+	private static int port = 5010;
 
 	@Test
 	public void testServerStart() throws Throwable {
 		VertxTestContext testContext = new VertxTestContext();
 
 		Checkpoint serverStarted = testContext.checkpoint();
+		Checkpoint responseReceived = testContext.checkpoint();
 		Checkpoint initClientSent = testContext.checkpoint();
 		// Use the underlying vertx instance
 		Vertx vertx = Vertx.vertx();
@@ -70,13 +64,7 @@ public class CryptoLibTest {
 			  HttpServerRequest req = routingContext.request();
 			  req.bodyHandler(bodyHandler -> {
 				  String recBody = bodyHandler.toString();
-				  HttpSession session = RestServer.getInstance().handleRequest(recBody);
-			  	  //System.out.println("POST received: " + recBody + " session = " + session);
-				  if (session == null) {
-					  testContext.failNow(new NullPointerException("session null"));
-				  } else if (session.senderValidated == false) {
-					  testContext.failNow(new NullPointerException("invalid sender"));
-				  }
+			  	  System.out.println("POST received: " + recBody);
 			  	  response.write("ok").end();
 			  });
 		  	  //routingContext.response().end();
@@ -92,20 +80,21 @@ public class CryptoLibTest {
 	    	});
 		WebClient client = WebClient.create(vertx);
 
-		Curve25519 x = new Curve25519();
-		Ed25519 ed = new Ed25519();
-		AES aes = new AES();
-		aes.setSeed(RandomSeed.createSeed());
-		String clientPrivate = Conv.toString(aes.random(32));
-		String clientPublic = ed.publicKey(clientPrivate);
-		ECConnection comm = new ECConnection(x, ed, aes);
-		Session clientSession = new Session();
-		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, "TestClient1");
-		//System.out.println("transfer message: " + message);
+		client.get(port, "localhost", "/").as(BodyCodec.string())
+				.send(ar -> {
+					if (ar.failed()) {
+						testContext.failNow(ar.cause());
+					} else {
+						//assertThat(response.body()).isEqualTo("Plop");
+						assertTrue(ar.result().body().contains("Secrets Container"));
+						System.out.println("received:" + ar.result().body());
+						//testContext.completeNow();
+						//testContext.failNow(null);
+						responseReceived.flag();
+					}
+				});
 
-		RestServer.getInstance().addPublicKey("TestClient1", clientPublic);
-		
-		Buffer buffer = Buffer.buffer(message);
+		Buffer buffer = Buffer.buffer("this is a request body");
 		client.post(port, "localhost", "/rest").as(BodyCodec.string())
 		.sendBuffer(buffer, ar -> {
 			if (ar.failed()) {
