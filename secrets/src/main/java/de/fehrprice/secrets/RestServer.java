@@ -4,13 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import de.fehrprice.crypto.AES;
+import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Curve25519;
 import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
+import de.fehrprice.net.Session;
 
 /**
  * Singleton for handling requests to the server.
@@ -18,6 +21,8 @@ import de.fehrprice.net.ECConnection;
  *
  */
 public class RestServer {
+
+	private Logger logger = Logger.getLogger(RestServer.class.toString());
 
 	private static RestServer instance = null;
 
@@ -32,8 +37,12 @@ public class RestServer {
 	private Ed25519 ed;
 	private AES aes;
 	private ECConnection conn;
+	private String serverPrivateKey;
+	private String serverPublicKey;
 	// use the key list as cache for db calls or for tests
 	private Map<String,String> pubKeyMap = new HashMap<>();
+	// map for all ongoing sessions, mapped by client id
+	private Map<String, HttpSession> sessionMap = new HashMap<>();
 	
 	private RestServer() {
 		x = new Curve25519();
@@ -74,6 +83,7 @@ public class RestServer {
 			if (clientPublicKey != null) {
 				HttpSession hs = new HttpSession();
 				hs.id = dto.id;
+				hs.dto = dto;
 				hs.senderValidated = conn.validateSender(dto, clientPublicKey);
 				return hs;
 			}
@@ -85,5 +95,40 @@ public class RestServer {
 		// try to find in key map, then DB if not found
 		String k = pubKeyMap.get(id);
 		return k;
+	}
+
+	public String createInitServerAnswer(HttpSession httpSession) {
+		Session serverSession = new Session();
+		byte[] clientPublicKey = Conv.toByteArray(httpSession.dto.key);
+		String initAnswer = conn.answerInitClient(serverSession, httpSession.dto, serverPrivateKey, serverPublicKey);
+		logger.info("transfer message: " + initAnswer);
+		byte[] sessionKey = conn.computeSessionKey(serverSession.sessionPrivateKey, clientPublicKey);
+		httpSession.sessionKey = sessionKey;
+		addSession(httpSession);
+		return initAnswer;
+	}
+
+	/**
+	 * Add session. If already existing the old one gets deleted.
+	 * @param httpSession
+	 */
+	private void addSession(HttpSession httpSession) {
+		sessionMap.remove(httpSession.id);
+		sessionMap.put(httpSession.id, httpSession);
+		logger.info("httpSession created for " + httpSession.id + " key = " + Conv.toString(httpSession.sessionKey));
+	}
+
+	/**
+	 * Add session. If already existing the old one gets deleted.
+	 * @param httpSession
+	 */
+	private HttpSession getSession(HttpSession httpSession) {
+		return sessionMap.get(httpSession.id);
+	}
+
+	public void setServerKeys(String serverPrivate, String serverPublic) {
+		this.serverPrivateKey = serverPrivate;
+		this.serverPublicKey = serverPublic;
+		
 	}
 }
