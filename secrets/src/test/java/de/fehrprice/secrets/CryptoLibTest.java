@@ -50,6 +50,7 @@ public class CryptoLibTest {
 
 		Checkpoint serverStarted = testContext.checkpoint();
 		Checkpoint initClientSent = testContext.checkpoint();
+		Checkpoint clientAESMessageSent = testContext.checkpoint();
 		// Use the underlying vertx instance
 		Vertx vertx = Vertx.vertx();
 		Router router = Router.router(vertx);
@@ -92,6 +93,20 @@ public class CryptoLibTest {
 			// routingContext.response().end();
 
 		});
+		Route route3 = router.route("/restmsg").handler(routingContext -> {
+			HttpServerResponse response = routingContext.response();
+			response.putHeader("content-type", "application/octet-stream");
+			response.setChunked(true);
+			HttpServerRequest req = routingContext.request();
+			req.bodyHandler(bodyHandler -> {
+				byte[] aesmsg = bodyHandler.getBytes();
+				logger.info("received aes message");
+				HttpSession session = RestServer.getInstance().handleAESMessage(aesmsg);
+				response.write("").end();
+			});
+			// routingContext.response().end();
+
+		});
 
 		server.requestHandler(router::accept).listen(port, ar -> {
 			if (ar.failed()) {
@@ -129,12 +144,23 @@ public class CryptoLibTest {
 					return;
 				}
 				byte[] sessionKey = comm.computeSessionKey(clientSession.sessionPrivateKey, Conv.toByteArray(dto.key));
+				clientSession.sessionAESKey = sessionKey;
 				logger.info("session key: " + Conv.toString(sessionKey));
 				initClientSent.flag();
+				String input = "This could be anything. Even UTF-8 chars like checkmark \u2713";
+				dto.id = "TestClient1";
+				byte[] aesMsg = comm.createAESMessage(dto, clientSession, input);
+				//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
+				logger.info("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
+				clientAESMessageSent.flag();
+				Buffer aesBuffer = Buffer.buffer(aesMsg);
+				client.post(port, "localhost", "/restmsg").as(BodyCodec.buffer()).sendBuffer(aesBuffer, asyncreq -> {
+					logger.info("aes sent!");;
+				});
 			}
 		});
 
-		assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+		assertTrue(testContext.awaitCompletion(500, TimeUnit.SECONDS));
 		if (testContext.failed()) {
 			throw testContext.causeOfFailure();
 		}

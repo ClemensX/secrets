@@ -73,7 +73,7 @@ public class RestServer {
 	}
 	
 	/**
-	 * Consume incoming request
+	 * Consume incoming init request
 	 * @param recBody
 	 */
 	public HttpSession handleRequest(String recBody) {
@@ -88,6 +88,22 @@ public class RestServer {
 				return hs;
 			}
 		}
+		return null;
+	}
+
+	public HttpSession handleAESMessage(byte[] aesmsg) {
+		String sender_id = ECConnection.getSenderIdFromAESMessage(aesmsg);
+		logger.info("got message from " + sender_id);
+		if (sender_id == null) {
+			logger.warning("no sender in message");
+			return null;
+		}
+		HttpSession hsession = getSession(sender_id);
+		if (hsession == null) {
+			logger.warning("no active session for id " + sender_id);
+			return null;
+		}
+		logger.info("session ok, key = " + Conv.toString(hsession.sessionKey));
 		return null;
 	}
 
@@ -122,8 +138,8 @@ public class RestServer {
 	 * Add session. If already existing the old one gets deleted.
 	 * @param httpSession
 	 */
-	private HttpSession getSession(HttpSession httpSession) {
-		return sessionMap.get(httpSession.id);
+	private HttpSession getSession(String id) {
+		return sessionMap.get(id);
 	}
 
 	public void setServerKeys(String serverPrivate, String serverPublic) {
