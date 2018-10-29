@@ -104,7 +104,11 @@ public class RestServer {
 			return null;
 		}
 		logger.info("session ok, key = " + Conv.toString(hsession.sessionKey));
-		return null;
+		hsession.cryptoSession.sessionAESKey = hsession.sessionKey;
+		String text = conn.getTextFromAESMessage(aesmsg, hsession.cryptoSession);
+		hsession.plaintext = text;
+		logger.info("received aes msg: " + text);
+		return hsession;
 	}
 
 	private String findClientPublicKey(String id) {
@@ -120,6 +124,7 @@ public class RestServer {
 		logger.info("transfer message: " + initAnswer);
 		byte[] sessionKey = conn.computeSessionKey(serverSession.sessionPrivateKey, clientPublicKey);
 		httpSession.sessionKey = sessionKey;
+		httpSession.cryptoSession = serverSession;
 		addSession(httpSession);
 		return initAnswer;
 	}

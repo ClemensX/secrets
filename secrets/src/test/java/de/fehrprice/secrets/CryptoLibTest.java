@@ -38,6 +38,8 @@ public class CryptoLibTest {
 	// listening port
 	private static int port = 5020;
 
+	private String aesInputMsg = "This could be anything. Even UTF-8 chars like checkmark \u2713";
+
 	@Test
 	public void testServerStart() throws Throwable {
 		AES aes = new AES();
@@ -51,6 +53,7 @@ public class CryptoLibTest {
 		Checkpoint serverStarted = testContext.checkpoint();
 		Checkpoint initClientSent = testContext.checkpoint();
 		Checkpoint clientAESMessageSent = testContext.checkpoint();
+		Checkpoint clientAESParsed = testContext.checkpoint();
 		// Use the underlying vertx instance
 		Vertx vertx = Vertx.vertx();
 		Router router = Router.router(vertx);
@@ -103,6 +106,11 @@ public class CryptoLibTest {
 				logger.info("received aes message");
 				HttpSession session = RestServer.getInstance().handleAESMessage(aesmsg);
 				response.write("").end();
+				if (session != null) {
+					if (aesInputMsg.equals(session.plaintext)) {
+						clientAESParsed.flag();
+					}
+				}
 			});
 			// routingContext.response().end();
 
@@ -147,9 +155,8 @@ public class CryptoLibTest {
 				clientSession.sessionAESKey = sessionKey;
 				logger.info("session key: " + Conv.toString(sessionKey));
 				initClientSent.flag();
-				String input = "This could be anything. Even UTF-8 chars like checkmark \u2713";
 				dto.id = "TestClient1";
-				byte[] aesMsg = comm.createAESMessage(dto, clientSession, input);
+				byte[] aesMsg = comm.createAESMessage(dto, clientSession, aesInputMsg);
 				//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
 				logger.info("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
 				clientAESMessageSent.flag();
@@ -157,10 +164,17 @@ public class CryptoLibTest {
 				client.post(port, "localhost", "/restmsg").as(BodyCodec.buffer()).sendBuffer(aesBuffer, asyncreq -> {
 					logger.info("aes sent!");;
 				});
+				// failing example with wrong id:
+				dto.id = "TestClientNIX";
+				aesMsg = comm.createAESMessage(dto, clientSession, aesInputMsg);
+				aesBuffer = Buffer.buffer(aesMsg);
+				client.post(port, "localhost", "/restmsg").as(BodyCodec.buffer()).sendBuffer(aesBuffer, asyncreq -> {
+					logger.info("aes sent!");;
+				});
 			}
 		});
 
-		assertTrue(testContext.awaitCompletion(500, TimeUnit.SECONDS));
+		assertTrue(testContext.awaitCompletion(15, TimeUnit.SECONDS));
 		if (testContext.failed()) {
 			throw testContext.causeOfFailure();
 		}
