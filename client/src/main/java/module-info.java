@@ -11,6 +11,7 @@ module de.fehrprice.secrets.client {
 	//opens de.fehrprice.secrets.entity;
 
 	requires crypto;
+	requires secrets;
 	//requires java.logging;
 	//requires java.persistence;
 	//requires java.sql;

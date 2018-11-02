@@ -3,6 +3,7 @@ package de.fehrprice.secrets.client;
 import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.RandomSeed;
+import de.fehrprice.secrets.HttpSession;
 
 public class SecretsClient {
 
@@ -14,6 +15,14 @@ public class SecretsClient {
 		if (isCommand("keygen", args)) {
 			keygen(args);
 		}
+		if (isCommand("server", args)) {
+			server(args);
+		}
+	}
+
+	private static void server(String[] args) {
+		System.out.println("Enter server URL:");
+		System.out.println(new HttpSession());
 	}
 
 	private static void keygen(String[] args) {
@@ -65,6 +74,8 @@ public class SecretsClient {
 				" ",
 				" keygen                generate and print one 256 bit private key", 
 				" keygen <n>            generate and print n 256 bit private keys", 
+				" ",
+				" server                interactively add or change the url of the Secrets! server", 
 				" "
 				);
 		System.out.println(usageString);
