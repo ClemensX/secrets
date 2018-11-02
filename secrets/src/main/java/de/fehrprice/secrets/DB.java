@@ -7,19 +7,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import de.fehrprice.secrets.entity.User;
 
 public class DB {
 	
-	private static final Logger logger = LogManager.getLogger(DB.class.getName());
+	private static final Logger logger = Logger.getLogger(DB.class.getName());
 
 	public static final String PERSISTENCE_UNIT_NAME = "secretsdb";
 	//public static final String PERSISTENCE_UNIT_NAME = "hsqldb-mem-test1";
@@ -35,16 +33,16 @@ public class DB {
 		Map<String, String> props = new HashMap<String, String>();
 		props.put("eclipselink.logging.level", "INFO"); // FINE, INFO, WARNING
 		//props.put("javax.persistence.jdbc.url", "jdbc:hsqldb:file:target/testdb42XXX;shutdown=true");
-		logger.trace("initiate EntityManagerFactory for persistence unit " + PERSISTENCE_UNIT_NAME);
+		logger.info("initiate EntityManagerFactory for persistence unit " + PERSISTENCE_UNIT_NAME);
         emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, props);
-        logger.trace("emf = " + emf);
+        logger.info("emf = " + emf);
         return emf;
 	}
 	
 	public static String status() {
         EntityManagerFactory emf = getEntityManagerFactory();
 		EntityManager em = emf.createEntityManager();
-		logger.trace("em  = " + em);
+		logger.info("em  = " + em);
 
         // write entity within new transaction
 		em.getTransaction().begin();
@@ -56,11 +54,11 @@ public class DB {
 		// now read list of users and verify:
 		List<User> users = User.getAllEntities(em);
 		User testUser = users.get(0);
-		logger.trace("User has auto created id " + testUser.getId());
+		logger.info("User has auto created id " + testUser.getId());
 		em.close();
-		logger.trace("em closed");
+		logger.info("em closed");
 		em = emf.createEntityManager();
-		logger.trace("another em  = " + em);
+		logger.info("another em  = " + em);
 		long count = User.countAllEntities(em);
 		em.close();
 		return "ok (" + count + " users)";
