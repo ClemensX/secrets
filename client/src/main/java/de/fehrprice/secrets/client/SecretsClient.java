@@ -17,13 +17,20 @@ import de.fehrprice.secrets.HttpSession;
 
 public class SecretsClient {
 
+	private static final String VERSION = "version";
+	private static final String SERVER_URL = "server_url";
+	private static final String SERVER_PUBLIC_KEY = "server_public_key";
+	
 	public static void main(String[] args) {
+		OptionHandler oh = new OptionHandler();
 		if (isCommand("keygen", args)) {
 			keygen(args);
 			done();
 		}
 		if (isCommand("server", args)) {
-			server(args);
+			//server(args);
+			oh.handleOption(SERVER_URL, getSetup(), getConfigFilePath(), args, "Enter server url");
+			oh.handleOption(SERVER_PUBLIC_KEY, getSetup(), getConfigFilePath(), args, "Enter server public key. It is advertized at the About tab of your server.");
 			done();
 		}
 		// check to see if setup is ok
@@ -56,10 +63,6 @@ public class SecretsClient {
 		}
 	}
 
-	private static final String VERSION = "version";
-	private static final String SERVER_URL = "server_url";
-	private static final String SERVER_PUBLIC_KEY = "server_public_key";
-	
 	private static Properties fillDefaultProperties(Properties p) {
 		p.clear();
 		p.put(VERSION, "1.0");
@@ -67,7 +70,7 @@ public class SecretsClient {
 	}
 
 	private static BufferedReader in = null;
-	private static String readLine() {
+	public static String readLine() {
 		if (in == null) {
 			in = new BufferedReader(new InputStreamReader(System.in));
 		}
