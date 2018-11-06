@@ -2,6 +2,9 @@ package de.fehrprice.secrets;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -56,11 +59,19 @@ public class RestServer {
 		return "Secrets Server is up. Status: " + DB.status();
 	}
 
+	private static String privateKeyStatus() {
+		Path path = Paths.get("/etc/secrets/private", "keyfile_private");
+		if (Files.exists(path)) {
+			return "Private key file found";
+		}
+		return "ERROR: Private Key not found.";
+	}
+
 	public static String statusCrypto() {
 		try {
 			Curve25519 crv = new Curve25519();
 			if (crv != null) {
-				return "ok";
+				return "ok" + " (" + privateKeyStatus() + ")";
 			}
 		} catch (Throwable t) {
 			// intentionally ignore exceptions
