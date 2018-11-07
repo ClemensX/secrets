@@ -31,7 +31,7 @@ public class RestServer {
 
 	private static RestServer instance = null;
 
-	public static RestServer getInstance() {
+	public static synchronized RestServer getInstance() {
 		if (instance == null) {
 			instance = new RestServer();
 		}
