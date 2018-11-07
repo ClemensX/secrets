@@ -2,6 +2,7 @@ package de.fehrprice.secrets;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,6 +18,7 @@ import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
+import io.vertx.core.buffer.Buffer;
 
 /**
  * Singleton for handling requests to the server.
@@ -53,16 +55,32 @@ public class RestServer {
 		aes = new AES();
 		aes.setSeed(RandomSeed.createSeed());
 		conn = new ECConnection(x, ed, aes);
+		
 	}
 	
+	private static String readPrivateKey() {
+		Path path = Paths.get("/etc/secrets/private", "keyfile_private");
+		if (Files.exists(path)) {
+			try {
+				String privKey = Files.readString(path);
+				if (privKey != null) {
+					privKey = privKey.trim();
+					return privKey;
+				}
+			} catch (IOException e) {
+			}
+		}
+		return null;
+	}
+
 	public static String status() {
 		return "Secrets Server is up. Status: " + DB.status();
 	}
 
 	private static String privateKeyStatus() {
-		Path path = Paths.get("/etc/secrets/private", "keyfile_private");
-		if (Files.exists(path)) {
-			return "Private key file found";
+		String privateKey = readPrivateKey();
+		if (privateKey != null) {
+			return "Private key file found, length: " + privateKey.length() + " chars";
 		}
 		return "ERROR: Private Key not found.";
 	}
@@ -162,5 +180,15 @@ public class RestServer {
 		this.serverPrivateKey = serverPrivate;
 		this.serverPublicKey = serverPublic;
 		
+	}
+
+	public static String getPublicKey() {
+		if (getInstance().serverPublicKey == null) {
+			// read private key and generate public key
+			String hexPrivateKey = readPrivateKey();
+			String hexPublicKey = getInstance().ed.publicKey(hexPrivateKey);
+			getInstance().setServerKeys(hexPrivateKey, hexPublicKey);
+		}
+		return getInstance().serverPublicKey;
 	}
 }

@@ -71,6 +71,14 @@ public class Server extends AbstractVerticle {
     	  routingContext.response().end();
     	});
 
+    router.route("/secretsbackend/getpublickey").handler(routingContext -> {
+    	  HttpServerResponse response = routingContext.response();
+    	  response.putHeader("content-type", "text/plain");
+    	  response.setChunked(true);
+    	  response.write(RestServer.getPublicKey());
+    	  routingContext.response().end();
+    	});
+
     server.requestHandler(router::accept).listen(port);
     System.out.println("Server started and listening on " + port);
   }
