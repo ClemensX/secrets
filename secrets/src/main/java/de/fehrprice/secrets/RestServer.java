@@ -18,7 +18,6 @@ import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
-import io.vertx.core.buffer.Buffer;
 
 /**
  * Singleton for handling requests to the server.
@@ -190,5 +189,27 @@ public class RestServer {
 			getInstance().setServerKeys(hexPrivateKey, hexPublicKey);
 		}
 		return getInstance().serverPublicKey;
+	}
+
+	public String restCall(String path) {
+		String[] p = path.split("/");
+//		for (int i = 0; i < p.length; i++) {
+//			System.out.println("PATH " + i + " " + p[i]);
+//		}
+		if (p.length < 4 || !"secretsbackend".equals(p[1]) || !"rest".equals(p[2])) {
+			logger.severe("invalid request path received: " + path);
+			return "error";
+		}
+		if ("status".equals(p[3])) {
+			return status();
+		}
+		if ("statuscrypto".equals(p[3])) {
+			return statusCrypto();
+		}
+		if ("getpublickey".equals(p[3])) {
+			return getPublicKey();
+		}
+		logger.severe("invalid request path received: " + path);
+		return "error";
 	}
 }

@@ -55,29 +55,14 @@ public class Server extends AbstractVerticle {
   	  routingContext.response().end();
   	});
 
-    router.route("/secretsbackend/status").handler(routingContext -> {
-    	  HttpServerResponse response = routingContext.response();
-    	  response.putHeader("content-type", "text/plain");
-    	  response.setChunked(true);
-    	  response.write(RestServer.status());
-    	  routingContext.response().end();
-    	});
-
-    router.route("/secretsbackend/statuscrypto").handler(routingContext -> {
-    	  HttpServerResponse response = routingContext.response();
-    	  response.putHeader("content-type", "text/plain");
-    	  response.setChunked(true);
-    	  response.write(RestServer.statusCrypto());
-    	  routingContext.response().end();
-    	});
-
-    router.route("/secretsbackend/getpublickey").handler(routingContext -> {
-    	  HttpServerResponse response = routingContext.response();
-    	  response.putHeader("content-type", "text/plain");
-    	  response.setChunked(true);
-    	  response.write(RestServer.getPublicKey());
-    	  routingContext.response().end();
-    	});
+    router.route("/secretsbackend/rest/*").handler(routingContext -> {
+      //System.out.println("path: " + routingContext.request().path());
+  	  HttpServerResponse response = routingContext.response();
+  	  response.putHeader("content-type", "text/plain");
+  	  response.setChunked(true);
+  	  response.write(RestServer.getInstance().restCall(routingContext.request().path()));
+  	  routingContext.response().end();
+  	});
 
     server.requestHandler(router::accept).listen(port);
     System.out.println("Server started and listening on " + port);
