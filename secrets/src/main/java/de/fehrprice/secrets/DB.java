@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import de.fehrprice.secrets.entity.Config;
 import de.fehrprice.secrets.entity.User;
 
 public class DB {
@@ -64,6 +65,27 @@ public class DB {
 		return "ok (" + count + " users)";
 	}
 
+	public static Config getCreateConfigEntity() {
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		Config conf = em.find(Config.class, 0);
+		if (conf == null) {
+			conf = new Config();
+			conf.setId(0);
+			conf.setNumSlots(100);
+			em.persist(conf);
+			System.out.println("CREATE Config Entity");
+		}
+		em.detach(conf);
+		em.close();
+		return conf;
+	}
+	
+	public static String getFreeSlots() {
+		Config conf = getCreateConfigEntity();
+		return "" + conf.getNumSlots();
+	}
+	
 	private static String jdbcStatus() {
 		String url = "jdbc:postgresql://db:5432/secretsdb";
 		Properties props = new Properties();

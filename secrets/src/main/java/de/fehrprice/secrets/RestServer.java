@@ -191,6 +191,10 @@ public class RestServer {
 		return getInstance().serverPublicKey;
 	}
 
+	private String getFreeSlots() {
+		return DB.getFreeSlots();
+	}
+
 	public String restCall(String path) {
 		String[] p = path.split("/");
 //		for (int i = 0; i < p.length; i++) {
@@ -208,6 +212,9 @@ public class RestServer {
 		}
 		if ("getpublickey".equals(p[3])) {
 			return getPublicKey();
+		}
+		if ("freeslots".equals(p[3])) {
+			return getFreeSlots();
 		}
 		logger.severe("invalid request path received: " + path);
 		return "error";
