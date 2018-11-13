@@ -33,6 +33,8 @@ public class DB {
 		// emf not open or not initialized, create new one:
 		Map<String, String> props = new HashMap<String, String>();
 		props.put("eclipselink.logging.level", "INFO"); // FINE, INFO, WARNING
+		props.put("javax.persistence.jdbc.password", System.getenv("DEFAULT_PASSWORD"));
+		logger.warning("READ PW " + System.getenv("DEFAULT_PASSWORD"));
 		//props.put("javax.persistence.jdbc.url", "jdbc:hsqldb:file:target/testdb42XXX;shutdown=true");
 		logger.info("initiate EntityManagerFactory for persistence unit " + PERSISTENCE_UNIT_NAME);
         emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, props);
