@@ -70,10 +70,12 @@ public class DB {
 		EntityManager em = emf.createEntityManager();
 		Config conf = em.find(Config.class, 0);
 		if (conf == null) {
+			em.getTransaction().begin();
 			conf = new Config();
 			conf.setId(0);
 			conf.setNumSlots(100);
 			em.persist(conf);
+			em.getTransaction().commit();
 			System.out.println("CREATE Config Entity");
 		}
 		em.detach(conf);
