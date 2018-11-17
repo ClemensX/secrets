@@ -195,6 +195,11 @@ public class RestServer {
 		return DB.getFreeSlots();
 	}
 
+	private String signup() {
+		logger.info("signup call received");
+		return "ok";
+	}
+
 	public String restCall(String path) {
 		String[] p = path.split("/");
 //		for (int i = 0; i < p.length; i++) {
@@ -216,7 +221,11 @@ public class RestServer {
 		if ("freeslots".equals(p[3])) {
 			return getFreeSlots();
 		}
+		if ("signup".equals(p[3])) {
+			return signup();
+		}
 		logger.severe("invalid request path received: " + path);
 		return "error";
 	}
+
 }
