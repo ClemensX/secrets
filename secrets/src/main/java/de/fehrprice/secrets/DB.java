@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import de.fehrprice.crypto.Conv;
 import de.fehrprice.secrets.dto.SignupResult;
 import de.fehrprice.secrets.entity.Config;
 import de.fehrprice.secrets.entity.User;
@@ -115,6 +116,10 @@ public class DB {
 		if (u != null) {
 			su.result = "User with this public key already exists";
 			su.alreadyExisting = true;
+			return su;
+		} else if (Conv.testEntropy(key) == false) {
+			su.result = "Invalid key provided";
+			su.alreadyExisting = false;
 			return su;
 		} else {
 			em.getTransaction().begin();
