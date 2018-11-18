@@ -1,11 +1,15 @@
 package de.fehrprice.secrets;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
 
@@ -55,12 +59,25 @@ public class Server extends AbstractVerticle {
   	  routingContext.response().end();
   	});
 
+    router.route().handler(BodyHandler.create());
     router.route("/secretsbackend/rest/*").handler(routingContext -> {
       //System.out.println("path: " + routingContext.request().path());
+      // look for post requests:
+      HttpServerRequest request = routingContext.request();
   	  HttpServerResponse response = routingContext.response();
-  	  response.putHeader("content-type", "text/plain");
   	  response.setChunked(true);
-  	  response.write(RestServer.getInstance().restCall(routingContext.request().path()));
+      if (request.method() == HttpMethod.POST) {
+//          String body = routingContext.getBodyAsString();
+//          System.out.println("received body: " + body);
+          JsonObject bodyj = routingContext.getBodyAsJson();
+//          System.out.println("received body: " + bodyj);
+      	  response.putHeader("content-type", "application/json");
+      	  response.write(RestServer.getInstance().restCall(routingContext.request().path(), bodyj));
+      } else {
+    	  // GET requests
+	  	  response.putHeader("content-type", "text/plain");
+	  	  response.write(RestServer.getInstance().restCall(routingContext.request().path()));
+      }
   	  routingContext.response().end();
   	});
 

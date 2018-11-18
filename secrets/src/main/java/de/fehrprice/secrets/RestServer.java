@@ -18,6 +18,8 @@ import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
+import de.fehrprice.secrets.dto.SignupResult;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Singleton for handling requests to the server.
@@ -195,12 +197,26 @@ public class RestServer {
 		return DB.getFreeSlots();
 	}
 
-	private String signup() {
+	private String signup(JsonObject bodyj) {
 		logger.info("signup call received");
-		return "ok";
+		String name = bodyj.getString("name");
+		String key = bodyj.getString("publickey");
+		logger.info("received: " + name + " " + key);
+		String res = signup(name, key);
+		//return "{\"v\":\"ok\"}";
+		return res;
+	}
+
+	private String signup(String name, String key) {
+		SignupResult res = DB.signup(name, key);
+		return res.asJsonString();
 	}
 
 	public String restCall(String path) {
+		return restCall(path, null);
+	}
+
+	public String restCall(String path, JsonObject bodyj) {
 		String[] p = path.split("/");
 //		for (int i = 0; i < p.length; i++) {
 //			System.out.println("PATH " + i + " " + p[i]);
@@ -222,7 +238,7 @@ public class RestServer {
 			return getFreeSlots();
 		}
 		if ("signup".equals(p[3])) {
-			return signup();
+			return signup(bodyj);
 		}
 		logger.severe("invalid request path received: " + path);
 		return "error";
