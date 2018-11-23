@@ -17,9 +17,11 @@ import de.fehrprice.secrets.HttpSession;
 
 public class SecretsClient {
 
+	// entries in config file:
 	private static final String VERSION = "version";
 	private static final String SERVER_URL = "server_url";
 	private static final String SERVER_PUBLIC_KEY = "server_public_key";
+	private static final String PRIVATE_KEY_FILE = "private_key_file";
 	
 	public static void main(String[] args) {
 		OptionHandler oh = new OptionHandler();
@@ -33,13 +35,35 @@ public class SecretsClient {
 			oh.handleOption(SERVER_PUBLIC_KEY, getSetup(), getConfigFilePath(), args, "Enter server public key. It is advertized at the About tab of your server.");
 			done();
 		}
+		if (isCommand("configfile", args)) {
+			showConfigFilePath();
+			done();
+		}
 		// check to see if setup is ok
 		if (isCommand("setup", args) || ( args.length == 0 && getSetup() == null)) {
 			setup();
 			done();
 		}
+		if (isCommand("private", args)) {
+			oh.handleOption(PRIVATE_KEY_FILE, getSetup(), getConfigFilePath(), args, "Enter full path to your public key file.");
+			System.out.println("  --> NEVER distribute, send or otherwise share your private key" + 
+			"\n      consider storing it on a removable device"); 
+			done();
+		}
+		if (args.length > 0) {
+			System.out.println("command not found: " + args[0]);
+		}
 		// if we reach here no command has been found
 		usage();
+	}
+
+	private static void showConfigFilePath() {
+		Path filePath = getConfigFilePath();
+		if (getSetup() != null) {
+			System.out.println("Your config file is here: " + filePath.toAbsolutePath());
+		} else {
+			System.out.println("Your config file will be created here: " + filePath.toAbsolutePath());
+		}
 	}
 
 	private static void setup() {
@@ -182,12 +206,16 @@ public class SecretsClient {
 				" keygen                generate and print one 256 bit private key", 
 				" keygen <n>            generate and print n 256 bit private keys", 
 				" ",
+				" configfile            show location of you config file", 
+				" ",
 				" server                interactively add or change the url of the Secrets! server", 
 				" ",
 				" setup                 interactively setup your Secrets! client", 
+				" ",
+				" private               interactively set full path and name to your private key file", 
 				" "
 				);
 		System.out.println(usageString);
-		System.out.println("user.home=" + System.getProperty("user.home"));
+		//System.out.println("user.home=" + System.getProperty("user.home"));
 	}
 }
