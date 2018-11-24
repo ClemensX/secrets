@@ -12,6 +12,7 @@ import java.util.Properties;
 
 import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
+import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.secrets.HttpSession;
 
@@ -35,6 +36,10 @@ public class SecretsClient {
 			oh.handleOption(SERVER_PUBLIC_KEY, getSetup(), getConfigFilePath(), args, "Enter server public key. It is advertized at the About tab of your server.");
 			done();
 		}
+		if (isCommand("public", args)) {
+			showPublicKey();
+			done();
+		}
 		if (isCommand("configfile", args)) {
 			showConfigFilePath();
 			done();
@@ -48,6 +53,8 @@ public class SecretsClient {
 			oh.handleOption(PRIVATE_KEY_FILE, getSetup(), getConfigFilePath(), args, "Enter full path to your public key file.");
 			System.out.println("  --> NEVER distribute, send or otherwise share your private key" + 
 			"\n      consider storing it on a removable device"); 
+			System.out.println("  --> NOBODY can re-generate your private key if you loose it!" + 
+			"\n      keep it save - but keep it"); 
 			done();
 		}
 		if (args.length > 0) {
@@ -55,6 +62,61 @@ public class SecretsClient {
 		}
 		// if we reach here no command has been found
 		usage();
+	}
+
+	private static void showPublicKey() {
+		if (!checkConfigFile()) return;
+		if (!checkPrivateKey()) return;
+		String priv = readPrivateKey();
+		Ed25519 ed = new Ed25519();
+		String publicKey = ed.publicKey(priv);
+		System.out.println("Your public key is " + publicKey);
+	}
+
+	private static boolean checkPrivateKey() {
+		String pk = readPrivateKey();
+		//System.out.println("### " + pk);
+		if (!Conv.testEntropy(pk)) {
+			System.out.println("private key is invalid (failed entropy check)");
+			return false;
+		}
+		return true;
+	}
+
+	private static String readPrivateKey() {
+		Properties p = getSetup();
+		if (p == null) return null;
+		String privateKeyFile = p.getProperty(PRIVATE_KEY_FILE);
+		if (privateKeyFile == null) return null;
+		return readPrivateKey(privateKeyFile);
+	}
+	private static String readPrivateKey(String privateKeyFile) {
+		Path keyPath = Paths.get(privateKeyFile);
+		if (!Files.exists(keyPath)) {
+			System.out.println("private key file not found");
+			return null;
+		}
+		String key;
+		try {
+			key = Files.readString(keyPath);
+		} catch (Throwable t) {
+			System.out.println("Error reading private key file " + keyPath.toString());
+			return null;
+		}
+		return key;
+	}
+
+	/**
+	 * Check that a config file exists and can be read
+	 */
+	private static boolean checkConfigFile() {
+		Path filePath = getConfigFilePath();
+		if (getSetup() == null) {
+			System.out.println("Config file not found, use setup to create one: " + filePath.toAbsolutePath());
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	private static void showConfigFilePath() {
@@ -205,6 +267,8 @@ public class SecretsClient {
 				" ",
 				" keygen                generate and print one 256 bit private key", 
 				" keygen <n>            generate and print n 256 bit private keys", 
+				" ",
+				" public                show your public key", 
 				" ",
 				" configfile            show location of you config file", 
 				" ",
