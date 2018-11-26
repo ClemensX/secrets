@@ -44,6 +44,11 @@ public class DB {
         return emf;
 	}
 	
+	/**
+	 * Test Status by adding and removing a test user.
+	 * Only if this was successful "ok" will be returned.
+	 * @return
+	 */
 	public static String status() {
         EntityManagerFactory emf = getEntityManagerFactory();
 		EntityManager em = emf.createEntityManager();
@@ -52,21 +57,30 @@ public class DB {
         // write entity within new transaction
 		em.getTransaction().begin();
 		User user = new User();
-		user.setName("clemens");
+		user.setName("11980463587use_name_garbage_843635328");
 		em.persist(user);
 		em.getTransaction().commit();
+		em.refresh(user);
+		long id = user.getId();
+		logger.info("id  = " + id);
 
 		// now read list of users and verify:
 		List<User> users = User.getAllEntities(em);
-		User testUser = users.get(0);
-		logger.info("User has auto created id " + testUser.getId());
+		User testUser = em.find(User.class, id);
+		if (testUser != null) {
+			em.getTransaction().begin();
+			em.remove(testUser);
+			em.getTransaction().commit();
+			logger.info("user removed, id: " + id);
+		} else {
+			return "error";
+		}
 		em.close();
-		logger.info("em closed");
-		em = emf.createEntityManager();
-		logger.info("another em  = " + em);
-		long count = User.countAllEntities(em);
-		em.close();
-		return "ok (" + count + " users)";
+//		em = emf.createEntityManager();
+//		logger.info("another em  = " + em);
+//		long count = User.countAllEntities(em);
+//		em.close();
+		return "ok";
 	}
 
 	public static Config getCreateConfigEntity() {
@@ -88,8 +102,12 @@ public class DB {
 	}
 	
 	public static String getFreeSlots() {
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
 		Config conf = getCreateConfigEntity();
-		return "" + conf.getNumSlots();
+		int numSLots = conf.getNumSlots(); 
+		long numUsed = User.countAllEntities(em);
+		return "" + (numSLots - numUsed); 
 	}
 	
 	private static String jdbcStatus() {

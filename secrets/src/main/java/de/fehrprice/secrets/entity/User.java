@@ -29,7 +29,7 @@ import de.fehrprice.secrets.RestServer;
 )
 public class User {
 
-	private static Logger logger = Logger.getLogger(RestServer.class.toString());
+	private static Logger logger = Logger.getLogger(User.class.toString());
 	
 	public static final String Query_GetAllEntities = "GetAllEntities";
 	public static final String Query_CountAllEntities = "CountAllEntities";
@@ -89,4 +89,5 @@ public class User {
 		}
 		return users.get(0);
 	}
+
 }
