@@ -13,7 +13,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import de.fehrprice.secrets.entity.Tag;
 import de.fehrprice.secrets.entity.User;
+import de.fehrprice.secrets.SnippetManager;
 
 /**
  * Unit test for simple App.
@@ -46,6 +48,43 @@ public class JPATest {
 		assertEquals("clemens", testUser.getName());
 		System.out.println("User has auto created id " + testUser.getId());
 		
+		em.close();
+		assertTrue(true);
+	}
+
+	@Test
+	public void testSnippetsPersistance() {
+		Map<String, String> props = new HashMap<String, String>();
+		props.put("eclipselink.logging.level", "INFO"); // FINE, INFO, WARNING
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, props);
+        assertNotNull(emf);
+		EntityManager em = emf.createEntityManager();
+        assertNotNull(em);
+		
+        // use fixed userid for testing
+        Long userid = 101L;
+        
+        // write entity within new transaction
+		em.getTransaction().begin();
+
+		var sm = new SnippetManager(em);
+		String tags[] = {"url", "test", "mycompany"};
+		sm.create(userid, "homepage", "http://www.google.com", tags);
+		var ts = Tag.getAllEntities(em);
+//		for (Tag t : ts) {
+//			System.out.println("TAG name / userid: " + t.getName() + " / " + t.getId().userid);
+//		}
+		assertEquals(3, ts.size());
+		
+
+		// now read list of users and verify:
+//		List<User> users = User.getAllEntities(em);
+//		assertEquals(1, users.size());
+//		User testUser = users.get(0);
+//		assertEquals("clemens", testUser.getName());
+//		System.out.println("User has auto created id " + testUser.getId());
+		
+		em.getTransaction().commit();
 		em.close();
 		assertTrue(true);
 	}

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.GeneratedValue;
@@ -18,32 +19,30 @@ import javax.persistence.TypedQuery;
 import de.fehrprice.secrets.RestServer;
 
 @Entity
-@NamedQuery(name = InfoSnippet.Query_GetAllEntities,
-            query = "select u from InfoSnippet u" 
+@NamedQuery(name = Snippet.Query_GetAllEntities,
+            query = "select u from Snippet u" 
             )
-@NamedQuery(name = InfoSnippet.Query_CountAllEntities,
-			query = "select count(u) from InfoSnippet u" 
+@NamedQuery(name = Snippet.Query_CountAllEntities,
+			query = "select count(u) from Snippet u" 
 			)
-public class InfoSnippet {
+public class Snippet {
 
 	private static Logger logger = Logger.getLogger(RestServer.class.toString());
 	
 	public static final String Query_GetAllEntities = "InfoSnippet.GetAllEntities";
 	public static final String Query_CountAllEntities = "InfoSnippet.CountAllEntities";
 	public static final String Query_GetEntitiesByKey = "InfoSnippet.GetEntitiesByKey";
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	@EmbeddedId
+	private SnippetId id;
 	private String title;
 	private String text;
 	private Set<String> topics; 
 
-	
-	public Long getId() {
+	public SnippetId getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(SnippetId id) {
 		this.id = id;
 	}
 
@@ -72,8 +71,8 @@ public class InfoSnippet {
 	}
 
 	// queries:
-	public static List<InfoSnippet> getAllEntities(EntityManager em) {
-		TypedQuery<InfoSnippet> all = em.createNamedQuery(Query_GetAllEntities, InfoSnippet.class);
+	public static List<Snippet> getAllEntities(EntityManager em) {
+		TypedQuery<Snippet> all = em.createNamedQuery(Query_GetAllEntities, Snippet.class);
 		return all.getResultList();
 	}
 
