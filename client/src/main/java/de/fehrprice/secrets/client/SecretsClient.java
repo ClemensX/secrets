@@ -44,6 +44,10 @@ public class SecretsClient {
 			showConfigFilePath();
 			done();
 		}
+		if (isCommand("test", args)) {
+			testConnection();
+			done();
+		}
 		// check to see if setup is ok
 		if (isCommand("setup", args) || ( args.length == 0 && getSetup() == null)) {
 			setup();
@@ -62,6 +66,23 @@ public class SecretsClient {
 		}
 		// if we reach here no command has been found
 		usage();
+	}
+
+	private static void testConnection() {
+		if (!checkConfigFile()) return;
+		if (!checkPrivateKey()) return;
+		Properties p = getSetup();
+		if (!p.containsKey(SERVER_PUBLIC_KEY)) {
+			System.out.println("Invalid server configuration: server public key missing");
+			return;
+		}
+		if (!p.containsKey(SERVER_URL)) {
+			System.out.println("Invalid server configuration: server url missing");
+			return;
+		}
+		String priv = readPrivateKey();
+		var server = new ServerCommunication(p, priv);
+		server.initiate();
 	}
 
 	private static void showPublicKey() {

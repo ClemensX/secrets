@@ -1,2 +1,2 @@
 @echo off
-call java --module-path  "../../Crypto/target/crypto-0.0.1-SNAPSHOT.jar;target/secrets.client-0.0.1-SNAPSHOT.jar;../secrets/target/secrets-0.0.1-SNAPSHOT.jar" --module de.fehrprice.secrets.client/de.fehrprice.secrets.client.SecretsClient %*
+call java --module-path  "../../Crypto/target/crypto-0.0.1-SNAPSHOT.jar;../../Crypto/target/javax.json-api-1.1.2.jar;../../Crypto/target/javax.json-1.1.2.jar;target/secrets.client-0.0.1-SNAPSHOT.jar;../secrets/target/secrets-0.0.1-SNAPSHOT.jar" --module de.fehrprice.secrets.client/de.fehrprice.secrets.client.SecretsClient %*
