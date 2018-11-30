@@ -25,18 +25,25 @@ import de.fehrprice.secrets.RestServer;
 @NamedQuery(name = Snippet.Query_CountAllEntities,
 			query = "select count(u) from Snippet u" 
 			)
+@NamedQuery(name = Snippet.Query_GetEntitiesByUser,
+			query = "select u from Snippet u where u.id.userid = :userid" 
+			)
+@NamedQuery(name = Snippet.Query_GetEntitiesByUserAndTag,
+			query = "select s from Snippet s inner join s.tags t where s.id.userid = :userid and t = :tag" 
+			)
 public class Snippet {
 
 	private static Logger logger = Logger.getLogger(RestServer.class.toString());
 	
 	public static final String Query_GetAllEntities = "InfoSnippet.GetAllEntities";
 	public static final String Query_CountAllEntities = "InfoSnippet.CountAllEntities";
-	public static final String Query_GetEntitiesByKey = "InfoSnippet.GetEntitiesByKey";
+	public static final String Query_GetEntitiesByUser = "InfoSnippet.GetEntitiesByUser";
+	public static final String Query_GetEntitiesByUserAndTag = "InfoSnippet.GetEntitiesByUserAndTag";
 	@EmbeddedId
 	private SnippetId id;
 	private String title;
 	private String text;
-	private Set<String> topics; 
+	private Set<Tag> tags; 
 
 	public SnippetId getId() {
 		return id;
@@ -62,12 +69,12 @@ public class Snippet {
 		this.text = text;
 	}
 
-	public Set<String> getTopics() {
-		return topics;
+	public Set<Tag> getTags() {
+		return tags;
 	}
 
-	public void setTopics(Set<String> topics) {
-		this.topics = topics;
+	public void setTopics(Set<Tag> tags) {
+		this.tags = tags;
 	}
 
 	// queries:
@@ -82,4 +89,16 @@ public class Snippet {
 		return count;
 	}
 	
+	public static List<Snippet> getEntitiesByUser(EntityManager em, Long userid) {
+		TypedQuery<Snippet> q = em.createNamedQuery(Query_GetEntitiesByUser, Snippet.class);
+		List<Snippet> all = q.setParameter("userid", userid).getResultList();
+		return all;
+	}
+
+	public static List<Snippet> getEntitiesByUserAndTag(EntityManager em, Long userid, Tag tag) {
+		TypedQuery<Snippet> q = em.createNamedQuery(Query_GetEntitiesByUserAndTag, Snippet.class);
+		List<Snippet> all = q.setParameter("userid", userid).setParameter("tag", tag).getResultList();
+		return all;
+	}
+
 }
