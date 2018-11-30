@@ -24,13 +24,16 @@ import de.fehrprice.secrets.RestServer;
 @NamedQuery(name = Tag.Query_CountAllEntities,
 			query = "select count(t) from Tag t" 
 			)
+@NamedQuery(name = Tag.Query_GetEntitiesByUserAndTagname,
+			query = "select t from Tag t where t.id.userid = :userid and t.id.tagname = :tagname" 
+			)
 public class Tag {
 
 	private static Logger logger = Logger.getLogger(Tag.class.toString());
 	
 	public static final String Query_GetAllEntities = "Topic.GetAllEntities";
 	public static final String Query_CountAllEntities = "Topic.CountAllEntities";
-	public static final String Query_GetEntitiesByKey = "Topic.GetEntitiesByKey";
+	public static final String Query_GetEntitiesByUserAndTagname = "Topic.GetEntitiesByKey";
 	@EmbeddedId
 	private TagId id;
 
@@ -67,10 +70,9 @@ public class Tag {
 		return count;
 	}
 	
-	public static Tag findTag(String tagName, EntityManager em) {
-		TypedQuery<Tag> all = em.createNamedQuery(Query_GetEntitiesByKey, Tag.class);
-		Tag tag = all.setParameter("name", tagName).getSingleResult();
+	public static Tag findTagnameForUser(EntityManager em, Long userid, String tagname) {
+		TypedQuery<Tag> q = em.createNamedQuery(Query_GetEntitiesByUserAndTagname, Tag.class);
+		Tag tag = q.setParameter("userid", userid).setParameter("tagname", tagname).getSingleResult();
 		return tag;
 	}
-
 }

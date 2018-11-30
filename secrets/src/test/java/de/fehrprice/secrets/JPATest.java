@@ -87,13 +87,18 @@ public class JPATest {
 
 		snippets = sm.getEntries(userid, ts.get(0));
 		assertEquals(1, snippets.size());
-		// now read list of users and verify:
-//		List<User> users = User.getAllEntities(em);
-//		assertEquals(1, users.size());
-//		User testUser = users.get(0);
-//		assertEquals("clemens", testUser.getName());
-//		System.out.println("User has auto created id " + testUser.getId());
 
+		String[] tags2 = { "something", "test", "another" };
+		sm.create(userid, "test headline", "Make more tests!!", tags2);
+		sm.create(userid, "some head", "garbage", new String[] {"taggy"});
+		
+		Tag t = sm.findTagnameForUser(userid, "test");
+		assertNotNull(t);
+		assertEquals("test", t.getName());
+		
+		snippets = sm.getEntries(userid, t);
+		assertEquals(2, snippets.size());
+		
 		em.getTransaction().commit();
 		em.close();
 		assertTrue(true);

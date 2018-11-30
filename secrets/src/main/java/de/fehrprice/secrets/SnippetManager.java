@@ -41,6 +41,10 @@ public class SnippetManager {
 		return Snippet.getEntitiesByUser(em, userid);
 	}
 
+	public Tag findTagnameForUser(Long userid, String tagname) {
+		return Tag.findTagnameForUser(em, userid, tagname);
+	}
+
 	private Set<Tag> getCreateTags(Long userid, String[] topicStrings) {
 		var ret = new HashSet<Tag>();
 		for ( String s : topicStrings) {
