@@ -156,4 +156,14 @@ public class DB {
 		}
 	}
 
+	public static Long findId(String clientPublicKey) {
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		User u = User.findUser(clientPublicKey, em);
+		if (u != null) {
+			return u.getId();
+		}
+		return null;
+	}
+
 }

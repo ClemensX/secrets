@@ -19,10 +19,18 @@ import de.fehrprice.secrets.HttpSession;
 public class SecretsClient {
 
 	// entries in config file:
-	private static final String VERSION = "version";
-	private static final String SERVER_URL = "server_url";
-	private static final String SERVER_PUBLIC_KEY = "server_public_key";
-	private static final String PRIVATE_KEY_FILE = "private_key_file";
+	public static final String VERSION = "version";
+	public static final String SERVER_URL = "server_url";
+	public static final String SERVER_PUBLIC_KEY = "server_public_key";
+	public static final String PRIVATE_KEY_FILE = "private_key_file";
+	public static final String SIGNUP_ID = "signup_id";
+	
+	// error messages if config entry not found:
+	private static final String ERROR_VERSION = "version";
+	private static final String ERROR_SERVER_URL = "Invalid server configuration: server url missing";
+	private static final String ERROR_SERVER_PUBLIC_KEY = "Invalid server configuration: server public key missing";
+	private static final String ERROR_PRIVATE_KEY_FILE = "private_key_file";
+	private static final String ERROR_SIGNUP_ID = "Invalid configuration: id missing, please run the id command";
 	
 	public static void main(String[] args) {
 		OptionHandler oh = new OptionHandler();
@@ -46,6 +54,10 @@ public class SecretsClient {
 		}
 		if (isCommand("test", args)) {
 			testConnection();
+			done();
+		}
+		if (isCommand("id", args)) {
+			getId();
 			done();
 		}
 		// check to see if setup is ok
@@ -72,17 +84,23 @@ public class SecretsClient {
 		if (!checkConfigFile()) return;
 		if (!checkPrivateKey()) return;
 		Properties p = getSetup();
-		if (!p.containsKey(SERVER_PUBLIC_KEY)) {
-			System.out.println("Invalid server configuration: server public key missing");
-			return;
-		}
-		if (!p.containsKey(SERVER_URL)) {
-			System.out.println("Invalid server configuration: server url missing");
-			return;
-		}
+		if (!checkConfigExists(p, SERVER_PUBLIC_KEY, ERROR_SERVER_PUBLIC_KEY)) return;
+		if (!checkConfigExists(p, SERVER_URL, ERROR_SERVER_URL)) return;
+		if (!checkConfigExists(p, SIGNUP_ID, ERROR_SIGNUP_ID)) return;
 		String priv = readPrivateKey();
 		var server = new ServerCommunication(p, priv);
 		server.initiate();
+	}
+
+	private static void getId() {
+		if (!checkConfigFile()) return;
+		if (!checkPrivateKey()) return;
+		Properties p = getSetup();
+		if (!checkConfigExists(p, SERVER_PUBLIC_KEY, ERROR_SERVER_PUBLIC_KEY)) return;
+		if (!checkConfigExists(p, SERVER_URL, ERROR_SERVER_URL)) return;
+		String priv = readPrivateKey();
+		var server = new ServerCommunication(p, priv);
+		server.getId();
 	}
 
 	private static void showPublicKey() {
@@ -138,6 +156,13 @@ public class SecretsClient {
 		} else {
 			return true;
 		}
+	}
+	
+	private static boolean checkConfigExists(Properties p, String key, String error_message) {
+		if (!p.containsKey(key)) {
+			System.out.println(error_message);
+			return false;
+		} else return true;
 	}
 
 	private static void showConfigFilePath() {
@@ -290,6 +315,10 @@ public class SecretsClient {
 				" keygen <n>            generate and print n 256 bit private keys", 
 				" ",
 				" public                show your public key", 
+				" ",
+				" test                  test connection to Secrets! server", 
+				" ",
+				" id                    get your id from Secrets! server and store in config file", 
 				" ",
 				" configfile            show location of you config file", 
 				" ",

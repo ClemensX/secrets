@@ -13,6 +13,7 @@ module de.fehrprice.secrets.client {
 	requires crypto;
 	requires secrets;
 	requires java.json;
+	requires java.net.http;
 	//requires java.logging;
 	//requires java.persistence;
 	//requires java.sql;

@@ -18,6 +18,7 @@ import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
+import de.fehrprice.secrets.dto.GetIdResult;
 import de.fehrprice.secrets.dto.SignupResult;
 import io.vertx.core.json.JsonObject;
 
@@ -240,8 +241,31 @@ public class RestServer {
 		if ("signup".equals(p[3])) {
 			return signup(bodyj);
 		}
+		if ("client".equals(p[3])) {
+			return clientCall(bodyj);
+		}
 		logger.severe("invalid request path received: " + path);
 		return "error";
+	}
+
+	private String clientCall(JsonObject bodyj) {
+		//System.out.println("server got client request " + bodyj.toString());
+		DTO dto = DTO.fromJsonString(bodyj.toString());
+		if (dto.isGetIdCommand()) {
+			GetIdResult res = new GetIdResult();
+			System.out.println("handling getid command for pk = " + dto.key);
+			String clientPublicKey = dto.key;//findClientPublicKey(dto.id);
+			if (clientPublicKey != null) {
+				HttpSession hs = new HttpSession();
+				hs.id = dto.id;
+				hs.dto = dto;
+				res.validated = conn.validateSender(dto, clientPublicKey);
+				res.id = DB.findId(clientPublicKey);
+				return res.asJsonString();
+			}
+			return res.asJsonString();
+		}
+		return "{ \"result\":\"unknown client call\"}";
 	}
 
 }
