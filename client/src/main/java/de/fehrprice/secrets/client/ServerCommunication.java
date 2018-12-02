@@ -18,6 +18,7 @@ import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Curve25519;
 import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.RandomSeed;
+import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
 import de.fehrprice.secrets.dto.GetIdResult;
@@ -52,8 +53,21 @@ public class ServerCommunication {
 		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, idString);
 		System.out.println("transfer message: " + message);
 		String body = postServer("/secretsbackend/rest/client", message);
-		System.out.println("server returned: " + body);
-		//if (body == null) return null;
+		//System.out.println("server returned: " + body);
+		if (body == null) {
+			System.out.println("no valid answer from server");
+			return;
+		}
+		DTO dto = DTO.fromJsonString(body);
+		String serverPublic = prop.getProperty(SecretsClient.SERVER_PUBLIC_KEY);
+		if (!comm.validateSender(dto, serverPublic)) {
+			System.out.println("invalid server signature");
+			return;
+		}
+		System.out.println("server verified");
+		byte[] sessionKey = comm.computeSessionKey(clientSession.sessionPrivateKey, Conv.toByteArray(dto.key));
+		clientSession.sessionAESKey = sessionKey;
+		System.out.println("session key: " + Conv.toString(sessionKey));
 	}
 
 	public Long getId() {
