@@ -103,25 +103,6 @@ public class RestServer {
 		pubKeyMap.put(id, key);
 	}
 	
-	/**
-	 * Consume incoming init request
-	 * @param recBody
-	 */
-	public HttpSession handleRequest(String recBody) {
-		DTO dto = DTO.fromJsonString(recBody);
-		if (dto.isInitClientCommand()) {
-			String clientPublicKey = findClientPublicKey(dto.id);
-			if (clientPublicKey != null) {
-				HttpSession hs = new HttpSession();
-				hs.id = dto.id;
-				hs.dto = dto;
-				hs.senderValidated = conn.validateSender(dto, clientPublicKey);
-				return hs;
-			}
-		}
-		return null;
-	}
-
 	public HttpSession handleAESMessage(byte[] aesmsg) {
 		String sender_id = ECConnection.getSenderIdFromAESMessage(aesmsg);
 		logger.info("got message from " + sender_id);
@@ -142,9 +123,20 @@ public class RestServer {
 		return hsession;
 	}
 
-	private String findClientPublicKey(String id) {
+	private String findClientPublicKey(String idString) {
 		// try to find in key map, then DB if not found
-		String k = pubKeyMap.get(id);
+		String k = pubKeyMap.get(idString);
+		if (k == null) {
+			// find in DB:
+			Long id;
+			try {
+				id = Long.parseLong(idString);
+				k = DB.findKey(id);
+				addPublicKey(idString, k);
+			} catch (Throwable t) {
+				return null;
+			}
+		}
 		return k;
 	}
 
@@ -248,9 +240,33 @@ public class RestServer {
 		return "error";
 	}
 
+	/**
+	 * Consume incoming init request
+	 * @param recBody
+	 */
+	public HttpSession handleRequest(String recBody) {
+		DTO dto = DTO.fromJsonString(recBody);
+		if (dto.isInitClientCommand()) {
+			String clientPublicKey = findClientPublicKey(dto.id);
+			if (clientPublicKey != null) {
+				HttpSession hs = new HttpSession();
+				hs.id = dto.id;
+				hs.dto = dto;
+				hs.senderValidated = conn.validateSender(dto, clientPublicKey);
+				return hs;
+			}
+		}
+		return null;
+	}
+
 	private String clientCall(JsonObject bodyj) {
 		//System.out.println("server got client request " + bodyj.toString());
-		DTO dto = DTO.fromJsonString(bodyj.toString());
+		String body = bodyj.toString();
+		return clientCall(body);
+	}
+
+	private String clientCall(String body) {
+		DTO dto = DTO.fromJsonString(body);
 		if (dto.isGetIdCommand()) {
 			GetIdResult res = new GetIdResult();
 			System.out.println("handling getid command for pk = " + dto.key);
@@ -264,6 +280,32 @@ public class RestServer {
 				return res.asJsonString();
 			}
 			return res.asJsonString();
+		}
+		if (dto.isInitClientCommand()) {
+			// make sure server keys are available
+			if (serverPublicKey == null) {
+				getPublicKey();
+				if (serverPublicKey == null) {
+					// exit if still unavailable
+					return "internal error: server keys not available";
+				}
+			}
+			String clientPublicKey = findClientPublicKey(dto.id);
+			if (clientPublicKey != null) {
+				HttpSession hs = new HttpSession();
+				hs.id = dto.id;
+				hs.dto = dto;
+				hs.senderValidated = conn.validateSender(dto, clientPublicKey);
+				// System.out.println("POST received: " + recBody + " session = " + session);
+				if (hs.senderValidated == false) {
+					logger.info("invalid sender");
+					return null;
+				}
+				String answer = createInitServerAnswer(hs);
+				return answer;
+			} else {
+				return "could not find public key: " + dto.id;
+			}
 		}
 		return "{ \"result\":\"unknown client call\"}";
 	}

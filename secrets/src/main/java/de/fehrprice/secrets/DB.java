@@ -166,4 +166,14 @@ public class DB {
 		return null;
 	}
 
+	public static String findKey(Long id) {
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		User u = em.find(User.class, id);
+		if (u != null) {
+			return u.getPublicKey();
+		}
+		return null;
+	}
+
 }

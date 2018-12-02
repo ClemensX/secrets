@@ -48,8 +48,12 @@ public class ServerCommunication {
 		String clientPublic = ed.publicKey(clientPrivate);
 		ECConnection comm = new ECConnection(x, ed, aes);
 		Session clientSession = new Session();
-		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, "TestClient1");
+		String idString = prop.getProperty(SecretsClient.SIGNUP_ID);
+		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, idString);
 		System.out.println("transfer message: " + message);
+		String body = postServer("/secretsbackend/rest/client", message);
+		System.out.println("server returned: " + body);
+		//if (body == null) return null;
 	}
 
 	public Long getId() {
@@ -64,6 +68,19 @@ public class ServerCommunication {
 		ECConnection comm = new ECConnection(x, ed, aes);
 		Session clientSession = new Session();
 		String message = comm.createOpenSignedCommand(clientSession, clientPrivate, clientPublic, "getid");
+		String body = postServer("/secretsbackend/rest/client", message);
+		if (body == null) return null;
+		var r = GetIdResult.fromJsonString(body);
+		if (!r.validated) {
+			System.out.println("Cannot get your id: public key is unknown. Did you signup?");
+			return null;
+		} else {
+			System.out.println("Your id is " + r.id);
+			return r.id;
+		}
+	}
+	
+	public String postServer(String urlPath, String message)  {
 		String serverConf = prop.getProperty(SecretsClient.SERVER_URL);
 		try {
 			URI u = new URI(serverConf);
@@ -83,14 +100,7 @@ public class ServerCommunication {
 			response = client.send(request, BodyHandlers.ofString());
 			//System.out.println(response.statusCode());
 			//System.out.println("response: " + response.body());
-			var r = GetIdResult.fromJsonString(response.body());
-			if (!r.validated) {
-				System.out.println("Cannot get your id: public key is unknown. Did you signup?");
-				return null;
-			} else {
-				System.out.println("Your id is " + r.id);
-				return r.id;
-			}
+			return response.body();
 		} catch (IOException | InterruptedException | URISyntaxException e) {
 			//e.printStackTrace();
 			System.out.println("Could not connect to server: " + serverConf);
