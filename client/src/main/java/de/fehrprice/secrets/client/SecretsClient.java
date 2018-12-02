@@ -100,7 +100,27 @@ public class SecretsClient {
 		if (!checkConfigExists(p, SERVER_URL, ERROR_SERVER_URL)) return;
 		String priv = readPrivateKey();
 		var server = new ServerCommunication(p, priv);
-		server.getId();
+		Long id = server.getId();
+		if (id != null) {
+			// we got a valid id from server, persist in config:
+			Long id_config = getIdAsLong(p);
+			if (id.equals(id_config)) return;
+			// store new id in config:
+			OptionHandler oh = new OptionHandler();
+			oh.updateOption(SIGNUP_ID, id.toString(), p, getConfigFilePath());
+		}
+	}
+
+	private static Long getIdAsLong(Properties p) {
+		String idString = p.getProperty(SIGNUP_ID);
+		if (idString == null) return null;
+		idString = idString.trim();
+		try {
+			Long id = Long.parseLong(idString);
+			return id;
+		} catch (Throwable t) {
+			return null;
+		}
 	}
 
 	private static void showPublicKey() {
@@ -236,11 +256,6 @@ public class SecretsClient {
 			fail("cannot read file " + getConfigFilePath());
 		}
 		return null; // cannot happen
-	}
-
-	private static void server(String[] args) {
-		System.out.println("Enter server URL:");
-		System.out.println(new HttpSession());
 	}
 
 	private static void keygen(String[] args) {

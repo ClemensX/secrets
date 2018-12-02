@@ -26,6 +26,15 @@ public class OptionHandler {
 			return;
 		}
 		p.put(optionName, newValue);
+		saveOptions(p, configFilePath);
+	}
+	
+	public void updateOption(String optionName, String optionText, Properties p, Path configFilePath) {
+		p.put(optionName, optionText);
+		saveOptions(p, configFilePath);
+	}
+	
+	public void saveOptions(Properties p, Path configFilePath) {
 		try (BufferedWriter writer = Files.newBufferedWriter(configFilePath,StandardOpenOption.CREATE, StandardOpenOption.WRITE);) {
 			p.store(writer, null);
 		} catch (IOException e) {

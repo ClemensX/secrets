@@ -52,7 +52,7 @@ public class ServerCommunication {
 		System.out.println("transfer message: " + message);
 	}
 
-	public void getId() {
+	public Long getId() {
 		x = new Curve25519();
 		ed = new Ed25519();
 		aes = new AES();
@@ -86,12 +86,15 @@ public class ServerCommunication {
 			var r = GetIdResult.fromJsonString(response.body());
 			if (!r.validated) {
 				System.out.println("Cannot get your id: public key is unknown. Did you signup?");
+				return null;
 			} else {
 				System.out.println("Your id is " + r.id);
+				return r.id;
 			}
 		} catch (IOException | InterruptedException | URISyntaxException e) {
 			//e.printStackTrace();
 			System.out.println("Could not connect to server: " + serverConf);
+			return null;
 		}
 	}
 }
