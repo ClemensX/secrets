@@ -6,9 +6,11 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Properties;
@@ -51,7 +53,7 @@ public class ServerCommunication {
 		Session clientSession = new Session();
 		String idString = prop.getProperty(SecretsClient.SIGNUP_ID);
 		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, idString);
-		System.out.println("transfer message: " + message);
+		//System.out.println("transfer message: " + message);
 		String body = postServer("/secretsbackend/rest/client", message);
 		//System.out.println("server returned: " + body);
 		if (body == null) {
@@ -64,10 +66,26 @@ public class ServerCommunication {
 			System.out.println("invalid server signature");
 			return;
 		}
-		System.out.println("server verified");
+		//System.out.println("server verified");
 		byte[] sessionKey = comm.computeSessionKey(clientSession.sessionPrivateKey, Conv.toByteArray(dto.key));
 		clientSession.sessionAESKey = sessionKey;
-		System.out.println("session key: " + Conv.toString(sessionKey));
+		//System.out.println("session key: " + Conv.toString(sessionKey));
+		dto.id = idString;
+		//System.out.println("my id: " + dto.id);
+		byte[] aesMsg = comm.createAESMessage(dto, clientSession, "hello");
+		//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
+		//System.out.println("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
+		//System.out.println("transfer message: " + message);
+		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
+		//System.out.println("recevied aes msg with length: " + aes.length);
+		//Conv.dump(aes, aes.length);
+		String text = comm.getTextFromAESMessage(aes, clientSession);
+		if ("hello answer".equals(text)) {
+			System.out.println("secure connection ok");
+		} else {
+			System.out.println("ERROR: could not verify secure connection to server");
+		}
+		//System.out.println("recevied aes msg: " + text);
 	}
 
 	public Long getId() {
@@ -95,10 +113,20 @@ public class ServerCommunication {
 	}
 	
 	public String postServer(String urlPath, String message)  {
+		var sendBody = BodyPublishers.ofString(message);
+		return postServerInternal(urlPath, sendBody);
+	}
+
+	public String postServer(String urlPath, byte[] message)  {
+		var sendBody = BodyPublishers.ofByteArray(message);
+		return postServerInternal(urlPath, sendBody);
+	}
+
+	public String postServerInternal(String urlPath, BodyPublisher message)  {
 		String serverConf = prop.getProperty(SecretsClient.SERVER_URL);
 		try {
 			URI u = new URI(serverConf);
-			URI uri = new URI(u.getScheme(), null, u.getHost(), u.getPort(), "/secretsbackend/rest/client", null, null );
+			URI uri = new URI(u.getScheme(), null, u.getHost(), u.getPort(), urlPath, null, null );
 			//System.out.println("Calling " + uri.toURL());
 			//System.out.println("transfer message: " + message);
 			HttpClient client = HttpClient.newBuilder()
@@ -108,10 +136,39 @@ public class ServerCommunication {
 				      .uri(uri)
 				      .timeout(Duration.ofMinutes(1))
 				      .header("Content-Type", "application/json")
-				      .POST(BodyPublishers.ofString(message))
+				      .POST(message)
 				      .build();
 			HttpResponse<String> response;
 			response = client.send(request, BodyHandlers.ofString());
+			//System.out.println(response.statusCode());
+			//System.out.println("response: " + response.body());
+			return response.body();
+		} catch (IOException | InterruptedException | URISyntaxException e) {
+			//e.printStackTrace();
+			System.out.println("Could not connect to server: " + serverConf);
+			return null;
+		}
+	}
+
+	public byte[] postServerBinary(String urlPath, byte[] message)  {
+		var sendBody = BodyPublishers.ofByteArray(message);
+		String serverConf = prop.getProperty(SecretsClient.SERVER_URL);
+		try {
+			URI u = new URI(serverConf);
+			URI uri = new URI(u.getScheme(), null, u.getHost(), u.getPort(), urlPath, null, null );
+			//System.out.println("Calling " + uri.toURL());
+			//System.out.println("transfer message: " + message);
+			HttpClient client = HttpClient.newBuilder()
+				      .version(Version.HTTP_2)
+				      .build();		
+			HttpRequest request = HttpRequest.newBuilder()
+				      .uri(uri)
+				      .timeout(Duration.ofMinutes(1))
+				      .header("Content-Type", "application/octet-stream")
+				      .POST(sendBody)
+				      .build();
+			HttpResponse<byte[]> response;
+			response = client.send(request, BodyHandlers.ofByteArray());
 			//System.out.println(response.statusCode());
 			//System.out.println("response: " + response.body());
 			return response.body();

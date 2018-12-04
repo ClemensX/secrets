@@ -147,7 +147,7 @@ public class CryptoLibTest {
 				// logger.info("received after post:" + initAnswer);
 				DTO dto = DTO.fromJsonString(initAnswer);
 				if (!comm.validateSender(dto, serverPublic)) {
-					logger.warning("invalide server signature");
+					logger.warning("invalid server signature");
 					testContext.failNow(new NullPointerException("invalid sender"));
 					return;
 				}
@@ -162,14 +162,14 @@ public class CryptoLibTest {
 				clientAESMessageSent.flag();
 				Buffer aesBuffer = Buffer.buffer(aesMsg);
 				client.post(port, "localhost", "/restmsg").as(BodyCodec.buffer()).sendBuffer(aesBuffer, asyncreq -> {
-					logger.info("aes sent!");;
+					logger.info("aes sent!");
 				});
 				// failing example with wrong id:
 				dto.id = "TestClientNIX";
 				aesMsg = comm.createAESMessage(dto, clientSession, aesInputMsg);
 				aesBuffer = Buffer.buffer(aesMsg);
 				client.post(port, "localhost", "/restmsg").as(BodyCodec.buffer()).sendBuffer(aesBuffer, asyncreq -> {
-					logger.info("aes sent!");;
+					logger.info("aes sent!");
 				});
 			}
 		});

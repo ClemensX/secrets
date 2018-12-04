@@ -1,6 +1,8 @@
 package de.fehrprice.secrets;
 
+import de.fehrprice.crypto.Conv;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -59,7 +61,30 @@ public class Server extends AbstractVerticle {
   	  routingContext.response().end();
   	});
 
-    router.route().handler(BodyHandler.create());
+	router.route("/secretsbackend/restmsg").handler(routingContext -> {
+		HttpServerResponse response = routingContext.response();
+		response.putHeader("content-type", "application/octet-stream");
+		response.setChunked(true);
+		HttpServerRequest req = routingContext.request();
+		req.bodyHandler(bodyHandler -> {
+			byte[] aesmsg = bodyHandler.getBytes();
+			//System.out.println("received aes message");
+			HttpSession session = RestServer.getInstance().handleAESMessage(aesmsg);
+			if (session != null) {
+				System.out.println("received: " + session.plaintext);
+			}
+			if (session.aesMsg != null) {
+				Buffer aesBuffer = Buffer.buffer(session.aesMsg);
+				//System.out.println("writing buffer len " + aesBuffer.length());
+				response.write(aesBuffer);
+			}
+			//response.write("").end();
+			response.end();
+		});
+		// routingContext.response().end();
+
+	});
+    router.route("/secretsbackend/rest/*").handler(BodyHandler.create());
     router.route("/secretsbackend/rest/*").handler(routingContext -> {
       //System.out.println("path: " + routingContext.request().path());
       // look for post requests:
@@ -80,6 +105,7 @@ public class Server extends AbstractVerticle {
       }
   	  routingContext.response().end();
   	});
+
 
     server.requestHandler(router::accept).listen(port);
     System.out.println("Server started and listening on " + port);

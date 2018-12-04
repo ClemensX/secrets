@@ -12,4 +12,5 @@ public class HttpSession {
 	// may only be available for server side
 	public Session cryptoSession;
 	public String plaintext; // decrypted message
+	public byte[] aesMsg;
 }
