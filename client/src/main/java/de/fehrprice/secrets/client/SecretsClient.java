@@ -8,13 +8,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.secrets.HttpSession;
+import de.fehrprice.secrets.entity.Snippet;
+import de.fehrprice.secrets.entity.Tag;
+import de.fehrprice.secrets.entity.TagId;
 
 public class SecretsClient {
 
@@ -34,6 +40,10 @@ public class SecretsClient {
 	
 	public static void main(String[] args) {
 		OptionHandler oh = new OptionHandler();
+		if (isCommand("create", args) || isCommand("c", args) || isCommand("+", args)) {
+			createSnippet(args, oh);
+			done();
+		}
 		if (isCommand("keygen", args)) {
 			keygen(args);
 			done();
@@ -78,6 +88,49 @@ public class SecretsClient {
 		}
 		// if we reach here no command has been found
 		usage();
+	}
+
+	private static void createSnippet(String[] args, OptionHandler oh) {
+		Snippet s = new Snippet();
+		String tagString = null;
+		s.setTitle(oh.interactive("Enter Key:", s.getTitle()));
+		s.setText(oh.interactive("Enter Value:", s.getText()));
+		tagString = oh.interactive("Enter Tags (separate with blanks):", tagString);
+		if (tagString != null) {
+			String[] parts = tagString.split(Pattern.quote(" "));
+			Set<Tag> tags = new HashSet<>(); 
+			for (String t : parts) {
+				var tag = new Tag();
+				tag.setId(new TagId());
+				tag.setName(t);
+				tags.add(tag);
+			}
+			s.setTopics(tags);
+		}
+		if (isAllFieldsSet(s)) {
+			printSnippet(s);
+		}
+	}
+
+	private static void printSnippet(Snippet s) {
+		if (s.getTitle() != null) { 
+			System.out.print(s.getTitle() + "=");
+			if (s.getText() != null) System.out.print(s.getText() + " ");
+		}
+		if (s.getTags() != null && !s.getTags().isEmpty()) {
+			System.out.print(" [");
+			for (Tag tag : s.getTags()) {
+				System.out.print(" " + tag.getName());	
+			}
+			System.out.print(" ]");
+		}
+	}
+
+	private static boolean isAllFieldsSet(Snippet s) {
+		if (s.getTitle() == null) return false;
+		if (s.getText() == null) return false;
+		if (s.getTags() == null || s.getTags().isEmpty()) return false;
+		return true;
 	}
 
 	private static void testConnection() {
@@ -325,6 +378,10 @@ public class SecretsClient {
 				"usage: sc command [<options>]", 
 				"", 
 				"Commands:", 
+				" ",
+				" create",
+				" c",
+				" +                     interactively add new snippet", 
 				" ",
 				" keygen                generate and print one 256 bit private key", 
 				" keygen <n>            generate and print n 256 bit private keys", 

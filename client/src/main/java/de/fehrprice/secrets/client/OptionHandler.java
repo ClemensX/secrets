@@ -43,4 +43,16 @@ public class OptionHandler {
 		System.out.println("updated file " + configFilePath);
 	}
 
+	public String interactive(String description, String current) {
+		if (current != null) {
+			description = description + " ["  + current + "]";
+		}
+		System.out.println(description);
+		String newValue = SecretsClient.readLine();
+		if (newValue == null || newValue.isBlank()) {
+			return null;
+		}
+		return newValue.trim();
+	}
+
 }
