@@ -43,6 +43,13 @@ public class OptionHandler {
 		System.out.println("updated file " + configFilePath);
 	}
 
+	/**
+	 * Interactive questioning with descriptive text and default value.
+	 * Returning null means 'keep current/default value'
+	 * @param description
+	 * @param current
+	 * @return
+	 */
 	public String interactive(String description, String current) {
 		if (current != null) {
 			description = description + " ["  + current + "]";

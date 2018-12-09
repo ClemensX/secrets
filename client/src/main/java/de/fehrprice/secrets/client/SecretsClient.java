@@ -93,23 +93,40 @@ public class SecretsClient {
 	private static void createSnippet(String[] args, OptionHandler oh) {
 		Snippet s = new Snippet();
 		String tagString = null;
-		s.setTitle(oh.interactive("Enter Key:", s.getTitle()));
-		s.setText(oh.interactive("Enter Value:", s.getText()));
-		tagString = oh.interactive("Enter Tags (separate with blanks):", tagString);
-		if (tagString != null) {
-			String[] parts = tagString.split(Pattern.quote(" "));
-			Set<Tag> tags = new HashSet<>(); 
-			for (String t : parts) {
-				var tag = new Tag();
-				tag.setId(new TagId());
-				tag.setName(t);
-				tags.add(tag);
+		boolean complete = false;
+		while (true) {
+			var v = oh.interactive("Enter Key:", s.getTitle());
+			if (v != null) s.setTitle(v);
+			v = oh.interactive("Enter Value:", s.getText());
+			if (v!= null) s.setText(v);
+			tagString = oh.interactive("Enter Tags (separate with blanks):", tagString);
+			if (tagString != null) {
+				String[] parts = tagString.split(Pattern.quote(" "));
+				Set<Tag> tags = new HashSet<>(); 
+				for (String t : parts) {
+					var tag = new Tag();
+					tag.setId(new TagId());
+					tag.setName(t);
+					tags.add(tag);
+				}
+				s.setTopics(tags);
 			}
-			s.setTopics(tags);
+			if (isAllFieldsSet(s)) {
+				break;
+			} else {
+				String cont = oh.interactive("snippet incomplete. continue entering?", "y");
+				if (cont == null || cont.startsWith("y")) {
+					// re-enter cycle 
+				} else {
+					System.out.println("aborting...");
+					return;
+				}
+			}
 		}
-		if (isAllFieldsSet(s)) {
-			printSnippet(s);
-		}
+		// snippet complete, send to server:
+		System.out.println("save snippet?");
+		printSnippet(s);
+		//oh.interactive("Enter Value:", s.getText())
 	}
 
 	private static void printSnippet(Snippet s) {
