@@ -124,9 +124,15 @@ public class SecretsClient {
 			}
 		}
 		// snippet complete, send to server:
-		System.out.println("save snippet?");
+		//System.out.println("save snippet?");
 		printSnippet(s);
-		//oh.interactive("Enter Value:", s.getText())
+		String saveIt = oh.interactive("\nsave snippet?", "y");
+		if (saveIt == null || saveIt.startsWith("y")) {
+			System.out.print("sending snippet to server...");
+			System.out.println(" ok");
+		} else {
+			System.out.println("aborting...");
+		}
 	}
 
 	private static void printSnippet(Snippet s) {
