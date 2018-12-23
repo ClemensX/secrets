@@ -129,10 +129,18 @@ public class SecretsClient {
 		String saveIt = oh.interactive("\nsave snippet?", "y");
 		if (saveIt == null || saveIt.startsWith("y")) {
 			System.out.print("sending snippet to server...");
-			System.out.println(" ok");
+			String result = sendSnippet(s);
+			System.out.println(result);
 		} else {
 			System.out.println("aborting...");
 		}
+	}
+
+	private static String sendSnippet(Snippet s) {
+		Properties p = getSetup();
+		String priv = readPrivateKey();
+		var server = new ServerCommunication(p, priv);
+		return server.sendSnippet(s);
 	}
 
 	private static void printSnippet(Snippet s) {

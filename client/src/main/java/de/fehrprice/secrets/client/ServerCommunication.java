@@ -24,6 +24,8 @@ import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
 import de.fehrprice.secrets.dto.GetIdResult;
+import de.fehrprice.secrets.dto.SnippetDTO;
+import de.fehrprice.secrets.entity.Snippet;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -40,52 +42,6 @@ public class ServerCommunication {
 	public ServerCommunication(Properties p, String priv) {
 		prop = p;
 		privateKey = priv;
-	}
-
-	public void initiate() {
-		x = new Curve25519();
-		ed = new Ed25519();
-		aes = new AES();
-		aes.setSeed(RandomSeed.createSeed());
-		String clientPrivate = privateKey;
-		String clientPublic = ed.publicKey(clientPrivate);
-		ECConnection comm = new ECConnection(x, ed, aes);
-		Session clientSession = new Session();
-		String idString = prop.getProperty(SecretsClient.SIGNUP_ID);
-		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, idString);
-		//System.out.println("transfer message: " + message);
-		String body = postServer("/secretsbackend/rest/client", message);
-		//System.out.println("server returned: " + body);
-		if (body == null) {
-			System.out.println("no valid answer from server");
-			return;
-		}
-		DTO dto = DTO.fromJsonString(body);
-		String serverPublic = prop.getProperty(SecretsClient.SERVER_PUBLIC_KEY);
-		if (!comm.validateSender(dto, serverPublic)) {
-			System.out.println("invalid server signature");
-			return;
-		}
-		//System.out.println("server verified");
-		byte[] sessionKey = comm.computeSessionKey(clientSession.sessionPrivateKey, Conv.toByteArray(dto.key));
-		clientSession.sessionAESKey = sessionKey;
-		//System.out.println("session key: " + Conv.toString(sessionKey));
-		dto.id = idString;
-		//System.out.println("my id: " + dto.id);
-		byte[] aesMsg = comm.createAESMessage(dto, clientSession, "hello");
-		//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
-		//System.out.println("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
-		//System.out.println("transfer message: " + message);
-		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
-		//System.out.println("recevied aes msg with length: " + aes.length);
-		//Conv.dump(aes, aes.length);
-		String text = comm.getTextFromAESMessage(aes, clientSession);
-		if ("hello answer".equals(text)) {
-			System.out.println("secure connection ok");
-		} else {
-			System.out.println("ERROR: could not verify secure connection to server");
-		}
-		//System.out.println("recevied aes msg: " + text);
 	}
 
 	public Long getId() {
@@ -177,5 +133,95 @@ public class ServerCommunication {
 			System.out.println("Could not connect to server: " + serverConf);
 			return null;
 		}
+	}
+
+	public void initiate() {
+		x = new Curve25519();
+		ed = new Ed25519();
+		aes = new AES();
+		aes.setSeed(RandomSeed.createSeed());
+		String clientPrivate = privateKey;
+		String clientPublic = ed.publicKey(clientPrivate);
+		ECConnection comm = new ECConnection(x, ed, aes);
+		Session clientSession = new Session();
+		String idString = prop.getProperty(SecretsClient.SIGNUP_ID);
+		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, idString);
+		//System.out.println("transfer message: " + message);
+		String body = postServer("/secretsbackend/rest/client", message);
+		//System.out.println("server returned: " + body);
+		if (body == null) {
+			System.out.println("no valid answer from server");
+			return;
+		}
+		DTO dto = DTO.fromJsonString(body);
+		String serverPublic = prop.getProperty(SecretsClient.SERVER_PUBLIC_KEY);
+		if (!comm.validateSender(dto, serverPublic)) {
+			System.out.println("invalid server signature");
+			return;
+		}
+		//System.out.println("server verified");
+		byte[] sessionKey = comm.computeSessionKey(clientSession.sessionPrivateKey, Conv.toByteArray(dto.key));
+		clientSession.sessionAESKey = sessionKey;
+		//System.out.println("session key: " + Conv.toString(sessionKey));
+		dto.id = idString;
+		//System.out.println("my id: " + dto.id);
+		byte[] aesMsg = comm.createAESMessage(dto, clientSession, "hello");
+		//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
+		//System.out.println("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
+		//System.out.println("transfer message: " + message);
+		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
+		//System.out.println("recevied aes msg with length: " + aes.length);
+		//Conv.dump(aes, aes.length);
+		String text = comm.getTextFromAESMessage(aes, clientSession);
+		if ("hello answer".equals(text)) {
+			System.out.println("secure connection ok");
+		} else {
+			System.out.println("ERROR: could not verify secure connection to server");
+		}
+		//System.out.println("recevied aes msg: " + text);
+	}
+
+	public String sendSnippet(Snippet s) {
+		// convert snippet to json
+		var json = SnippetDTO.asJsonString(s);
+		System.out.println("sending json: " + json);
+		x = new Curve25519();
+		ed = new Ed25519();
+		aes = new AES();
+		aes.setSeed(RandomSeed.createSeed());
+		String clientPrivate = privateKey;
+		String clientPublic = ed.publicKey(clientPrivate);
+		ECConnection comm = new ECConnection(x, ed, aes);
+		Session clientSession = new Session();
+		String idString = prop.getProperty(SecretsClient.SIGNUP_ID);
+		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, idString);
+		//System.out.println("transfer message: " + message);
+		String body = postServer("/secretsbackend/rest/client", message);
+		//System.out.println("server returned: " + body);
+		if (body == null) {
+			System.out.println("no valid answer from server");
+			return null;
+		}
+		DTO dto = DTO.fromJsonString(body);
+		String serverPublic = prop.getProperty(SecretsClient.SERVER_PUBLIC_KEY);
+		if (!comm.validateSender(dto, serverPublic)) {
+			System.out.println("invalid server signature");
+			return null;
+		}
+		//System.out.println("server verified");
+		byte[] sessionKey = comm.computeSessionKey(clientSession.sessionPrivateKey, Conv.toByteArray(dto.key));
+		clientSession.sessionAESKey = sessionKey;
+		//System.out.println("session key: " + Conv.toString(sessionKey));
+		dto.id = idString;
+		//System.out.println("my id: " + dto.id);
+		byte[] aesMsg = comm.createAESMessage(dto, clientSession, json);
+		//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
+		//System.out.println("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
+		//System.out.println("transfer message: " + message);
+		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
+		//System.out.println("recevied aes msg with length: " + aes.length);
+		//Conv.dump(aes, aes.length);
+		String text = comm.getTextFromAESMessage(aes, clientSession);
+		return text;
 	}
 }

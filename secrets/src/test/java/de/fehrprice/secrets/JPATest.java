@@ -1,6 +1,7 @@
 package de.fehrprice.secrets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,6 +16,7 @@ import javax.persistence.Persistence;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.fehrprice.secrets.dto.SnippetDTO;
 import de.fehrprice.secrets.entity.Tag;
 import de.fehrprice.secrets.entity.User;
 
@@ -102,5 +104,18 @@ public class JPATest {
 		em.getTransaction().commit();
 		em.close();
 		assertTrue(true);
+	}
+	
+	@Test
+	public void testJsonMapping() {
+		String jsonString = "{\"text\":\"some content\",\"title\":\"key\",\"tags\":[\"url\",\"pw\"]}";
+		var snippet1 = SnippetDTO.fromJsonString(jsonString);
+		var snippet2 = SnippetDTO.fromJsonString(SnippetDTO.asJsonString(snippet1));
+		
+		//assertEquals(jsonString, redone);
+		assertEquals(snippet1, snippet2);
+		var snippet3 = SnippetDTO.fromJsonString(jsonString.replaceFirst("pw", "pw2"));
+		//System.out.println(SnippetDTO.asJsonString(snippet3));
+		assertNotEquals(snippet1, snippet3);
 	}
 }
