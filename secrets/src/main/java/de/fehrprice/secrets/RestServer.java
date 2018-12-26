@@ -20,6 +20,8 @@ import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
 import de.fehrprice.secrets.dto.GetIdResult;
 import de.fehrprice.secrets.dto.SignupResult;
+import de.fehrprice.secrets.dto.SnippetDTO;
+import de.fehrprice.secrets.entity.Snippet;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -128,12 +130,24 @@ public class RestServer {
 			text = conn.getTextFromAESMessage(hsession.aesMsg, hsession.cryptoSession);
 			//System.out.println("this is: " + text);
 		} else {
-			hsession.aesMsg = conn.createAESMessage(hsession.dto, hsession.cryptoSession, "snippet received");
+			Snippet s = SnippetDTO.fromJsonString(text);
+			String answer = processSnippetRequest(s);
+			hsession.aesMsg = conn.createAESMessage(hsession.dto, hsession.cryptoSession, answer);
 			//Conv.dump(hsession.aesMsg, hsession.aesMsg.length);
-			text = conn.getTextFromAESMessage(hsession.aesMsg, hsession.cryptoSession);
+			//text = conn.getTextFromAESMessage(hsession.aesMsg, hsession.cryptoSession);
 			//System.out.println("this is: " + text);
 		}
 		return hsession;
+	}
+
+	private String processSnippetRequest(Snippet s) {
+		if (s == null)
+			return "invalid request (snippet not parsable)";
+		String cmd = s.getCommand();
+		if ("add".equals(cmd)) {
+			return "snippet added";
+		}
+		return "internal error";
 	}
 
 	private String findClientPublicKey(String idString) {
