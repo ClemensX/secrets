@@ -25,6 +25,7 @@ public class SnippetDTO {
 			builder.add("snippetid", s.getId().snippedid.toString());
 			builder.add("userid", s.getId().userid.toString());
 		}
+		if (s.getCommand() != null) builder.add("command", s.getCommand());
 		if (s.getText() != null) builder.add("text", s.getText());
 		if (s.getTitle() != null) builder.add("title", s.getTitle());
 		if (s.getTags() != null) {
@@ -50,6 +51,7 @@ public class SnippetDTO {
 	public static Snippet fromJsonObject(JsonObject jobj)  {
 		//logger.severe("DTO PARSING: " + json);
 		Snippet s = new Snippet();
+		s.setCommand(jobj.getString("command", null));
 		s.setText(jobj.getString("text", null));
 		s.setTitle(jobj.getString("title", null));
 		var a = jobj.getJsonArray("tags");
@@ -65,7 +67,7 @@ public class SnippetDTO {
 				t.setName(tagstring);
 				tags.add(t);
 			}
-			s.setTopics(tags);
+			s.setTags(tags);
 		}
 		return s;
 	}

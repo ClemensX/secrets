@@ -29,7 +29,7 @@ public class SnippetManager {
 		snippet.setId(snippetId);
 		snippet.setTitle(title);
 		snippet.setText(text);
-		snippet.setTopics(tags);
+		snippet.setTags(tags);
 		em.persist(snippet);
 	}
 

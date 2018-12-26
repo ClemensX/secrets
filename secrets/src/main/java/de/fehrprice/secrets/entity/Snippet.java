@@ -46,7 +46,7 @@ public class Snippet {
 	private String text;
 	private Set<Tag> tags; 
 	@Transient
-	private String command;
+	private String command;  // only used in server communication - not persisted 
 
 	public SnippetId getId() {
 		return id;
@@ -76,8 +76,16 @@ public class Snippet {
 		return tags;
 	}
 
-	public void setTopics(Set<Tag> tags) {
+	public void setTags(Set<Tag> tags) {
 		this.tags = tags;
+	}
+
+	public String getCommand() {
+		return command;
+	}
+
+	public void setCommand(String command) {
+		this.command = command;
 	}
 
 	// queries:

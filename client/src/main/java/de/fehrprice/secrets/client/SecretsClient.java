@@ -109,7 +109,7 @@ public class SecretsClient {
 					tag.setName(t);
 					tags.add(tag);
 				}
-				s.setTopics(tags);
+				s.setTags(tags);
 			}
 			if (isAllFieldsSet(s)) {
 				break;
@@ -129,6 +129,7 @@ public class SecretsClient {
 		String saveIt = oh.interactive("\nsave snippet?", "y");
 		if (saveIt == null || saveIt.startsWith("y")) {
 			System.out.print("sending snippet to server...");
+			s.setCommand("add");
 			String result = sendSnippet(s);
 			System.out.println(result);
 		} else {

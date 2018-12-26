@@ -127,6 +127,11 @@ public class RestServer {
 			//Conv.dump(hsession.aesMsg, hsession.aesMsg.length);
 			text = conn.getTextFromAESMessage(hsession.aesMsg, hsession.cryptoSession);
 			//System.out.println("this is: " + text);
+		} else {
+			hsession.aesMsg = conn.createAESMessage(hsession.dto, hsession.cryptoSession, "snippet received");
+			//Conv.dump(hsession.aesMsg, hsession.aesMsg.length);
+			text = conn.getTextFromAESMessage(hsession.aesMsg, hsession.cryptoSession);
+			//System.out.println("this is: " + text);
 		}
 		return hsession;
 	}
