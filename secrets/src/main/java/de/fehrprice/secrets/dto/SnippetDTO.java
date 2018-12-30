@@ -9,6 +9,7 @@ import javax.json.Json;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.stream.JsonParsingException;
 
 import de.fehrprice.secrets.entity.Snippet;
 import de.fehrprice.secrets.entity.Tag;
@@ -41,11 +42,17 @@ public class SnippetDTO {
 	}
 
 	public static Snippet fromJsonString(String json)  {
-		//logger.severe("DTO PARSING: " + json);
-		JsonReader reader = Json.createReader(new StringReader(json));
-		JsonObject jobj = reader.readObject();
-		Snippet s = fromJsonObject(jobj);
-		return s;
+		try {
+			//logger.severe("DTO PARSING: " + json);
+			JsonReader reader = Json.createReader(new StringReader(json));
+			JsonObject jobj = reader.readObject();
+			Snippet s = fromJsonObject(jobj);
+			return s;
+		} catch (JsonParsingException e) {
+			// could not parse - return null
+			logger.warning("tried to parse non-json string: " + json);
+			return null;
+		}
 	}
 
 	public static Snippet fromJsonObject(JsonObject jobj)  {
