@@ -32,6 +32,9 @@ import de.fehrprice.secrets.RestServer;
 @NamedQuery(name = Snippet.Query_GetEntitiesByUserAndTag,
 			query = "select s from Snippet s inner join s.tags t where s.id.userid = :userid and t = :tag" 
 			)
+@NamedQuery(name = Snippet.Query_GetEntitiesByUserAndKey,
+			query = "select s from Snippet s where s.id.userid = :userid and s.title = :key" 
+)
 public class Snippet {
 
 	private static Logger logger = Logger.getLogger(RestServer.class.toString());
@@ -40,6 +43,7 @@ public class Snippet {
 	public static final String Query_CountAllEntities = "InfoSnippet.CountAllEntities";
 	public static final String Query_GetEntitiesByUser = "InfoSnippet.GetEntitiesByUser";
 	public static final String Query_GetEntitiesByUserAndTag = "InfoSnippet.GetEntitiesByUserAndTag";
+	public static final String Query_GetEntitiesByUserAndKey = "InfoSnippet.GetEntitiesByUserAndKey";
 	@EmbeddedId
 	private SnippetId id;
 	private String title;
@@ -54,6 +58,15 @@ public class Snippet {
 
 	public void setId(SnippetId id) {
 		this.id = id;
+	}
+
+	public void setUserId(Long id) {
+		SnippetId sid = getId();
+		if (sid == null) {
+			setId(new SnippetId());
+			sid = getId(); 
+		}
+		sid.userid = id;
 	}
 
 	public String getTitle() {
@@ -110,6 +123,16 @@ public class Snippet {
 		TypedQuery<Snippet> q = em.createNamedQuery(Query_GetEntitiesByUserAndTag, Snippet.class);
 		List<Snippet> all = q.setParameter("userid", userid).setParameter("tag", tag).getResultList();
 		return all;
+	}
+
+	public static Snippet getEntityByUserAndKey(EntityManager em, Long userid, String key) {
+		TypedQuery<Snippet> q = em.createNamedQuery(Query_GetEntitiesByUserAndKey, Snippet.class);
+		List<Snippet> all = q.setParameter("userid", userid).setParameter("key", key).getResultList();
+		if (all.size() == 0) {
+			return null;
+		} else {
+			return all.get(0);
+		}
 	}
 
 	@Override

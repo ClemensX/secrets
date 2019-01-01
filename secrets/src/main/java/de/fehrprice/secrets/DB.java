@@ -16,6 +16,8 @@ import javax.persistence.Persistence;
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.secrets.dto.SignupResult;
 import de.fehrprice.secrets.entity.Config;
+import de.fehrprice.secrets.entity.Snippet;
+import de.fehrprice.secrets.entity.Tag;
 import de.fehrprice.secrets.entity.User;
 
 public class DB {
@@ -174,6 +176,35 @@ public class DB {
 			return u.getPublicKey();
 		}
 		return null;
+	}
+
+	/**
+	 * Add snippet to db if it has a new key,
+	 * change existing snippet if key already exists
+	 * @param s
+	 * @return
+	 */
+	public static String addSnippet(Snippet s) {
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		em.getTransaction().begin();
+		
+		// try to find existing key:
+		Snippet existing = Snippet.getEntityByUserAndKey(em, s.getId().userid, s.getTitle());
+		if (existing != null) {
+			System.out.println("found existing");
+			em.getTransaction().rollback();
+			return "found exixting";
+		}
+		for (Tag tag : s.getTags()) {
+			tag.setUserId(s.getId().userid);
+			em.merge(tag);
+		}
+		em.persist(s);
+		em.getTransaction().commit();
+		//em.detach(u);
+		em.close();
+		return "snippet added to DB";
 	}
 
 }

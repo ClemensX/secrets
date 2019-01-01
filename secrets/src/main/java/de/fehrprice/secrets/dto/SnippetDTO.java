@@ -11,6 +11,7 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.stream.JsonParsingException;
 
+import de.fehrprice.secrets.HttpSession;
 import de.fehrprice.secrets.entity.Snippet;
 import de.fehrprice.secrets.entity.Tag;
 import de.fehrprice.secrets.entity.TagId;
@@ -79,4 +80,12 @@ public class SnippetDTO {
 		return s;
 	}
 
+	public static Long idLongfromString(String idString)  {
+		try {
+			long id = Long.decode(idString);
+			return id;
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
 }

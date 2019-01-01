@@ -100,4 +100,13 @@ public class Tag {
 			return false;
 		return true;
 	}
+
+	public void setUserId(Long userid) {
+		TagId tid = getId();
+		if (tid == null) {
+			setId(new TagId());
+			tid = getId(); 
+		}
+		tid.userid = userid;
+	}
 }

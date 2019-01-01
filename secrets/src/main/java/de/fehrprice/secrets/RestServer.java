@@ -131,7 +131,7 @@ public class RestServer {
 			//System.out.println("this is: " + text);
 		} else {
 			Snippet s = SnippetDTO.fromJsonString(text);
-			String answer = processSnippetRequest(s);
+			String answer = processSnippetRequest(s, hsession);
 			hsession.aesMsg = conn.createAESMessage(hsession.dto, hsession.cryptoSession, answer);
 			//Conv.dump(hsession.aesMsg, hsession.aesMsg.length);
 			//text = conn.getTextFromAESMessage(hsession.aesMsg, hsession.cryptoSession);
@@ -140,12 +140,21 @@ public class RestServer {
 		return hsession;
 	}
 
-	private String processSnippetRequest(Snippet s) {
+	private String processSnippetRequest(Snippet s, HttpSession hsession) {
 		if (s == null)
 			return "invalid request (snippet not parsable)";
 		String cmd = s.getCommand();
+		// set userid from session in snippet:
+		// prevent user reading another users snippets
+		Long userid = SnippetDTO.idLongfromString(hsession.id);
+		if (userid == null) {
+			return "internal error (user id wrong)";
+		}
+		s.setUserId(userid);
 		if ("add".equals(cmd)) {
-			return "snippet added";
+			String result = DB.addSnippet(s);
+			return result;
+			//return "snippet added with tags: " + s.getTags().toString();
 		}
 		return "internal error";
 	}
