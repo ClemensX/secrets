@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
@@ -47,6 +48,7 @@ public class Snippet {
 	@EmbeddedId
 	private SnippetId id;
 	private String title;
+	@Column(length=4096)
 	private String text;
 	private Set<Tag> tags; 
 	@Transient
