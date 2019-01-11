@@ -44,6 +44,10 @@ public class SecretsClient {
 			createSnippet(args, oh);
 			done();
 		}
+		if (isCommand("tag", args)) {
+			tag(args);
+			done();
+		}
 		if (isCommand("keygen", args)) {
 			keygen(args);
 			done();
@@ -163,6 +167,23 @@ public class SecretsClient {
 		if (s.getText() == null) return false;
 		if (s.getTags() == null || s.getTags().isEmpty()) return false;
 		return true;
+	}
+
+	private static void tag(String[] args) {
+		if (!checkConfigFile()) return;
+		if (!checkPrivateKey()) return;
+		Properties p = getSetup();
+		if (!checkConfigExists(p, SERVER_PUBLIC_KEY, ERROR_SERVER_PUBLIC_KEY)) return;
+		if (!checkConfigExists(p, SERVER_URL, ERROR_SERVER_URL)) return;
+		if (!checkConfigExists(p, SIGNUP_ID, ERROR_SIGNUP_ID)) return;
+		String priv = readPrivateKey();
+		var server = new ServerCommunication(p, priv);
+		if (args.length <= 1) {
+			// no parameters: get all user tags
+			server.getTags();
+		} else {
+			server.getSnippetsForTag(args[1]);
+		}
 	}
 
 	private static void testConnection() {
@@ -414,6 +435,9 @@ public class SecretsClient {
 				" create",
 				" c",
 				" +                     interactively add new snippet", 
+				" ",
+				" tag                   get list of all your tags (CONSOLE DISPLAY)", 
+				" tag <name>            get list of all key/values with tag 'name' (CONSOLE DISPLAY)", 
 				" ",
 				" keygen                generate and print one 256 bit private key", 
 				" keygen <n>            generate and print n 256 bit private keys", 

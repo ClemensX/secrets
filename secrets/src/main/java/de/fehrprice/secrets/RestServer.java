@@ -155,7 +155,10 @@ public class RestServer {
 			String result = DB.addSnippet(s);
 			return result;
 			//return "snippet added with tags: " + s.getTags().toString();
+		} else if ("gettags".equals(cmd)) {
+			return DB.getTags(s);
 		}
+		logger.severe("invalid command received: " + cmd);
 		return "internal error";
 	}
 

@@ -224,4 +224,75 @@ public class ServerCommunication {
 		String text = comm.getTextFromAESMessage(aes, clientSession);
 		return text;
 	}
+
+	public void getTags() {
+		// convert snippet to json
+		Snippet s = new Snippet();
+		s.setCommand("gettags");
+		var json = SnippetDTO.asJsonString(s);
+		System.out.println("sending json: " + json);
+		
+		ConnectData cd = prepareConnection();
+		
+		byte[] aesMsg = cd.comm.createAESMessage(cd.dto, cd.clientSession, json);
+		//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
+		//System.out.println("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
+		//System.out.println("transfer message: " + message);
+		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
+		//System.out.println("recevied aes msg with length: " + aes.length);
+		//Conv.dump(aes, aes.length);
+		String text = cd.comm.getTextFromAESMessage(aes, cd.clientSession);
+		System.out.println("TAGS: " + text);
+		//return text;
+}
+
+	private ConnectData prepareConnection() {
+		ConnectData cd = new ConnectData();
+		x = new Curve25519();
+		ed = new Ed25519();
+		aes = new AES();
+		aes.setSeed(RandomSeed.createSeed());
+		String clientPrivate = privateKey;
+		String clientPublic = ed.publicKey(clientPrivate);
+		ECConnection comm = new ECConnection(x, ed, aes);
+		Session clientSession = new Session();
+		String idString = prop.getProperty(SecretsClient.SIGNUP_ID);
+		String message = comm.initiateECDSA(clientSession, clientPrivate, clientPublic, idString);
+		//System.out.println("transfer message: " + message);
+		String body = postServer("/secretsbackend/rest/client", message);
+		//System.out.println("server returned: " + body);
+		if (body == null) {
+			System.out.println("no valid answer from server");
+			return null;
+		}
+		DTO dto = DTO.fromJsonString(body);
+		String serverPublic = prop.getProperty(SecretsClient.SERVER_PUBLIC_KEY);
+		if (!comm.validateSender(dto, serverPublic)) {
+			System.out.println("invalid server signature");
+			return null;
+		}
+		//System.out.println("server verified");
+		byte[] sessionKey = comm.computeSessionKey(clientSession.sessionPrivateKey, Conv.toByteArray(dto.key));
+		clientSession.sessionAESKey = sessionKey;
+		//System.out.println("session key: " + Conv.toString(sessionKey));
+		dto.id = idString;
+		//System.out.println("my id: " + dto.id);
+		cd.comm = comm;
+		cd.dto = dto;
+		cd.clientSession = clientSession;
+		return cd;
+	}
+
+	public void getSnippetsForTag(String string) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private class ConnectData {
+
+		public Session clientSession;
+		public DTO dto;
+		public ECConnection comm;
+		
+	}
 }

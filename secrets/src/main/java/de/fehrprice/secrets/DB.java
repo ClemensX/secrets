@@ -207,4 +207,10 @@ public class DB {
 		return "snippet added to DB";
 	}
 
+	public static String getTags(Snippet s) {
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		return null;
+	}
+
 }
