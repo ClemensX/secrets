@@ -3,9 +3,11 @@ package de.fehrprice.secrets.dto;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -85,6 +87,25 @@ public class SnippetDTO {
 			long id = Long.decode(idString);
 			return id;
 		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	public static List<Snippet> fromJsonStringList(String json) {
+		try {
+			//logger.severe("DTO PARSING: " + json);
+			JsonReader reader = Json.createReader(new StringReader(json));
+			JsonArray array = reader.readArray();
+			List<Snippet> snippets = new ArrayList<>();
+			for (int i = 0; i < array.size(); i++) {
+				JsonObject jo = array.getJsonObject(i);
+				Snippet s = fromJsonObject(jo);
+				snippets.add(s);
+			}
+			return snippets;
+		} catch (JsonParsingException e) {
+			// could not parse - return null
+			logger.warning("tried to parse non-json string: " + json);
 			return null;
 		}
 	}

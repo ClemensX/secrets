@@ -158,6 +158,9 @@ public class RestServer {
 		} else if ("gettags".equals(cmd)) {
 			logger.info("handle gettags command");
 			return DB.getTags(s);
+		} else if ("gettag".equals(cmd)) {
+			logger.info("handle gettag command");
+			return DB.getSnippetsForTag(s);
 		}
 		logger.severe("invalid command received: " + cmd);
 		return "internal error";

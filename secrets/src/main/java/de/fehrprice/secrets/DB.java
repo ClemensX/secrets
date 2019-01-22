@@ -15,6 +15,7 @@ import javax.persistence.Persistence;
 
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.secrets.dto.SignupResult;
+import de.fehrprice.secrets.dto.SnippetDTO;
 import de.fehrprice.secrets.dto.TagDTO;
 import de.fehrprice.secrets.entity.Config;
 import de.fehrprice.secrets.entity.Snippet;
@@ -219,6 +220,24 @@ public class DB {
 		String json = TagDTO.asJsonString(tags);
 		System.out.println("Tags: " + json);
 		return json;
+	}
+
+	public static String getSnippetsForTag(Snippet s) {
+		if (s.getTags() == null || s.getTags().size() != 1) {
+			//we have no tag - cannot continue
+			return "error - need exactly one tag for gettag command";
+		}
+		Tag tag = s.getTags().iterator().next();
+		System.out.println(" userid: " + s.getId().userid);
+		System.out.println(" Tag: " + tag);
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		var snippets = Snippet.getEntitiesByUserAndTag(em, s.getId().userid, tag);
+		System.out.println("Snippets:");
+		for (Snippet sn : snippets) {
+			System.out.println(sn);
+		}
+		return "ok";
 	}
 
 }
