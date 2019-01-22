@@ -156,6 +156,7 @@ public class RestServer {
 			return result;
 			//return "snippet added with tags: " + s.getTags().toString();
 		} else if ("gettags".equals(cmd)) {
+			logger.info("handle gettags command");
 			return DB.getTags(s);
 		}
 		logger.severe("invalid command received: " + cmd);

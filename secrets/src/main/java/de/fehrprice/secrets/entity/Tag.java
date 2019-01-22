@@ -27,6 +27,9 @@ import de.fehrprice.secrets.RestServer;
 @NamedQuery(name = Tag.Query_GetEntitiesByUserAndTagname,
 			query = "select t from Tag t where t.id.userid = :userid and t.id.tagname = :tagname" 
 			)
+@NamedQuery(name = Tag.Query_GetEntitiesByUser,
+			query = "select t from Tag t where t.id.userid = :userid" 
+			)
 public class Tag {
 
 	private static Logger logger = Logger.getLogger(Tag.class.toString());
@@ -34,6 +37,7 @@ public class Tag {
 	public static final String Query_GetAllEntities = "Topic.GetAllEntities";
 	public static final String Query_CountAllEntities = "Topic.CountAllEntities";
 	public static final String Query_GetEntitiesByUserAndTagname = "Topic.GetEntitiesByKey";
+	public static final String Query_GetEntitiesByUser = "Topic.GetEntitiesByUser";
 	@EmbeddedId
 	private TagId id;
 
@@ -74,6 +78,12 @@ public class Tag {
 		TypedQuery<Tag> q = em.createNamedQuery(Query_GetEntitiesByUserAndTagname, Tag.class);
 		Tag tag = q.setParameter("userid", userid).setParameter("tagname", tagname).getSingleResult();
 		return tag;
+	}
+
+	public static List<Tag> getEntitiesByUser(EntityManager em, Long userid) {
+		TypedQuery<Tag> q = em.createNamedQuery(Query_GetEntitiesByUser, Tag.class);
+		List<Tag> all = q.setParameter("userid", userid).getResultList();
+		return all;
 	}
 
 	@Override

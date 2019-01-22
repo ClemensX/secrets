@@ -15,6 +15,7 @@ import javax.persistence.Persistence;
 
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.secrets.dto.SignupResult;
+import de.fehrprice.secrets.dto.TagDTO;
 import de.fehrprice.secrets.entity.Config;
 import de.fehrprice.secrets.entity.Snippet;
 import de.fehrprice.secrets.entity.Tag;
@@ -210,7 +211,14 @@ public class DB {
 	public static String getTags(Snippet s) {
         EntityManagerFactory emf = getEntityManagerFactory();
 		EntityManager em = emf.createEntityManager();
-		return null;
+		List<Tag> tags = Tag.getEntitiesByUser(em, s.getId().userid); 
+		System.out.println("Tags:");
+		for (Tag t : tags) {
+			System.out.println(t.getName());
+		}
+		String json = TagDTO.asJsonString(tags);
+		System.out.println("Tags: " + json);
+		return json;
 	}
 
 }

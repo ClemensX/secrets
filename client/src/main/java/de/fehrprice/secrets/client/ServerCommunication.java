@@ -13,6 +13,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.List;
 import java.util.Properties;
 
 import de.fehrprice.crypto.AES;
@@ -25,6 +26,8 @@ import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
 import de.fehrprice.secrets.dto.GetIdResult;
 import de.fehrprice.secrets.dto.SnippetDTO;
+import de.fehrprice.secrets.entity.Tag;
+import de.fehrprice.secrets.dto.TagDTO;
 import de.fehrprice.secrets.entity.Snippet;
 
 import javax.json.Json;
@@ -230,21 +233,19 @@ public class ServerCommunication {
 		Snippet s = new Snippet();
 		s.setCommand("gettags");
 		var json = SnippetDTO.asJsonString(s);
-		System.out.println("sending json: " + json);
+		//System.out.println("sending json: " + json);
 		
 		ConnectData cd = prepareConnection();
 		
 		byte[] aesMsg = cd.comm.createAESMessage(cd.dto, cd.clientSession, json);
-		//logger.info("client sent aes message: " + Conv.toPlaintext(aesMsg));
-		//System.out.println("name in aes msg: " + comm.getSenderIdFromAESMessage(aesMsg));
-		//System.out.println("transfer message: " + message);
 		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
-		//System.out.println("recevied aes msg with length: " + aes.length);
-		//Conv.dump(aes, aes.length);
 		String text = cd.comm.getTextFromAESMessage(aes, cd.clientSession);
-		System.out.println("TAGS: " + text);
-		//return text;
-}
+		System.out.println("Your Taglist:");
+		List<Tag> tags = TagDTO.fromJsonString(text);
+		for (Tag t : tags) {
+			System.out.println(t.getName());
+		}
+	}
 
 	private ConnectData prepareConnection() {
 		ConnectData cd = new ConnectData();
