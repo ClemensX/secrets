@@ -59,7 +59,7 @@ public class Tag {
 
 	@Override
 	public String toString() {
-		return "Topic [name=" + getName() + "]";
+		return "Tag [id=" + id + ", getId()=" + getId() + "]";
 	}
 	
 	// queries:

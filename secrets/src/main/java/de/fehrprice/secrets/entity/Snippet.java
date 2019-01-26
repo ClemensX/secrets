@@ -31,7 +31,7 @@ import de.fehrprice.secrets.RestServer;
 			query = "select u from Snippet u where u.id.userid = :userid" 
 			)
 @NamedQuery(name = Snippet.Query_GetEntitiesByUserAndTag,
-			query = "select s from Snippet s inner join s.tags t where s.id.userid = :userid and t = :tag" 
+			query = "select s from Snippet s inner join s.tags t where s.id.userid = :userid and t.id.tagname = :tagname" 
 			)
 @NamedQuery(name = Snippet.Query_GetEntitiesByUserAndKey,
 			query = "select s from Snippet s where s.id.userid = :userid and s.title = :key" 
@@ -122,8 +122,9 @@ public class Snippet {
 	}
 
 	public static List<Snippet> getEntitiesByUserAndTag(EntityManager em, Long userid, Tag tag) {
+		System.out.println(" Snippet.getEntities Tag: " + tag);
 		TypedQuery<Snippet> q = em.createNamedQuery(Query_GetEntitiesByUserAndTag, Snippet.class);
-		List<Snippet> all = q.setParameter("userid", userid).setParameter("tag", tag).getResultList();
+		List<Snippet> all = q.setParameter("userid", userid).setParameter("tagname", tag.getName()).getResultList();
 		return all;
 	}
 
@@ -184,6 +185,13 @@ public class Snippet {
 		} else if (!title.equals(other.title))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		getTags().size();  // instantiate relation
+		return "Snippet [id=" + id + ", title=" + title + ", text=" + text + ", tags=" + getTags().toString() + ", command=" + command
+				+ "]";
 	}
 
 }

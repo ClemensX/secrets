@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.fehrprice.secrets.dto.SnippetDTO;
+import de.fehrprice.secrets.entity.Snippet;
 import de.fehrprice.secrets.entity.Tag;
 import de.fehrprice.secrets.entity.User;
 
@@ -100,6 +101,11 @@ public class JPATest {
 		
 		snippets = sm.getEntries(userid, t);
 		assertEquals(2, snippets.size());
+		snippets = Snippet.getEntitiesByUserAndTag(em, userid, t);
+		System.out.println("Snippets:");
+		for (Snippet sn : snippets) {
+			System.out.println(sn);
+		}
 		
 		em.getTransaction().commit();
 		em.close();

@@ -42,4 +42,9 @@ public class TagId implements Serializable {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "TagId [tagname=" + tagname + ", userid=" + userid + "]";
+	}
+
 }
