@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -190,18 +191,30 @@ public class DB {
         EntityManagerFactory emf = getEntityManagerFactory();
 		EntityManager em = emf.createEntityManager();
 		em.getTransaction().begin();
-		
+
 		// try to find existing key:
 		Snippet existing = Snippet.getEntityByUserAndKey(em, s.getId().userid, s.getTitle());
 		if (existing != null) {
 			System.out.println("found existing");
-			em.getTransaction().rollback();
-			return "found exixting";
+			//em.getTransaction().rollback();
+			existing.setText(s.getText());
+			existing.setTags(s.getTags());
+			// merge (re-create) tags
+			for (Tag tag : s.getTags()) {
+				tag.setUserId(s.getId().userid);
+				em.merge(tag);
+			}
+			em.merge(existing);
+			em.getTransaction().commit();
+			em.close();
+			return "replaced existing snippet";
 		}
+		// merge tags
 		for (Tag tag : s.getTags()) {
 			tag.setUserId(s.getId().userid);
 			em.merge(tag);
 		}
+
 		em.persist(s);
 		em.getTransaction().commit();
 		//em.detach(u);
