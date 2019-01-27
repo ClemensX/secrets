@@ -261,10 +261,10 @@ public class ServerCommunication {
 		byte[] aesMsg = cd.comm.createAESMessage(cd.dto, cd.clientSession, json);
 		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
 		String text = cd.comm.getTextFromAESMessage(aes, cd.clientSession);
-		System.out.println("Your Taglist:");
+		System.out.println("Your Snippets for tag " + tagname + ":");
 		List<Snippet> snippets = SnippetDTO.fromJsonStringList(text);
 		for (Snippet sn : snippets) {
-			System.out.println(sn.toString());
+			System.out.println(sn.getTitle() + "=" + sn.getText());
 		}
 	}
 	

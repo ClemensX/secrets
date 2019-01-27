@@ -10,6 +10,7 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.json.stream.JsonParsingException;
 
@@ -23,8 +24,12 @@ public class SnippetDTO {
 	private static Logger logger = Logger.getLogger(SnippetDTO.class.toString());
 
 	public static String asJsonString(Snippet s)  {
-		JsonBuilderFactory factory = Json.createBuilderFactory(null);
-		var builder = factory.createObjectBuilder();
+		JsonObject json = asJsonBuilder(s).build();
+		String result = json.toString();
+		return result;
+	}
+
+	private static void addSnippetEncoding(JsonBuilderFactory factory, JsonObjectBuilder builder, Snippet s) {
 		if (s.getId() != null) {
 			builder.add("snippetid", s.getId().snippedid.toString());
 			builder.add("userid", s.getId().userid.toString());
@@ -39,9 +44,13 @@ public class SnippetDTO {
 			}
 			builder.add("tags", arr);
 		}
-		JsonObject json = builder.build();
-		String result = json.toString();
-		return result;
+	}
+	
+	private static JsonObjectBuilder asJsonBuilder(Snippet s) {
+		JsonBuilderFactory factory = Json.createBuilderFactory(null);
+		var builder = factory.createObjectBuilder();
+		addSnippetEncoding(factory, builder, s);
+		return builder;
 	}
 
 	public static Snippet fromJsonString(String json)  {
@@ -109,4 +118,18 @@ public class SnippetDTO {
 			return null;
 		}
 	}
+
+	public static String asJsonString(List<Snippet> snippets)  {
+		JsonBuilderFactory factory = Json.createBuilderFactory(null);
+		var builder = factory.createArrayBuilder();
+		for (Snippet s : snippets) {
+			var b = factory.createObjectBuilder();
+			addSnippetEncoding(factory, b, s);
+			builder.add(b);
+		}
+		JsonArray json = builder.build();
+		String result = json.toString();
+		return result;
+	}
+
 }

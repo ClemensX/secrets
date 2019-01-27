@@ -233,11 +233,12 @@ public class DB {
         EntityManagerFactory emf = getEntityManagerFactory();
 		EntityManager em = emf.createEntityManager();
 		var snippets = Snippet.getEntitiesByUserAndTag(em, s.getId().userid, tag);
-		System.out.println("Snippets:");
-		for (Snippet sn : snippets) {
-			System.out.println(sn);
-		}
-		return "ok";
+		String json = SnippetDTO.asJsonString(snippets);
+		System.out.println("Snippets: " + json);
+//		for (Snippet sn : snippets) {
+//			System.out.println(sn);
+//		}
+		return json;
 	}
 
 }
