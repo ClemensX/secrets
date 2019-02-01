@@ -112,6 +112,8 @@ public class DB {
 		Config conf = getCreateConfigEntity();
 		int numSLots = conf.getNumSlots(); 
 		long numUsed = User.countAllEntities(em);
+		logger.info("getFreeSlots() numSlots: " + numSLots);
+		logger.info("getFreeSlots() numUsed: " + numUsed);
 		return "" + (numSLots - numUsed); 
 	}
 	
