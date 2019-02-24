@@ -106,7 +106,7 @@ public class DB {
 		return conf;
 	}
 	
-	public static String getFreeSlots() {
+	public static long getFreeSlots() {
         EntityManagerFactory emf = getEntityManagerFactory();
 		EntityManager em = emf.createEntityManager();
 		Config conf = getCreateConfigEntity();
@@ -114,7 +114,8 @@ public class DB {
 		long numUsed = User.countAllEntities(em);
 		logger.info("getFreeSlots() numSlots: " + numSLots);
 		logger.info("getFreeSlots() numUsed: " + numUsed);
-		return "" + (numSLots - numUsed); 
+		return (numSLots - numUsed); 
+		//return "" + (numSLots - numUsed); 
 	}
 	
 	private static String jdbcStatus() {
@@ -144,6 +145,10 @@ public class DB {
 			return su;
 		} else if (Conv.testEntropy(key) == false) {
 			su.result = "Invalid key provided";
+			su.alreadyExisting = false;
+			return su;
+		} else if (getFreeSlots() <= 0) {
+			su.result = "No free slots available.";
 			su.alreadyExisting = false;
 			return su;
 		} else {

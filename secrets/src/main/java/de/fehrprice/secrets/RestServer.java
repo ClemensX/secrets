@@ -230,7 +230,7 @@ public class RestServer {
 	}
 
 	private String getFreeSlots() {
-		return DB.getFreeSlots();
+		return "" + DB.getFreeSlots();
 	}
 
 	private String signup(JsonObject bodyj) {
