@@ -261,4 +261,23 @@ public class DB {
 		return json;
 	}
 
+	public static String getSnippetsForKey(Snippet s) {
+		if (s.getTitle() == null || s.getTitle().length() < 1) {
+			//we have no key to look for - cannot continue
+			return "error - need exactly one key for getbykey command";
+		}
+		System.out.println(" userid: " + s.getId().userid);
+		System.out.println(" key: " + s.getTitle());
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		var snippet = Snippet.getEntityByUserAndKey(em, s.getId().userid, s.getTitle());
+		if (snippet != null) {
+			String json = SnippetDTO.asJsonString(snippet);
+			System.out.println("Snippet: " + json);
+			return json;
+		} else {
+			return "no snippet found for key " + s.getTitle();
+		}
+	}
+
 }

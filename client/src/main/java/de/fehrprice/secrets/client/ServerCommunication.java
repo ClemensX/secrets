@@ -268,6 +268,27 @@ public class ServerCommunication {
 		}
 	}
 	
+	public void getSnippetForKey(String key) {
+		// convert snippet to json
+		Snippet s = new Snippet();
+		s.setCommand("getbykey");
+		s.setTitle(key);
+		var json = SnippetDTO.asJsonString(s);
+		System.out.println("sending json: " + json);
+		ConnectData cd = prepareConnection();
+		
+		byte[] aesMsg = cd.comm.createAESMessage(cd.dto, cd.clientSession, json);
+		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
+		String text = cd.comm.getTextFromAESMessage(aes, cd.clientSession);
+		//System.out.println("Your Snippet for key " + key + ":");
+		if (text != null && text.startsWith("no")) {
+			System.out.println(text);
+		} else {
+			Snippet sn = SnippetDTO.fromJsonString(text);
+			System.out.println(sn.getTitle() + "=" + sn.getText());
+		}
+	}
+
 	private ConnectData prepareConnection() {
 		ConnectData cd = new ConnectData();
 		x = new Curve25519();
@@ -312,4 +333,5 @@ public class ServerCommunication {
 		public ECConnection comm;
 		
 	}
+
 }
