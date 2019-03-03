@@ -268,7 +268,7 @@ public class ServerCommunication {
 		}
 	}
 	
-	public void getSnippetForKey(String key) {
+	public String getSnippetForKey(String key, boolean toClipboard) {
 		// convert snippet to json
 		Snippet s = new Snippet();
 		s.setCommand("getbykey");
@@ -283,9 +283,15 @@ public class ServerCommunication {
 		//System.out.println("Your Snippet for key " + key + ":");
 		if (text != null && text.startsWith("no")) {
 			System.out.println(text);
+			return null;
 		} else {
 			Snippet sn = SnippetDTO.fromJsonString(text);
-			System.out.println(sn.getTitle() + "=" + sn.getText());
+			if (!toClipboard) {
+				System.out.println(sn.getTitle() + "=" + sn.getText());
+			} else {
+				System.out.println("value for " + sn.getTitle() + " copied to clipboard.");
+			}
+			return sn.getText();
 		}
 	}
 

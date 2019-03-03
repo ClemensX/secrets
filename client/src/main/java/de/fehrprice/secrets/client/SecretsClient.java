@@ -1,5 +1,8 @@
 package de.fehrprice.secrets.client;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,7 +20,6 @@ import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.RandomSeed;
-import de.fehrprice.secrets.HttpSession;
 import de.fehrprice.secrets.entity.Snippet;
 import de.fehrprice.secrets.entity.Tag;
 import de.fehrprice.secrets.entity.TagId;
@@ -50,6 +52,10 @@ public class SecretsClient {
 		}
 		if (isCommand("get", args)) {
 			get(args);
+			done();
+		}
+		if (isCommand("g", args)) {
+			get(args, true);
 			done();
 		}
 		if (isCommand("keygen", args)) {
@@ -99,6 +105,10 @@ public class SecretsClient {
 	}
 
 	private static void get(String[] args) {
+		get(args, false);
+	}
+	
+	private static void get(String[] args, boolean toClipboard) {
 		if (!checkConfigFile()) return;
 		if (!checkPrivateKey()) return;
 		Properties p = getSetup();
@@ -112,8 +122,17 @@ public class SecretsClient {
 			System.out.println("no key specified.");
 		} else {
 			System.out.println("Getting value for key " + args[1]);
-			server.getSnippetForKey(args[1]);
+			String key = server.getSnippetForKey(args[1], toClipboard);
+			if (key != null && toClipboard) {
+				toClipboard(key);
+			}
 		}
+	}
+
+	private static void toClipboard(String key) {
+	    StringSelection stringSelection = new StringSelection(key);
+	    Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+	    clpbrd.setContents(stringSelection, null);
 	}
 
 	private static void createSnippet(String[] args, OptionHandler oh) {
@@ -460,6 +479,8 @@ public class SecretsClient {
 				" ",
 				" tag                   get list of all your tags (CONSOLE DISPLAY)", 
 				" tag <name>            get list of all key/values with tag 'name' (CONSOLE DISPLAY)", 
+				" ",
+				" g <key>               get snippet by key (COPY to CLIPBOARD - NO DISPLAY)", 
 				" ",
 				" get <key>             get snippet by key (CONSOLE DISPLAY)", 
 				" ",

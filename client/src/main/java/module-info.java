@@ -14,6 +14,8 @@ module de.fehrprice.secrets.client {
 	requires secrets;
 	requires java.json;
 	requires java.net.http;
+	requires java.datatransfer;
+	requires java.desktop;
 	//requires java.logging;
 	//requires java.persistence;
 	//requires java.sql;

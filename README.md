@@ -46,7 +46,8 @@ DRIVER              VOLUME NAME
 
 ## TODO Profile Green (Secure Communication)
  * (done) get snippet by key
- * get snippet by key and copy to clipboard
+ * (done) get snippet by key and copy to clipboard
+ * list tag entries without displaying keys
  * delete snippet by key
  * ? get all snippets
  * ? export all snippets to file
