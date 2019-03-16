@@ -1,7 +1,0 @@
-# jlink options file, usage: jlink @jlink_opts
---module-path "../../../../repos/Crypto/target/crypto-0.0.1-SNAPSHOT.jar;../../../../repos/Crypto/target/javax.json-api-1.1.2.jar;../../../../repos/Crypto/target/javax.json-1.1.2.jar;../../../../repos/Crypto/target/junit-jupiter-api-5.4.0.jar;target/secrets.client-0.0.1-SNAPSHOT.jar;../secrets/target/secrets-0.0.1-SNAPSHOT.jar
---add-modules de.fehrprice.secrets.client,org.junit.jupiter.api;
---strip-debug
---compress=2
---launcher sc=de.fehrprice.secrets.client/de.fehrprice.secrets.client.SecretsClient
---output run
