@@ -1,4 +1,4 @@
-module crypto {
+module fehrprice.crypto {
 	//exports de.fehrprice.net.test;
 	exports de.fehrprice.crypto;
 	//exports de.fehrprice.crypto.test;

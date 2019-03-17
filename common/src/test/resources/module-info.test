@@ -1,0 +1,13 @@
+--add-exports
+  java.persistence/javax.persistence=fehrprice.common
+--add-exports
+  java.persistence/javax.persistence=junit.platform.isolator
+--add-exports
+  java.persistence/javax.persistence=org.apiguardian.api
+--add-exports
+  java.persistence/javax.persistence=postgresql
+--add-exports
+  commonj.sdo/commonj.sdo.impl=org.junit.jupiter.api
+--add-exports
+  commonj.sdo/commonj.sdo.impl=org.opentest4j
+  
