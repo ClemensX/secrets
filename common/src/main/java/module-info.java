@@ -5,7 +5,7 @@
  * @author Clemens
  *
  */
-module fehrprice.common {
+open module fehrprice.common {
 	exports de.fehrprice.secrets.dto;
 	exports de.fehrprice.secrets.entity;
 
@@ -15,4 +15,5 @@ module fehrprice.common {
 	//requires eclipselink;
 	//requires java.sql;
 	requires java.json;
+	//requires org.junit.jupiter.api;
 }

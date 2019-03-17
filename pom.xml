@@ -11,6 +11,7 @@
 
 	<modules>
 		<module>crypto</module>
+		<module>persistence</module>
 		<module>common</module>
 		<module>server</module>
 		<!-- <module>client</module> -->
