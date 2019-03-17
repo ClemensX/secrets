@@ -1,9 +1,13 @@
-// open module foo {
-//   requires foo;
+// open module crypto {
 //   requires org.junit.jupiter.api;
+//   requires org.glassfish.java.json;
+//   opens de.fehrprice.crypto to org.junit.platform.commons;
 // }
 
 --add-reads
-  foo=org.junit.jupiter.api
+  crypto=org.junit.jupiter.api
+--add-reads
+  crypto=org.glassfish.java.json
 --add-opens
-  foo/foo=org.junit.platform.commons
+  crypto/de.fehrprice.crypto=org.junit.platform.commons
+  
