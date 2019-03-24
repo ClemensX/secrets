@@ -1,4 +1,4 @@
-package de.fehrprice.secrets.entity;
+package de.fehrprice.secrets.dto;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;

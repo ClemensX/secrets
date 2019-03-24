@@ -27,9 +27,6 @@ import de.fehrprice.net.Session;
 import de.fehrprice.secrets.dto.GetIdResult;
 import de.fehrprice.secrets.dto.SnippetDTO;
 import de.fehrprice.secrets.dto.TagDTO;
-import de.fehrprice.secrets.entity.Snippet;
-import de.fehrprice.secrets.entity.Tag;
-import de.fehrprice.secrets.entity.TagId;
 
 public class ServerCommunication {
 
@@ -181,7 +178,7 @@ public class ServerCommunication {
 		//System.out.println("recevied aes msg: " + text);
 	}
 
-	public String sendSnippet(Snippet s) {
+	public String sendSnippet(SnippetDTO s) {
 		// convert snippet to json
 		var json = SnippetDTO.asJsonString(s);
 		System.out.println("sending json: " + json);
@@ -227,8 +224,8 @@ public class ServerCommunication {
 
 	public void getTags() {
 		// convert snippet to json
-		Snippet s = new Snippet();
-		s.setCommand("gettags");
+		SnippetDTO s = new SnippetDTO();
+		s.command = "gettags";
 		var json = SnippetDTO.asJsonString(s);
 		//System.out.println("sending json: " + json);
 		
@@ -238,22 +235,21 @@ public class ServerCommunication {
 		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
 		String text = cd.comm.getTextFromAESMessage(aes, cd.clientSession);
 		System.out.println("Your Taglist:");
-		List<Tag> tags = TagDTO.fromJsonString(text);
-		for (Tag t : tags) {
-			System.out.println(t.getName());
+		List<TagDTO> tags = TagDTO.fromJsonString(text);
+		for (TagDTO t : tags) {
+			System.out.println(t.tagname);
 		}
 	}
 
 	public void getSnippetsForTag(String tagname) {
 		// convert snippet to json
-		Snippet s = new Snippet();
-		s.setCommand("gettag");
-		Tag tag = new Tag();
-		tag.setId(new TagId());
-		tag.setName(tagname);
-		Set<Tag> tags = new HashSet<>();
+		SnippetDTO s = new SnippetDTO();
+		s.command = "gettag";
+		TagDTO tag = new TagDTO();
+		tag.tagname = tagname;
+		Set<TagDTO> tags = new HashSet<>();
 		tags.add(tag);
-		s.setTags(tags);
+		s.tags = tags;
 		var json = SnippetDTO.asJsonString(s);
 		//System.out.println("sending json: " + json);
 		ConnectData cd = prepareConnection();
@@ -262,17 +258,17 @@ public class ServerCommunication {
 		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
 		String text = cd.comm.getTextFromAESMessage(aes, cd.clientSession);
 		System.out.println("Your Snippets for tag " + tagname + ":");
-		List<Snippet> snippets = SnippetDTO.fromJsonStringList(text);
-		for (Snippet sn : snippets) {
-			System.out.println(sn.getTitle() + "=" + sn.getText());
+		List<SnippetDTO> snippets = SnippetDTO.fromJsonStringList(text);
+		for (SnippetDTO sn : snippets) {
+			System.out.println(sn.title + "=" + sn.text);
 		}
 	}
 	
 	public String getSnippetForKey(String key, boolean toClipboard) {
 		// convert snippet to json
-		Snippet s = new Snippet();
-		s.setCommand("getbykey");
-		s.setTitle(key);
+		SnippetDTO s = new SnippetDTO();
+		s.command = "getbykey";
+		s.title = key;
 		var json = SnippetDTO.asJsonString(s);
 		System.out.println("sending json: " + json);
 		ConnectData cd = prepareConnection();
@@ -285,13 +281,13 @@ public class ServerCommunication {
 			System.out.println(text);
 			return null;
 		} else {
-			Snippet sn = SnippetDTO.fromJsonString(text);
+			SnippetDTO sn = SnippetDTO.fromJsonString(text);
 			if (!toClipboard) {
-				System.out.println(sn.getTitle() + "=" + sn.getText());
+				System.out.println(sn.title + "=" + sn.text);
 			} else {
-				System.out.println("value for " + sn.getTitle() + " copied to clipboard.");
+				System.out.println("value for " + sn.title + " copied to clipboard.");
 			}
-			return sn.getText();
+			return sn.text;
 		}
 	}
 

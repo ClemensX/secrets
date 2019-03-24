@@ -20,9 +20,8 @@ import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.RandomSeed;
-import de.fehrprice.secrets.entity.Snippet;
-import de.fehrprice.secrets.entity.Tag;
-import de.fehrprice.secrets.entity.TagId;
+import de.fehrprice.secrets.dto.SnippetDTO;
+import de.fehrprice.secrets.dto.TagDTO;
 
 public class SecretsClient {
 
@@ -136,25 +135,24 @@ public class SecretsClient {
 	}
 
 	private static void createSnippet(String[] args, OptionHandler oh) {
-		Snippet s = new Snippet();
+		SnippetDTO s = new SnippetDTO();
 		String tagString = null;
 		boolean complete = false;
 		while (true) {
-			var v = oh.interactive("Enter Key:", s.getTitle());
-			if (v != null) s.setTitle(v);
-			v = oh.interactive("Enter Value:", s.getText());
-			if (v!= null) s.setText(v);
+			var v = oh.interactive("Enter Key:", s.title);
+			if (v != null) s.title = v;
+			v = oh.interactive("Enter Value:", s.text);
+			if (v!= null) s.text = v;
 			tagString = oh.interactive("Enter Tags (separate with blanks):", tagString);
 			if (tagString != null) {
 				String[] parts = tagString.split(Pattern.quote(" "));
-				Set<Tag> tags = new HashSet<>(); 
+				Set<TagDTO> tags = new HashSet<>(); 
 				for (String t : parts) {
-					var tag = new Tag();
-					tag.setId(new TagId());
-					tag.setName(t);
+					var tag = new TagDTO();
+					tag.tagname = t;
 					tags.add(tag);
 				}
-				s.setTags(tags);
+				s.tags = tags;
 			}
 			if (isAllFieldsSet(s)) {
 				break;
@@ -174,7 +172,7 @@ public class SecretsClient {
 		String saveIt = oh.interactive("\nsave snippet?", "y");
 		if (saveIt == null || saveIt.startsWith("y")) {
 			System.out.print("sending snippet to server...");
-			s.setCommand("add");
+			s.command = "add";
 			String result = sendSnippet(s);
 			System.out.println(result);
 		} else {
@@ -182,31 +180,31 @@ public class SecretsClient {
 		}
 	}
 
-	private static String sendSnippet(Snippet s) {
+	private static String sendSnippet(SnippetDTO s) {
 		Properties p = getSetup();
 		String priv = readPrivateKey();
 		var server = new ServerCommunication(p, priv);
 		return server.sendSnippet(s);
 	}
 
-	private static void printSnippet(Snippet s) {
-		if (s.getTitle() != null) { 
-			System.out.print(s.getTitle() + "=");
-			if (s.getText() != null) System.out.print(s.getText() + " ");
+	private static void printSnippet(SnippetDTO s) {
+		if (s.title != null) { 
+			System.out.print(s.title + "=");
+			if (s.text != null) System.out.print(s.text + " ");
 		}
-		if (s.getTags() != null && !s.getTags().isEmpty()) {
+		if (s.tags != null && !s.tags.isEmpty()) {
 			System.out.print(" [");
-			for (Tag tag : s.getTags()) {
-				System.out.print(" " + tag.getName());	
+			for (TagDTO tag : s.tags) {
+				System.out.print(" " + tag.tagname);	
 			}
 			System.out.print(" ]");
 		}
 	}
 
-	private static boolean isAllFieldsSet(Snippet s) {
-		if (s.getTitle() == null) return false;
-		if (s.getText() == null) return false;
-		if (s.getTags() == null || s.getTags().isEmpty()) return false;
+	private static boolean isAllFieldsSet(SnippetDTO s) {
+		if (s.title == null) return false;
+		if (s.text == null) return false;
+		if (s.tags == null || s.tags.isEmpty()) return false;
 		return true;
 	}
 

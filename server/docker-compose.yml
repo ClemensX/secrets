@@ -1,0 +1,49 @@
+# run maven build first! then use
+#  docker-compose up --build    (to rebuild after changes, then run)
+#  docker-compose up -d --build (same, detached mode)
+#  docker-compose up            (to run docker-composer.yml)
+# windows: shared drive option must be active! Only absolute paths work on windows
+# or: remove image secrets_serverapp after changes before bringing it up again!
+version: '3'
+services:
+  serverapp:
+    build: .
+    ports:
+     - "5000:5000"
+     - "8000:8000"
+    volumes:
+     - ./private:/etc/secrets/private
+    environment:
+      DEFAULT_PASSWORD: "${POSTGRES_PASSWORD}"
+#      JDK_JAVA_OPTIONS: "-agentlib:jdwp=transport=dt_socket,address=*:8000,server=y,suspend=n"
+# uncomment above for remote debugging!
+  db:
+    image: postgres:10-alpine
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: secretsdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  pgadmin:
+    image: fenglc/pgadmin4
+    ports:
+      - 5050:5050
+    volumes:
+      - pgadmindata:/var/lib/pgadmin
+    environment:
+      DEFAULT_USER: "${DEFAULT_USER_PGADMIN}"
+      DEFAULT_PASSWORD: "${DEFAULT_PASSWORD_PGADMIN}"
+# connect with localhost:5050 then add new server: any name, then 2nd tab connection: db 5432 secretsdb postgres <pw from above>
+# if serverapp volume does not work: check docker->settings reset credentials
+# check with docker exec -it secrets_serverapp_1 /bin/bash
+volumes:
+  pgdata:
+  pgadmindata:
+
+#--mount source=myvol2,target=/app
+#docker run --rm --mount source=myvol2,target=/app -w /app java:8 javac de\fehrprice\secrets\App.java
+
+#power shell examples from local folder C:\dev\docker\secrets\secrets\src\main\java:
+#docker run --rm -v ${PWD}:/data -w /data java:8 javac de/fehrprice/secrets/App.java
+#docker run --rm -v ${PWD}:/data -w /data java:8 java de.fehrprice.secrets.App
+#      - c:/dev/docker/secrets/secrets/init:/docker-entrypoint-initdb.d

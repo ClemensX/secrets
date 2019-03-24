@@ -29,6 +29,7 @@ hs_err_pid*
 .project
 /secrets/.settings/
 /client/run/
+/client/jlink_create/run/
 /secrets/init/
 /secrets/private/
 .env

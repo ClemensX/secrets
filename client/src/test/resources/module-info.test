@@ -1,13 +1,16 @@
-// open module crypto {
-//   requires org.junit.jupiter.api;
-//   requires org.glassfish.java.json;
-//   opens de.fehrprice.crypto to org.junit.platform.commons;
+// open module client {
+//	requires fehrprice.crypto;
+//	requires fehrprice.common;
+//	requires java.json;
+//	requires java.net.http;
+//	requires java.datatransfer;
+//	requires java.desktop;
 // }
 
 --add-reads
-  fehrprice.crypto=org.junit.jupiter.api
+  client=org.junit.jupiter.api
 --add-reads
-  fehrprice.crypto=org.glassfish.java.json
+  client=org.glassfish.java.json
 --add-opens
-  fehrprice.crypto/de.fehrprice.crypto=org.junit.platform.commons
+  client/de.fehrprice.secrets.client=org.junit.platform.commons
   
