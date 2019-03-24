@@ -25,7 +25,7 @@ export POSTGRES_PASSWORD="zzz"
 
  * access db via pgadmin on port 5050, e.g. http://localhost:5050
  * use user name and pass you set in .env file
- * add new server: any name, then 2nd tab connection: db 5432 postgres postgres \<pw from .env\>
+ * add new server: any name, then 2nd tab connection: db 5432 secretsdb postgres \<pw from .env\>
  * DB data is stored in docker volumes ```docker volume ls```
  * to delete all data, e.g. when you want to change passwords in .env file you have to delete the docker volumes
 ```
