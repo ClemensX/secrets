@@ -1,0 +1,9 @@
+#  jlink --module-path "bin" --add-modules fehrprice.secrets.client --output run
+# jlink options file, usage: jlink @jlink_opts
+#--module-path ./target/secrets.client-0.0.1-SNAPSHOT.jar
+--module-path bin
+--add-modules de.fehrprice.secrets.client
+--strip-debug
+--compress=0
+--launcher sc=de.fehrprice.secrets.client/de.fehrprice.secrets.client.SecretsClient
+--output run
