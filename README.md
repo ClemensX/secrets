@@ -49,6 +49,8 @@ DRIVER              VOLUME NAME
  * (done) get snippet by key and copy to clipboard
  * list tag entries without displaying keys
  * delete snippet by key
+ * fix client exception if id is wrong in sc test
+ * local config file
  * ? get all snippets
  * ? export all snippets to file
  * ? private / public mode: toggle display of console output for values 

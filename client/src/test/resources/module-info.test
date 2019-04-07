@@ -9,8 +9,8 @@
 
 --add-reads
   client=org.junit.jupiter.api
---add-reads
-  client=org.glassfish.java.json
+//--add-reads
+//  client=org.glassfish.java.json // same as requires .. in module-info.java
 --add-opens
   client/de.fehrprice.secrets.client=org.junit.platform.commons
   

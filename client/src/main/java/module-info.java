@@ -9,6 +9,7 @@ module client {
 	requires fehrprice.crypto;
 	requires fehrprice.common;
 	requires java.json;
+	requires org.glassfish.java.json;
 	requires java.net.http;
 	requires java.datatransfer;
 	requires java.desktop;
