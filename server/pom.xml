@@ -94,7 +94,7 @@
 		</dependency>
 		<dependency>
 			<groupId>de.fehrprice</groupId>
-			<artifactId>crypto</artifactId>
+			<artifactId>fehrprice.crypto</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
