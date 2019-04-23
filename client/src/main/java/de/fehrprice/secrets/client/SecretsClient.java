@@ -343,6 +343,9 @@ public class SecretsClient {
 		// setup secrets client
 		if (getSetup() == null) {
 			// no config file yet
+			String javaHome = System.getProperty("java.home");
+			System.out.println("java.home = " + javaHome);
+			System.out.println("Secrets Client requires config file in local");
 			System.out.println("Create config file " + getConfigFilePath() + " ? (yes/[no])");
 			String l = readLine();
 			if (!"yes".equalsIgnoreCase(l) && !"y".equalsIgnoreCase(l)) {
@@ -384,8 +387,49 @@ public class SecretsClient {
 		return line;
 	}
 
+	private static String configFilename = ".secrets_profile";
+	private static int parentFolderSearchLimit = 3;
+	/**
+	 * Config file should be in a parent folder of java.home.
+	 * ALternatively it is also found in <current directory> or parent folders.
+	 * Up to 3 parent folders will be searched.
+	 * Config file name is .secrets_profile
+	 * @return
+	 */
 	private static Path getConfigFilePath() {
-		return Paths.get(System.getProperty("user.home"), ".secrets_profile");
+		System.out.println("#######");
+		//return Paths.get(System.getProperty("user.home"), ".secrets_profile");
+		String javaHome = System.getProperty("java.home");
+		Path base = Paths.get(javaHome);
+		Path p = Paths.get(base.toString(), configFilename);
+		Path defaultPath = p.normalize();
+		System.out.println("--> " + p.toString());
+		if (p.toFile().exists()) return p;
+		for (int i = 0; i < parentFolderSearchLimit; i++) {
+			base = base.getParent();
+			if (base != null) {
+				p = Paths.get(base.toString(), configFilename);
+				System.out.println("--> " + p.toString());
+				if (p.toFile().exists()) return p;
+			}
+		}
+		// not found yet - look in current directory
+		p = Paths.get(configFilename).toAbsolutePath();
+		base = p.getParent();
+//		System.out.println("--> " + p.toString());
+//		if (p.toFile().exists()) return p;
+		for (int i = 0; i < parentFolderSearchLimit; i++) {
+			if (base != null) {
+				p = Paths.get(base.toString(), configFilename);
+				System.out.println("--> " + p.toString());
+				if (p.toFile().exists()) return p;
+				base = base.getParent();
+			}
+//			p = p.getParent();
+//			System.out.println("--> " + p.toString());
+//			if (p.toFile().exists()) return p;
+		}
+		return defaultPath;
 	}
 	
 	private static Properties getSetup() {
