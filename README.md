@@ -1,11 +1,15 @@
 # Secrets!
 
+## Crypto Lib
+
+[Details of the used cryptographic algorithms can be found here](README_CRYPTO.md)
+
 ## Start Server
 
 ### Preparations
 
  * build crypto, server and client projects with mvn clean install (OpenJDK 11 needed)
- * use client to generate private keys, slect one and put to ./secrets/private/keyfile_private
+ * use client to generate private keys, select one and put to ./secrets/private/keyfile_private
  * set environment vars in local .env file. Example for bash:
 ```
 export DEFAULT_USER_PGADMIN="xxx@yyy.com"
@@ -45,12 +49,12 @@ DRIVER              VOLUME NAME
 ```
 
 ## TODO Profile Green (Secure Communication)
- * (done) get snippet by key
- * (done) get snippet by key and copy to clipboard
+ * &#x2713; get snippet by key
+ * &#x2713; get snippet by key and copy to clipboard
  * list tag entries without displaying keys
  * delete snippet by key
  * fix client exception if id is wrong in sc test
- * local config file
+ * &#x2713; local config file
  * ? get all snippets
  * ? export all snippets to file
  * ? private / public mode: toggle display of console output for values 

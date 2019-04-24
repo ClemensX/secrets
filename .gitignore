@@ -35,5 +35,6 @@ hs_err_pid*
 /client/jlink_create/run/
 /secrets/init/
 /secrets/private/
+/client/private/
 .env
 target/
