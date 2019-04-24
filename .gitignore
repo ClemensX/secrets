@@ -27,7 +27,10 @@ hs_err_pid*
 
 .classpath
 .project
-/secrets/.settings/
+# all .settings folders (eclipse generated): 
+.settings/
+# never store our profile in git:
+.secrets_profile
 /client/run/
 /client/jlink_create/run/
 /secrets/init/
