@@ -48,3 +48,27 @@ Overview of the algorithms used for end-to-end encrypted communication:
 
 #### Key Agreement Details
 Goal: Agree on a secret AES-256 session key that will be used to encrypt all further communication in this session. The Key agreement messages are openly transmitted and could be read by anyone.
+
+| **AES Session Key Exchange**  | Server | Client |
+| -------------             | ------ | ------ |
+| Preparation (outside this protocol)              | has Client Public Key PUBc | has Server Public Key PUBs
+| Initiate | | ECDH: prepare key exchange message<br> ` InitClient : name : client session public key `|
+|   | | ECDSA: Sign ECDH message with private key and append to message<br> ` InitClient : name : client session public key : signature ` |
+| Verify Client | receive message and verify client with PUBc
+|   | Generate AES session key from client session public key and server session private key
+|   | ECDH: prepare answer message<br> ` InitServer : name : server session public key `|
+|   | ECDSA: Sign ECDH message with private key and append to message<br> ` InitServer : name : server session public key : signature `|
+| Verify Server | | receive message and verify server with PUBs
+|   | | Generate (the same) AES session key from server session public key and client session private key
+
+#### Message Exchange with AES-256
+
+Any message can be securely exchanged after key agreement via open channels. The AES-256 protocol prevents anyone in the outside world from reading the messages. However, DOS attacks (denial of service) are still possible. It is up to the receiver of any AES encrypted message to reject messages:
+ * Message too large: Depending on scenario messages exceeding a certain size may be rejected *before* decrypting.
+ * Invalid content: Third parties can send garbage messages, but without the AES session key they cannot produce meaningful messages. Any message not having the expected format should be rejected.
+ 
+AES-256 is only defined for complete blocks of 16 bytes. To exchange arbitrary length messages these modifications have been made:
+ * The very last byte of the last decrypted block always contains the number of bytes that should be discarded from the last 16-byte block. A ten byte message will have the value 6 in the last byte so that the receiver can cut the message to the exact size of ten.
+ * When encrypting multiple blocks the same input block would result in the same output block. This would allow an attacker to gain some knowledge of the unencrypted input: He would know where in the input are the same blocks of 16 specific bytes. An attacker should not be able to gain such knowledge, so for every block its sequential number within the message will be added to the first half of the message before encrypting. This is reversed on the receiving side.
+
+The above modifications are done transparently in the background by our AES implementation.
