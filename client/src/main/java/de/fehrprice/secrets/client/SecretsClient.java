@@ -11,7 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -343,9 +345,8 @@ public class SecretsClient {
 		// setup secrets client
 		if (getSetup() == null) {
 			// no config file yet
-			String javaHome = System.getProperty("java.home");
-			System.out.println("java.home = " + javaHome);
-			System.out.println("Secrets Client requires config file in local");
+			System.out.println("Config file not found in these locations:");
+			printConfigFilePaths();
 			System.out.println("Create config file " + getConfigFilePath() + " ? (yes/[no])");
 			String l = readLine();
 			if (!"yes".equalsIgnoreCase(l) && !"y".equalsIgnoreCase(l)) {
@@ -389,45 +390,63 @@ public class SecretsClient {
 
 	private static String configFilename = ".secrets_profile";
 	private static int parentFolderSearchLimit = 3;
+	
+	/**
+	 * Generate list of Paths for all possible config file locations
+	 * Config file should be in a parent folder of java.home.
+	 * Alternatively it is also found in <current directory> or parent folders.
+	 * Up to 3 parent folders will be searched.
+	 * Config file name is .secrets_profile
+	 * @return List of Path entities where config file is searched. 1st entry is default path
+	 */
+	private static List<Path> generateConfigFilePaths() {
+		List<Path> paths = new ArrayList<>();
+		// look in jvm location and parent chain
+		String javaHome = System.getProperty("java.home");
+		Path base = Paths.get(javaHome);
+		Path p = Paths.get(base.toString(), configFilename);
+		Path defaultPath = p.normalize();
+		paths.add(defaultPath);
+		for (int i = 0; i < parentFolderSearchLimit; i++) {
+			base = base.getParent();
+			if (base != null) {
+				p = Paths.get(base.toString(), configFilename);
+				paths.add(p);
+			}
+		}
+		// look in current directory and its parent chain
+		p = Paths.get(configFilename).toAbsolutePath();
+		base = p.getParent();
+		for (int i = 0; i < parentFolderSearchLimit; i++) {
+			if (base != null) {
+				p = Paths.get(base.toString(), configFilename);
+				paths.add(p);
+				base = base.getParent();
+			}
+		}
+		return paths;
+	}
+
+	private static void printConfigFilePaths() {
+		var paths = generateConfigFilePaths();
+		var defaultPath = paths.get(0);
+		for ( Path p : paths) {
+			System.out.println("    " + p.toString());
+		}
+	}
 	/**
 	 * Config file should be in a parent folder of java.home.
-	 * ALternatively it is also found in <current directory> or parent folders.
+	 * Alternatively it is also found in <current directory> or parent folders.
 	 * Up to 3 parent folders will be searched.
 	 * Config file name is .secrets_profile
 	 * @return
 	 */
 	private static Path getConfigFilePath() {
-		System.out.println("#######");
-		//return Paths.get(System.getProperty("user.home"), ".secrets_profile");
-		String javaHome = System.getProperty("java.home");
-		Path base = Paths.get(javaHome);
-		Path p = Paths.get(base.toString(), configFilename);
-		Path defaultPath = p.normalize();
-		System.out.println("--> " + p.toString());
-		if (p.toFile().exists()) return p;
-		for (int i = 0; i < parentFolderSearchLimit; i++) {
-			base = base.getParent();
-			if (base != null) {
-				p = Paths.get(base.toString(), configFilename);
-				System.out.println("--> " + p.toString());
-				if (p.toFile().exists()) return p;
-			}
-		}
-		// not found yet - look in current directory
-		p = Paths.get(configFilename).toAbsolutePath();
-		base = p.getParent();
-//		System.out.println("--> " + p.toString());
-//		if (p.toFile().exists()) return p;
-		for (int i = 0; i < parentFolderSearchLimit; i++) {
-			if (base != null) {
-				p = Paths.get(base.toString(), configFilename);
-				System.out.println("--> " + p.toString());
-				if (p.toFile().exists()) return p;
-				base = base.getParent();
-			}
-//			p = p.getParent();
-//			System.out.println("--> " + p.toString());
-//			if (p.toFile().exists()) return p;
+		var paths = generateConfigFilePaths();
+		var defaultPath = paths.get(0);
+		for ( Path p : paths) {
+			//System.out.println("--> " + p.toString());
+			if (p.toFile().exists()) return p;
 		}
 		return defaultPath;
 	}
