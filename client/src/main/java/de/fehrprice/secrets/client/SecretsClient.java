@@ -47,7 +47,7 @@ public class SecretsClient {
 			createSnippet(args, oh);
 			done();
 		}
-		if (isCommand("tag", args)) {
+		if (isCommand("tag", args) || isCommand("tagfull", args)) {
 			tag(args);
 			done();
 		}
@@ -223,7 +223,8 @@ public class SecretsClient {
 			// no parameters: get all user tags
 			server.getTags();
 		} else {
-			server.getSnippetsForTag(args[1]);
+			boolean displayValues = "tagfull".equalsIgnoreCase(args[0]);
+			server.getSnippetsForTag(args[1], displayValues);
 		}
 	}
 
@@ -539,7 +540,8 @@ public class SecretsClient {
 				" +                     interactively add new snippet", 
 				" ",
 				" tag                   get list of all your tags (CONSOLE DISPLAY)", 
-				" tag <name>            get list of all key/values with tag 'name' (CONSOLE DISPLAY)", 
+				" tag <name>            get list of all keys with tag 'name' (CONSOLE DISPLAY)", 
+				" tagfull <name>        get list of all key/values with tag 'name' (CONSOLE DISPLAY)", 
 				" ",
 				" g <key>               get snippet by key (COPY to CLIPBOARD - NO DISPLAY)", 
 				" ",

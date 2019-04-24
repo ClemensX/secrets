@@ -241,7 +241,7 @@ public class ServerCommunication {
 		}
 	}
 
-	public void getSnippetsForTag(String tagname) {
+	public void getSnippetsForTag(String tagname, boolean displayValues) {
 		// convert snippet to json
 		SnippetDTO s = new SnippetDTO();
 		s.command = "gettag";
@@ -260,7 +260,11 @@ public class ServerCommunication {
 		System.out.println("Your Snippets for tag " + tagname + ":");
 		List<SnippetDTO> snippets = SnippetDTO.fromJsonStringList(text);
 		for (SnippetDTO sn : snippets) {
-			System.out.println(sn.title + "=" + sn.text);
+			if (displayValues) {
+				System.out.println(sn.title + "=" + sn.text);
+			} else {
+				System.out.println(sn.title + "=");
+			}
 		}
 	}
 	
