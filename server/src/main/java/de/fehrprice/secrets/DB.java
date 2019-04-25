@@ -29,6 +29,8 @@ public class DB {
 	private static final Logger logger = Logger.getLogger(DB.class.getName());
 
 	public static final String PERSISTENCE_UNIT_NAME = "secretsdb";
+
+	private static final int MAX_USER_SLOTS = 100;
 	//public static final String PERSISTENCE_UNIT_NAME = "hsqldb-mem-test1";
 	// 
 
@@ -97,7 +99,7 @@ public class DB {
 			em.getTransaction().begin();
 			conf = new Config();
 			conf.setId(0);
-			conf.setNumSlots(100);
+			conf.setNumSlots(MAX_USER_SLOTS);
 			em.persist(conf);
 			em.getTransaction().commit();
 			System.out.println("CREATE Config Entity");

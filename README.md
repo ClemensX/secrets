@@ -52,7 +52,7 @@ DRIVER              VOLUME NAME
  * &#x2713; get snippet by key
  * &#x2713; get snippet by key and copy to clipboard
  * &#x2713; list tag entries without displaying keys
- * delete snippet by key
+ * &#x2713; delete snippet by key
  * fix client exception if id is wrong in sc test
  * &#x2713; local config file
  * ? get all snippets
