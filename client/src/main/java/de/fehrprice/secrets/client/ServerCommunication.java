@@ -340,4 +340,27 @@ public class ServerCommunication {
 		
 	}
 
+	public String deleteSnippetWithKey(String key) {
+		// convert snippet to json
+		SnippetDTO s = new SnippetDTO();
+		s.command = "deletebykey";
+		s.title = key;
+		var json = SnippetDTO.asJsonString(s);
+		System.out.println("sending json: " + json);
+		ConnectData cd = prepareConnection();
+		
+		byte[] aesMsg = cd.comm.createAESMessage(cd.dto, cd.clientSession, json);
+		byte[] aes = postServerBinary("/secretsbackend/restmsg", aesMsg);
+		String text = cd.comm.getTextFromAESMessage(aes, cd.clientSession);
+		//System.out.println("Your Snippet for key " + key + ":");
+		if (text != null && text.startsWith("no")) {
+			System.out.println(text);
+			return null;
+		} else {
+			SnippetDTO sn = SnippetDTO.fromJsonString(text);
+			System.out.println(sn.title + " deleted");
+			return sn.text;
+		}
+	}
+
 }

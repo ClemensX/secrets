@@ -162,6 +162,9 @@ public class RestServer {
 		} else if ("getbykey".equals(cmd)) {
 			logger.info("handle getbykey command");
 			return DB.getSnippetsForKey(s);
+		} else if ("deletebykey".equals(cmd)) {
+			logger.info("handle deletebykey command");
+			return DB.deleteSnippetByKey(s);
 		}
 		logger.severe("invalid command received: " + cmd);
 		return "internal error";

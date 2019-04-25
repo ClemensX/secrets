@@ -47,6 +47,10 @@ public class SecretsClient {
 			createSnippet(args, oh);
 			done();
 		}
+		if (isCommand("del", args) || isCommand("d", args) || isCommand("-", args)) {
+			deleteSnippet(args);
+			done();
+		}
 		if (isCommand("tag", args) || isCommand("tagfull", args)) {
 			tag(args);
 			done();
@@ -547,6 +551,10 @@ public class SecretsClient {
 				" ",
 				" get <key>             get snippet by key (CONSOLE DISPLAY)", 
 				" ",
+				" del <key>",
+				" d <key>",
+				" - <key>               delete snippet by key", 
+				" ",
 				" keygen                generate and print one 256 bit private key", 
 				" keygen <n>            generate and print n 256 bit private keys", 
 				" ",
@@ -567,5 +575,23 @@ public class SecretsClient {
 				);
 		System.out.println(usageString);
 		//System.out.println("user.home=" + System.getProperty("user.home"));
+	}
+
+	private static void deleteSnippet(String[] args) {
+		if (!checkConfigFile()) return;
+		if (!checkPrivateKey()) return;
+		Properties p = getSetup();
+		if (!checkConfigExists(p, SERVER_PUBLIC_KEY, ERROR_SERVER_PUBLIC_KEY)) return;
+		if (!checkConfigExists(p, SERVER_URL, ERROR_SERVER_URL)) return;
+		if (!checkConfigExists(p, SIGNUP_ID, ERROR_SIGNUP_ID)) return;
+		String priv = readPrivateKey();
+		var server = new ServerCommunication(p, priv);
+		if (args.length <= 1) {
+			// no parameters: print error
+			System.out.println("no key specified.");
+		} else {
+			//System.out.println("deleting snippet with key " + args[1]);
+			String key = server.deleteSnippetWithKey(args[1]);
+		}
 	}
 }

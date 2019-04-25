@@ -1,5 +1,6 @@
 package de.fehrprice.secrets.entity;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -103,6 +104,14 @@ public class Snippet {
 		this.command = command;
 	}
 
+	public void removeTag(Tag tagToRemove) {
+		for (Iterator<Tag> iterator = tags.iterator(); iterator.hasNext();) {
+			Tag tag = (Tag) iterator.next();
+			if (tag.getName().equals(tagToRemove.getName())) {
+				iterator.remove();
+			}
+		}
+	}
 	// queries:
 	public static List<Snippet> getAllEntities(EntityManager em) {
 		TypedQuery<Snippet> all = em.createNamedQuery(Query_GetAllEntities, Snippet.class);

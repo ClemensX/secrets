@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
@@ -274,6 +275,43 @@ public class DB {
 		if (snippet != null) {
 			String json = SnippetDTO.asJsonString(snippet);
 			System.out.println("Snippet: " + json);
+			return json;
+		} else {
+			return "no snippet found for key " + s.getTitle();
+		}
+	}
+
+	public static String deleteSnippetByKey(Snippet s) {
+		if (s.getTitle() == null || s.getTitle().length() < 1) {
+			//we have no key to look for - cannot continue
+			return "error - need exactly one key for deletebykey command";
+		}
+		//System.out.println(" userid: " + s.getId().userid);
+		//System.out.println(" key: " + s.getTitle());
+        EntityManagerFactory emf = getEntityManagerFactory();
+		EntityManager em = emf.createEntityManager();
+		var snippet = Snippet.getEntityByUserAndKey(em, s.getId().userid, s.getTitle());
+		if (snippet != null) {
+			String json = SnippetDTO.asJsonString(snippet);
+			System.out.println("Snippet: " + json);
+			// go through tags and remove the ones that are empty now:
+			em.getTransaction().begin();
+			Set<Tag> toRemove = new HashSet<>();
+			for (Tag t : snippet.getTags()) {
+				var sns = Snippet.getEntitiesByUserAndTag(em, s.getId().userid, t);
+				if (sns.size() <= 1) {
+					toRemove.add(t);
+				}
+			}
+			for (Tag t : toRemove) {
+				snippet.removeTag(t);
+				em.remove(t);
+				System.out.println("removed tag: " + t.getName() + " for user " + s.getId().userid);
+			}
+			em.remove(snippet);
+			em.getTransaction().commit();
+			em.close();
+			System.out.println("removed snippet: " + snippet.getTitle() + " for user " + s.getId().userid);
 			return json;
 		} else {
 			return "no snippet found for key " + s.getTitle();
