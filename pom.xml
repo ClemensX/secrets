@@ -45,6 +45,9 @@
 				<artifactId>junit-platform-maven-plugin</artifactId>
 				<version>1.0.0-M5</version>
 				<extensions>true</extensions>
+				<configuration>
+				  <timeout>3600</timeout>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
