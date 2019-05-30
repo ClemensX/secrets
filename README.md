@@ -4,6 +4,107 @@
 
 [Details of the used cryptographic algorithms can be found here](README_CRYPTO.md)
 
+## Client Usage
+
+Secrets! stores info snippets as key/value pairs on our server. Each pair is associated with one or more tags for organizing your snippets.
+
+Example usage:
+
+List all tags you have used:  
+
+```
+C:\>sc tag
+Your Taglist:
+connect
+server
+login
+microsoft
+pw
+github
+bank
+```
+List all keys with tag pw (values will not be shown):  
+
+```
+C:\>sc tag pw
+Your Snippets for tag pw:
+microsoft_pw=
+login.vr.pw=
+login.tennis.pw=
+```
+Copy your microsoft password to clipboard:  
+
+```
+C:\>sc g microsoft_pw
+Getting value for key microsoft_pw
+value for microsoft_pw copied to clipboard.
+```
+Store your github password:  
+
+```
+C:\>sc +
+Enter Key:
+login.github.pw
+Enter Value:
+geheim
+Enter Tags (separate with blanks):
+pw github login
+login.github.pw=geheim  [ pw github login ]
+save snippet? [y]
+
+snippet added to DB
+```
+Show your github password in console:  
+
+```
+C:\>sc get login.github.pw
+Getting value for key login.github.pw
+login.github.pw=geheim
+```
+Full client help page:
+
+```
+sc - The Secrets! Client. See details at http://fehrprice.de:5000/secrets
+
+usage: sc command [<options>]
+
+Commands:
+
+ create
+ c
+ +                     interactively add new snippet
+
+ tag                   get list of all your tags (CONSOLE DISPLAY)
+ tag <name>            get list of all keys with tag 'name' (CONSOLE DISPLAY)
+ tagfull <name>        get list of all key/values with tag 'name' (CONSOLE DISPLAY)
+
+ g <key>               get snippet by key (COPY to CLIPBOARD - NO DISPLAY)
+
+ get <key>             get snippet by key (CONSOLE DISPLAY)
+
+ del <key>
+ d <key>
+ - <key>               delete snippet by key
+
+ keygen                generate and print one 256 bit private key
+ keygen <n>            generate and print n 256 bit private keys
+
+ public                show your public key
+
+ test                  test connection to Secrets! server
+
+ id                    get your id from Secrets! server and store in config file
+
+ configfile            show location of you config file
+
+ server                interactively add or change the url of the Secrets! server
+
+ setup                 interactively setup your Secrets! client
+
+ private               interactively set full path and name to your private key file
+```
+
+
 ## Start Server
 
 ### Preparations
@@ -52,7 +153,7 @@ DRIVER              VOLUME NAME
  * &#x2713; get snippet by key
  * &#x2713; get snippet by key and copy to clipboard
  * &#x2713; list tag entries without displaying keys
- * delete snippet by key
+ * &#x2713; delete snippet by key
  * fix client exception if id is wrong in sc test
  * &#x2713; local config file
  * ? get all snippets
