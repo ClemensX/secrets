@@ -109,7 +109,8 @@ Commands:
 
 ### Preparations
 
- * build crypto, server and client projects with mvn clean install (OpenJDK 11 needed)
+ * build 5 modules with mvn clean install in parent folder (OpenJDK 11 needed)
+ * enable build time test by setting dryRun to false in secrets/pom.xml
  * use client to generate private keys, select one and put to ./secrets/private/keyfile_private
  * set environment vars in local .env file. Example for bash:
 ```
