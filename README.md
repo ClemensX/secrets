@@ -107,10 +107,103 @@ Commands:
 
 ## Start Server
 
+### Pre-Preparations
+
+This is what you need to install and configure on a clean end fresh Ubuntu 20 Server. All instructions as root.
+
+#### Users
+```
+  adduser hugo
+  groups
+  adduser hugo root
+  usermod -aG sudo hugo
+  users
+```
+  
+#### Java
+
+Java Development Version (JDK 14):
+
+check with java -version. if not installed:
+
+```
+apt-get install openjdk-14-jdk openjdk-14-demo openjdk-14-doc openjdk-14-jre-headless openjdK-14-source 
+```
+
+#### Git
+
+ User mode is enough!
+
+```
+  mkdir server
+  cd server/
+  mkdir docker
+  cd docker/
+  git config --list
+  git config --global user.name "Hugo Ho"
+  git config --global user.email "hugo@gmx.de"
+  git config --list
+  git clone https://github.com/ClemensX/secrets.git
+  cd secrets
+  git status
+```
+
+#### Maven
+
+```
+ apt-cache policy maven
+ apt-get install maven
+ In user mode:
+ mvn -version
+
+```
+
+#### FTP
+
+if ftp is not avilable install it:
+
+```
+check if installed:
+ apt-cache policy vsftpd
+ 
+ apt-get install vsftpd
+ nano /etc/vsftpd.conf
+ --> uncomment line: write_enable=YES 
+
+```
+#### Docker
+
+if ftp is not avilable install it:
+
+```
+check if installed:
+ apt-cache policy docker.io
+ apt-get install docker.io
+ 
+ apt-cache policy docker-compose
+ apt-get install docker-compose
+ groups (docker should be available)
+ groups hugo
+ usermod -aG docker hugo
+```
+#### Nginx
+
+Installation and configuration of nginx:
+
+```
+check if installed:
+ apt-cache policy nginx
+ 
+ apt-get install nginx
+ nano /etc/vsftpd.conf
+ --> uncomment line: write_enable=YES 
+
+```
+
 ### Preparations
 
  * build 5 modules with mvn clean install in parent folder (OpenJDK 11 needed)
- * enable build time test by setting dryRun to false in secrets/pom.xml
+ * **Disable** build time tests by setting dryRun to false in top level pom.xml
  * use client to generate private keys, select one and put to ./secrets/private/keyfile_private
  * set environment vars in local .env file. Example for bash:
 ```
