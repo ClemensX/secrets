@@ -47,7 +47,7 @@
 				<extensions>true</extensions>
 				<configuration>
 				  <timeout>3600</timeout>
-				  <dryRun>false</dryRun>
+				  <dryRun>true</dryRun>
 				</configuration>
 			</plugin>
 		</plugins>
