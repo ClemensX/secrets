@@ -40,9 +40,10 @@ public class Server extends AbstractVerticle {
     
     // reroute short URL to proper start page:
     Route route1 = router.route("/secrets").handler(routingContext -> {
-    	  HttpServerResponse response = routingContext.response();
-    	  response.putHeader("location", "/secrets/index.html").setStatusCode(302).end();
-    	});
+        System.out.println("Server received /secrets");
+        HttpServerResponse response = routingContext.response();
+        response.putHeader("location", "/secrets/index.html").setStatusCode(302).end();
+      });
 
     // handle backend calls:
     Route route2 = router.route("/secretsbackend/").handler(routingContext -> {
