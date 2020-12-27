@@ -44,3 +44,7 @@ psql -U postgres -d secretsdb
 powershell:
 h history
 r <num> rerun command
+
+attach to running secrets app:
+ docker exec -it server_serverapp_1 /bin/bash
+ 

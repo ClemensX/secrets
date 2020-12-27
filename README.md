@@ -173,18 +173,18 @@ check if installed:
 ```
 #### Docker
 
-if ftp is not avilable install it:
+Re-install docker according to https://docs.docker.com/engine/install/ubuntu/
+Do not use the pre-installed version.
+
+Do **not** use docker.io, use regular docker-ce docker-ce-cli containerd.io from docker.com
 
 ```
-check if installed:
+check if installed frong version:
+ # should yield Installed: (none)
  apt-cache policy docker.io
- apt-get install docker.io
- 
- apt-cache policy docker-compose
- apt-get install docker-compose
- groups (docker should be available)
- groups hugo
- usermod -aG docker hugo
+
+ # should yield Installed: 5:20.10.1~3-0~ubuntu-focal
+ apt-cache policy docker-ce
 ```
 #### Nginx
 
@@ -197,6 +197,14 @@ check if installed:
  apt-get install nginx
  nano /etc/vsftpd.conf
  --> uncomment line: write_enable=YES 
+
+example configuration in /etc/nginx/sites-available/default:
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        server_name _;
+        return 301 http://$host:5000/secrets;
+}
 
 ```
 
@@ -219,8 +227,50 @@ export POSTGRES_PASSWORD="zzz"
  * Start the server in current shell with logs visible ```docker-compose up --build```
  * access server on port 5000, e.g. http://localhost:5000/secrets
  * Stop server ```docker-compose down```
- 
+
+#### Run Errors
+ * Check to see if serverapp is reachable: ```curl http://localhost:5000/secrets ```
+ * if this hangs (does not immediately return), use this command sequence.
+   Exact reason unknown - probably has something to do with networking
+```
+docker network disconnect bridge server_serverapp_1
+docker-compose down
+sudo systemctl restart docker
+docker-compose up -d --build
+docker network connect bridge server_serverapp_1
+```
+ * then retest. Good luck!
+
 ## Maintenance
+
+### Backup / Restore
+
+ * start as usual
+ * connect to running postgresql container: ```docker exec -it server_db_1 /bin/bash```
+ * List DBs: psql -U postgres -l
+ * backup secretsdb: 
+```
+in container:
+   pg_dump -U postgres secretsdb >dump.sql
+copy to host:
+  docker cp 67cd18f7d5e3:/dump.sql ./d.sql
+```
+ * restore secretsdb: 
+```
+in container:
+drop old tables:
+list tables, drop table, quit:
+  psql -U postgres secretsdb
+    \dt+
+    drop table config;
+    \q
+copy from host:
+  docker cp ./dump.sql 67cd18f7d5e3:/dump.sql
+import content:    
+  psql -U postgres secretsdb <dump.sql
+```
+
+### Other
 
  * access db via pgadmin on port 5050, e.g. http://localhost:5050
  * use user name and pass you set in .env file
