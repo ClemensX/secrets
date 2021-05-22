@@ -214,12 +214,13 @@ server {
  * **Disable** build time tests by setting dryRun to true in top level pom.xml
  * use client to generate private keys, select one and put to ./secrets/private/keyfile_private
  * set environment vars in local .env file. Example for bash:
+ * cd to this folder: /server/docker/secrets/server
 ```
 export DEFAULT_USER_PGADMIN="xxx@yyy.com"
 export DEFAULT_PASSWORD_PGADMIN="pppp"
 export POSTGRES_PASSWORD="zzz"
 ```
- * set vars with ```. .env```
+ * set vars with ```. .env2```
  
 ### Run
 
