@@ -60,6 +60,7 @@ d25bf5f0595bbe24655141438e7a100b
 	 */
 	@Test
 	public void Test1() {
+        System.out.println("CurveSignatureTest.Test1");
 		String secretKeyString, publicKeyString, messageString, signatureString;
 		secretKeyString = "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
 		publicKeyString = "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
@@ -86,6 +87,7 @@ d25bf5f0595bbe24655141438e7a100b
 	 */
 	@Test
 	public void Test2() {
+        System.out.println("CurveSignatureTest.Test2");
 		String secretKeyString, publicKeyString, messageString, signatureString;
 		secretKeyString = "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb";
 		publicKeyString = "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
@@ -102,6 +104,7 @@ d25bf5f0595bbe24655141438e7a100b
 	// line 108: 
 	@Test
 	public void Test108() {
+        System.out.println("CurveSignatureTest.Test108");
 		String secretKeyString, publicKeyString, messageString, signatureString;
 		secretKeyString = "50414cf549bcc55b5b6b75ea3782b2ea7c087b6a0106175e469ca2cc764aeb01";
 		publicKeyString = "d0f30c12e997f96e7aeecd1bff6a012ec388ebf8f3f4af664804d1638e4c346a";
@@ -119,6 +122,7 @@ d25bf5f0595bbe24655141438e7a100b
 	//                     
 	@Test
 	public void Test126() {
+        System.out.println("CurveSignatureTest.Test126");
 		String secretKeyString, publicKeyString, messageString, signatureString;
 		secretKeyString = "670b30626fe367d8b45f43733d6f25b37eccbcb551963f0ac8b666b48041c72d";
 		publicKeyString = "65aa4c6d4ba0ab34bc75b39f09527ca6f2425f52415cdffdf2dff273f8ea612c";
@@ -134,6 +138,7 @@ d25bf5f0595bbe24655141438e7a100b
 	
 	@Test
 	void testConstants() {
+        System.out.println("CurveSignatureTest.testConstants");
 		assertEquals("46316835694926478169428394003475163141307993866256225615783033603165251855960", Ed25519.By.toString());
 		assertEquals("15112221349535400772501151409588531511454012693041857206046113283949847762202", Ed25519.Bx.toString());
 	}
@@ -186,6 +191,7 @@ d25bf5f0595bbe24655141438e7a100b
 	
 	@Test
 	void testRandom() {
+        System.out.println("CurveSignatureTest.testRandom");
 		byte[] seed = RandomSeed.createSeed();
 		RandomSeed.createSeed();
 		RandomSeed.createSeed();
