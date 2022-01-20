@@ -37,10 +37,10 @@ public class RandomSeed {
 		byte[] ret = new byte[64];
 		System.arraycopy(secBuffer, 0, ret, 0, 32);
 		System.arraycopy(nanoBuffer, 0, ret, 32, 32);
-		//System.out.println(Conv.toString(ret));
+		System.out.println(Conv.toString(ret));
 		SHA sha = new SHA();
 		byte[] seed = sha.sha512(ret);
-		//System.out.println("final seed: " + Conv.toString(seed));
+		System.out.println("final seed: " + Conv.toString(seed));
 		return seed;
 	}
 
