@@ -189,7 +189,7 @@ d25bf5f0595bbe24655141438e7a100b
 //		System.out.println("signature " + signatureString);
 	}
 	
-	@Test
+	//@Test
 	void testRandom() {
         System.out.println("CurveSignatureTest.testRandom");
 		byte[] seed = RandomSeed.createSeed();

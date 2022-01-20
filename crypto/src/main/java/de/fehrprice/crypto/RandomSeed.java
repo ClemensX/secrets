@@ -22,7 +22,9 @@ public class RandomSeed {
 		// ScureRandom
 		byte[] secBuffer;
 		try {
+		    System.out.println("SecureRandom start");
 			secBuffer = SecureRandom.getInstanceStrong().generateSeed(32);
+            System.out.println("SecureRandom end");
 		} catch (NoSuchAlgorithmException e) {
 			return null;
 		}
@@ -37,7 +39,7 @@ public class RandomSeed {
 		byte[] ret = new byte[64];
 		System.arraycopy(secBuffer, 0, ret, 0, 32);
 		System.arraycopy(nanoBuffer, 0, ret, 32, 32);
-		System.out.println(Conv.toString(ret));
+		//System.out.println(Conv.toString(ret));
 		SHA sha = new SHA();
 		byte[] seed = sha.sha512(ret);
 		System.out.println("final seed: " + Conv.toString(seed));
