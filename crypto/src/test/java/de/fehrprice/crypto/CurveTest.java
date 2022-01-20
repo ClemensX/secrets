@@ -22,6 +22,7 @@ public class CurveTest {
 	
 	@BeforeAll
 	public static void setUp() throws Exception {
+        System.out.println("CurveTest");
 		crv = new Curve25519();
 	}
 

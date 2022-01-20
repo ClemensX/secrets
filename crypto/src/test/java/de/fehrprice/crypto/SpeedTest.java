@@ -4,12 +4,18 @@ import java.math.BigInteger;
 import java.text.DecimalFormat;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 
 import de.fehrprice.crypto.RSA;
 
 public class SpeedTest {
 
-	// indicate use of big keys that will slow test execution considerably
+    @BeforeAll
+    public static void setUp() throws Exception {
+        System.out.println("SpeedTest");
+    }
+
+    // indicate use of big keys that will slow test execution considerably
 	// use for final tests, not during development
 	private static final boolean USE_LARGE_KEY_TESTS = false;
 

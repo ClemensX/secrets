@@ -26,6 +26,7 @@ public class CurveSignatureTest {
 	
 	@BeforeAll
 	public static void setUp() throws Exception {
+        System.out.println("CurveSignatureTest");
 		ed = new Ed25519();
 	}
 

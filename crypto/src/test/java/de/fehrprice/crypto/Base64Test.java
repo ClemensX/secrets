@@ -16,6 +16,7 @@ public class Base64Test {
 
 	@BeforeAll
 	public static void setUp() throws Exception {
+	    System.out.println("Base64Test");
 	}
 
 	@AfterAll

@@ -12,6 +12,7 @@ import java.util.Random;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 
 import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
@@ -28,7 +29,12 @@ public class CryptoTest {
 
 	private static final int Nb = 4; // always 4 state columns
 
-	@Test
+    @BeforeAll
+    public static void setUp() throws Exception {
+        System.out.println("CryptoTest");
+    }
+
+    @Test
 	public void testCurveConversions() {
 		Curve25519 crv = new Curve25519();
 		byte[] coded = crv.toByteArrayLittleEndian("0000000000000000000000000000000000000000000000000000000000000001");

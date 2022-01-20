@@ -42,6 +42,7 @@ public class CommTest {
 	
 	@BeforeAll
 	public static void setUp() throws Exception {
+        System.out.println("CommTest");
 		x = new Curve25519();
 		ed = new Ed25519();
 		aes = new AES();

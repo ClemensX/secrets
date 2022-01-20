@@ -16,6 +16,7 @@ class ModularWhiteBoxPatchRuntimeTests {
 
 	@Test
 	void accessPublicClass() {
+        System.out.println("ModularWhiteBoxPatchRuntimeTests");
 		Assertions.assertEquals("de.fehrprice.net", DTO.class.getPackageName());
 		Assertions.assertEquals("fehrprice.crypto", DTO.class.getModule().getName());
 	}

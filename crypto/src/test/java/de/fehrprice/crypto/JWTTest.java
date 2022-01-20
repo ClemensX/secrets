@@ -62,6 +62,7 @@ public class JWTTest {
 	
 	@BeforeAll
 	public static void setUp() throws Exception {
+        System.out.println("JWTTest");
 	}
 
 	@AfterAll
