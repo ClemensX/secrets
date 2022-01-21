@@ -36,7 +36,7 @@ public class RandomSeed {
 //	            System.out.println("securerandom.source reset: " + sec);
 //	        }
 
-	        SecureRandom secureRandom = SecureRandom.getInstance("DRBG");
+	        SecureRandom secureRandom = SecureRandom.getInstance("NativePRNGNonBlocking");
 //            secBuffer = SecureRandom.getInstanceStrong().generateSeed(32);
             secBuffer = secureRandom.generateSeed(32);
             System.out.println("SecureRandom end");
