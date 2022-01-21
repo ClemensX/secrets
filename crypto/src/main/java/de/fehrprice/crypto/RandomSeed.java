@@ -30,6 +30,7 @@ public class RandomSeed {
 	        //System.out.println("securerandom.source: " + sec);
 	        if (sec.contains("/dev") && !sec.equalsIgnoreCase("file:/dev/urandom")) {
 	            props.setProperty("securerandom.source", "file:/dev/urandom");
+	            props.setProperty("java.security.egd", "file:/dev/urandom");
 	            props = System.getProperties();
 	            sec = props.getProperty("securerandom.source");
 	            System.out.println("securerandom.source reset: " + sec);
