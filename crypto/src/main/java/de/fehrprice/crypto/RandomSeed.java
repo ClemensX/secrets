@@ -28,15 +28,17 @@ public class RandomSeed {
 	        String sec = props.getProperty("securerandom.source");
 	        //props.setProperty("gate.home", "http://gate.ac.uk/wiki/code-repository");
 	        //System.out.println("securerandom.source: " + sec);
-	        if (sec.contains("/dev") && !sec.equalsIgnoreCase("file:/dev/urandom")) {
-	            props.setProperty("securerandom.source", "file:/dev/urandom");
-	            props.setProperty("java.security.egd", "file:/dev/urandom");
-	            props = System.getProperties();
-	            sec = props.getProperty("securerandom.source");
-	            System.out.println("securerandom.source reset: " + sec);
-	        }
-		    
-			secBuffer = SecureRandom.getInstanceStrong().generateSeed(32);
+//	        if (sec.contains("/dev") && !sec.equalsIgnoreCase("file:/dev/urandom")) {
+//	            props.setProperty("securerandom.source", "file:/dev/urandom");
+//	            props.setProperty("java.security.egd", "file:/dev/urandom");
+//	            props = System.getProperties();
+//	            sec = props.getProperty("securerandom.source");
+//	            System.out.println("securerandom.source reset: " + sec);
+//	        }
+
+	        SecureRandom secureRandom = SecureRandom.getInstance("DRBG");
+//            secBuffer = SecureRandom.getInstanceStrong().generateSeed(32);
+            secBuffer = secureRandom.generateSeed(32);
             System.out.println("SecureRandom end");
 		} catch (NoSuchAlgorithmException e) {
 			return null;
