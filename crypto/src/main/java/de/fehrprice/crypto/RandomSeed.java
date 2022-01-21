@@ -36,9 +36,14 @@ public class RandomSeed {
 //	            System.out.println("securerandom.source reset: " + sec);
 //	        }
 
-	        SecureRandom secureRandom = SecureRandom.getInstance("NativePRNGNonBlocking");
-//            secBuffer = SecureRandom.getInstanceStrong().generateSeed(32);
-            secBuffer = secureRandom.generateSeed(32);
+	        if (System.getProperty("os.name").toLowerCase().startsWith("win")) {
+	            // running on Windows
+	            secBuffer = SecureRandom.getInstanceStrong().generateSeed(32);
+	        } else {
+	            // non Windows
+	            SecureRandom secureRandom = SecureRandom.getInstance("NativePRNGNonBlocking");
+                secBuffer = secureRandom.generateSeed(32);
+	        }
             System.out.println("SecureRandom end");
 		} catch (NoSuchAlgorithmException e) {
 			return null;

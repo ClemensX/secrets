@@ -46,8 +46,14 @@
 				<version>1.0.0-M5</version>
 				<extensions>true</extensions>
 				<configuration>
-				  <timeout>3600</timeout>
-				  <dryRun>false</dryRun>
+					<timeout>3600</timeout>
+					<dryRun>false</dryRun>
+					<classNamePatterns>
+						<pattern>.*WebClientServerTest</pattern>
+					</classNamePatterns>
+					<tweaks>
+						<failIfNoTests>false</failIfNoTests>
+					</tweaks>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -33,16 +33,16 @@ public class CryptoTest {
     @BeforeAll
     public static void setUp() throws Exception {
         System.out.println("CryptoTest");
-        Properties props = System.getProperties();
-        String sec = props.getProperty("securerandom.source");
-        //props.setProperty("gate.home", "http://gate.ac.uk/wiki/code-repository");
-        System.out.println("securerandom.source: " + sec);
-        if (sec.contains("/dev")) {
-            props.setProperty("securerandom.source", "file:/dev/urandom");
-            props = System.getProperties();
-            sec = props.getProperty("securerandom.source");
-            System.out.println("securerandom.source: " + sec);
-        }
+//        Properties props = System.getProperties();
+//        String sec = props.getProperty("securerandom.source");
+//        //props.setProperty("gate.home", "http://gate.ac.uk/wiki/code-repository");
+//        System.out.println("securerandom.source: " + sec);
+//        if (sec.contains("/dev")) {
+//            props.setProperty("securerandom.source", "file:/dev/urandom");
+//            props = System.getProperties();
+//            sec = props.getProperty("securerandom.source");
+//            System.out.println("securerandom.source: " + sec);
+//        }
     }
 
     @Test
