@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -32,6 +33,9 @@ public class CryptoTest {
     @BeforeAll
     public static void setUp() throws Exception {
         System.out.println("CryptoTest");
+        Properties props = System.getProperties();
+        //props.setProperty("gate.home", "http://gate.ac.uk/wiki/code-repository");
+        System.out.println("securerandom.source: " + props.getProperty("securerandom.source"));
     }
 
     @Test
