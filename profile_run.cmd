@@ -1,0 +1,1 @@
+java -cp server\target\server-0.0.1-SNAPSHOT-jar-with-dependencies.jar -agentpath:C:/tools/visualvm/visualvm/lib/deployed/jdk16/windows-amd64/profilerinterface.dll=C:\tools\visualvm\visualvm\lib,5140 de.fehrprice.crypto.run.PerformanceCheck

@@ -135,16 +135,67 @@ public class CommTest {
 	}
 	
 	// execute ECDSA test multiple times for performance analysis
-	//@Test
+
+	@Test
 	void multiECDSATest() {
-		for ( int i = 0; i < 1000; i++) {
-			testECDSA();
+        String alicePrivate = Conv.toString(aes.random(32));
+        String bobPrivate = Conv.toString(aes.random(32));
+
+        String alicePublic = ed.publicKey(alicePrivate);
+        String bobPublic = ed.publicKey(bobPrivate);
+		for ( int i = 0; i < 10; i++) {
+		    doECDSACommunication(alicePrivate, alicePublic, bobPrivate, bobPublic);
 		}
 	}
 	
 	@Test
 	void clientServerTest() {
 		//Http
+	}
+	
+	// do full conversation like in real world scenario, for performance tests, minimal assertions
+	private void doECDSACommunication(String alicePrivate, String alicePublic, String bobPrivate, String bobPublic) {
+        // Alice acts as client and calls Bob:
+        ECConnection comm = new ECConnection(x, ed, aes);
+        Session aliceSession = new Session();
+        String message = comm.initiateECDSA(aliceSession, alicePrivate, alicePublic, "Alice");
+        
+        // Bob receives the message and verifies:
+        DTO dto = DTO.fromJsonString(message);
+        assertTrue(dto.isInitClientCommand());
+        assertTrue(comm.validateSender(dto, alicePublic));
+        
+        // Bob answers, after that both client and server are able to construct the session key for AES
+        Session bobSession = new Session();
+        String initAnswer = comm.answerInitClient(bobSession, dto, bobPrivate, bobPublic);
+        
+        // Alice receives the server ok message and returns the first AES encrypted block
+        dto = DTO.fromJsonString(initAnswer);
+        assertTrue(comm.validateSender(dto, bobPublic));
+        byte[] sessionKeyAlice = comm.computeSessionKey(aliceSession.sessionPrivateKey, bobSession.sessionPublicKey);
+        aliceSession.sessionAESKey = sessionKeyAlice;
+        
+        // continue with AES: Alice sends message to Bob
+        String aesMessage = "Niklas ist der Beste!";
+        //String aesMessage = "Niklas";
+        byte[] encrypted = comm.encryptAES(aliceSession, aesMessage);
+        
+        // Bob receives the block and decrypts:
+        byte[] sessionKeyBob = comm.computeSessionKey(bobSession.sessionPrivateKey, aliceSession.sessionPublicKey);
+        bobSession.sessionAESKey = sessionKeyBob;
+        String decryptedMessage = comm.decryptAES(bobSession, encrypted);
+        assertEquals(aesMessage, decryptedMessage);
+        
+        // intermediate: check session keys
+        assertArrayEquals(sessionKeyAlice, sessionKeyBob);
+    
+        // Bob answers:
+        String answer = "You have spoken the truth!";
+        encrypted = comm.encryptAES(bobSession, answer);
+        
+        // Alice receives answer:
+        decryptedMessage = comm.decryptAES(aliceSession, encrypted);
+        assertEquals(answer, decryptedMessage);
 	}
 }
 

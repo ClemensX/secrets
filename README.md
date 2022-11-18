@@ -242,6 +242,10 @@ docker network connect bridge server_serverapp_1
 ```
  * then retest. Good luck!
 
+### Profiling
+See ``profile_run.cmd`` and ``profiler_start.cmd`` for configuration of profiler https://visualvm.github.io
+
+
 ## Maintenance
 
 ### Backup / Restore
