@@ -156,7 +156,11 @@ public class RSA {
  	}
  	
  	private static String bigIntegerToHexString(BigInteger big) {
- 		return big.toString(16);
+ 	    var s = big.toString(16);
+ 	    if (s.length() % 2 == 1) {
+ 	        s = "0" + s;
+ 	    }
+ 		return s;
  	}
  	
 	/**

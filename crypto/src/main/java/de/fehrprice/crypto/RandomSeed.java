@@ -23,7 +23,7 @@ public class RandomSeed {
 		// ScureRandom
 		byte[] secBuffer;
 		try {
-		    System.out.println("SecureRandom start");
+		    //System.out.println("SecureRandom start");
 	        Properties props = System.getProperties();
 	        String sec = props.getProperty("securerandom.source");
 	        //props.setProperty("gate.home", "http://gate.ac.uk/wiki/code-repository");
@@ -44,7 +44,7 @@ public class RandomSeed {
 	            SecureRandom secureRandom = SecureRandom.getInstance("NativePRNGNonBlocking");
                 secBuffer = secureRandom.generateSeed(32);
 	        }
-            System.out.println("SecureRandom end");
+            //System.out.println("SecureRandom end");
 		} catch (NoSuchAlgorithmException e) {
 			return null;
 		}
@@ -62,7 +62,7 @@ public class RandomSeed {
 		//System.out.println(Conv.toString(ret));
 		SHA sha = new SHA();
 		byte[] seed = sha.sha512(ret);
-		System.out.println("final seed: " + Conv.toString(seed));
+		//System.out.println("final seed: " + Conv.toString(seed));
 		return seed;
 	}
 

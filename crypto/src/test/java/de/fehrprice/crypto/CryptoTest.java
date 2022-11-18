@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 
 import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
@@ -22,6 +23,7 @@ import de.fehrprice.crypto.RSA;
 import de.fehrprice.crypto.SHA;
 //import junit.framework.TestCase;
 
+//@Disabled
 public class CryptoTest {
 
 	// indicate use of big keys that will slow test execution considerably
@@ -47,6 +49,7 @@ public class CryptoTest {
 
     @Test
 	public void testCurveConversions() {
+        System.out.println("CryptoTest.testCurveConversions");
 		Curve25519 crv = new Curve25519();
 		byte[] coded = crv.toByteArrayLittleEndian("0000000000000000000000000000000000000000000000000000000000000001");
 		BigInteger v = crv.decodeLittleEndian(coded, 255);
@@ -87,6 +90,7 @@ public class CryptoTest {
 
 	@Test
 	public void testAES() {
+        System.out.println("CryptoTest.testAES");
 		Charset.forName("UTF-8");
 		int[] w = null;
 		AES aes = new AES();
@@ -146,6 +150,7 @@ public class CryptoTest {
 
 	@Test
 	public void testLongByteConversion () {
+        System.out.println("CryptoTest.testLongByteConversion");
 		byte[] k =  Conv.toByteArray("00000000000000000000000000000001");
 		long l = Conv.bytesToUnsignedLong(k);
 		assertEquals(0L, l);
@@ -167,6 +172,7 @@ public class CryptoTest {
 	
 	@Test
 	public void testAESFullMessage() {
+        System.out.println("CryptoTest.testAESFullMessage");
 		AES aes = new AES();
 		
 		byte[] key2 = Conv.toByteArray("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
@@ -183,6 +189,7 @@ public class CryptoTest {
 	// create random byte buffer and check encryption/decryption
 	@Test
 	public void testAESRandomMessage() {
+        System.out.println("CryptoTest.testAESRandomMessage");
 		AES aes = new AES();
 		Random random = new Random();
 		int runs = 200;
@@ -196,12 +203,16 @@ public class CryptoTest {
 			byte[] enc = aes.cipher256(key, message);
 			byte[] dec = aes.decipher256(key, enc);
 			assertArrayEquals(message, dec);
+			if (i % 30 == 0) {
+		        System.out.println("CryptoTest.testAESRandom run " + i);
+			}
 		}
 		
 	}
 
 	@Test
 	public void testKeyExpansion() {
+        System.out.println("CryptoTest.testKeyExpansion");
 		int[] w = null;
 		AES aes = new AES();
 
@@ -228,6 +239,7 @@ public class CryptoTest {
 
 	@Test
 	public void testMult() {
+        System.out.println("CryptoTest.testMult");
 		AES aes = new AES();
 		byte r;
 		r = aes.galoisFastMult((byte) 0xbf, (byte) 0x03);
@@ -247,6 +259,7 @@ public class CryptoTest {
 
 	@Test
 	public void testRandom() {
+        System.out.println("CryptoTest.testRandom");
 		AES aes = new AES();
 		if (!USE_LARGE_KEY_TESTS)
 			return;
@@ -289,6 +302,7 @@ public class CryptoTest {
 
 	@Test
 	public void testConversions() {
+        System.out.println("CryptoTest.testConversions");
 		AES aes = new AES();
 		byte[] plaintext = { (byte) 0x32, (byte) 0x43, (byte) 0xf6, (byte) 0xa8, (byte) 0x88, (byte) 0x5a, (byte) 0x30,
 				(byte) 0x8d, (byte) 0x31, (byte) 0x31, (byte) 0x98, (byte) 0xa2, (byte) 0xe0, (byte) 0x37, (byte) 0x07,
@@ -316,6 +330,7 @@ public class CryptoTest {
 
 	@Test
 	public void testRSA() {
+        System.out.println("CryptoTest.testRSA");
 		// test RSA and key generation:
 		RSA rsa = new RSA();
 		// rsa.createPrimesPQ(32);
@@ -400,6 +415,7 @@ public class CryptoTest {
 
 	@Test
 	public void testRSASigning() {
+        System.out.println("CryptoTest.testRSASigning");
 		String secret_k = "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742";
 		RSA rsa = new RSA();
 		rsa.generateKeys(1024);
@@ -443,6 +459,7 @@ public class CryptoTest {
 
 	@Test
 	public void testBigIntegerConversions() {
+        System.out.println("CryptoTest.testBigIntegerConversions");
 		RSA rsa = new RSA();
 		String res, input = "01";
 		res = Conv.toString(rsa.decodeFromBigInteger(rsa.encodeToBigInteger(Conv.toByteArray(input))));
@@ -477,6 +494,7 @@ public class CryptoTest {
 
 	@Test
 	public void testSHA() {
+        System.out.println("CryptoTest.testSHA");
 		SHA sha = new SHA();
 		byte[] digest = null;
 
