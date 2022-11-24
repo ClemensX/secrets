@@ -93,7 +93,7 @@ public class Conv {
 	}
 
 	/**
-	 * Format byte array as Hex String - on byte yields 2 chars.
+	 * Format byte array as Hex String - one byte yields 2 chars.
 	 * Big Endian order: First byte will be first 2 chars of String
 	 * @param bytes
 	 * @return
@@ -132,6 +132,21 @@ public class Conv {
 		b[5] = (byte) (l>>>16);
 		b[6] = (byte) (l>>>8);
 		b[7] = (byte) (l);
+	}
+	
+	/**
+	 * Reverse bytes of 32 bytes array.
+	 * Throws NumberFormatException on wrong length
+	 * @param b
+	 */
+	public static void reverseBytes(byte[] b) {
+	    if (b.length != 32) {
+	        throw new NumberFormatException("byte arrays have to be 32 bytes");
+	    }
+	    for (int i = 0; i < 16; i++) {
+	        // in place reversal:
+	        byte t = b[i]; b[i] = b[31-i]; b[31-i] = t;
+	    }
 	}
 	
 	public static int byteToInt(byte b) {
