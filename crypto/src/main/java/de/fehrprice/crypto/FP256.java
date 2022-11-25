@@ -126,6 +126,14 @@ public class FP256 {
         return new fp256();
     }
 
+    private long getCarry(long a, long b) {
+        if (Long.compareUnsigned(a, b) < 0) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    
     // /src/ll/ll_u256_add.c
     public void add(fp256 res, fp256 a, fp256 b) {
         //u64 t, r, carry;
@@ -133,28 +141,28 @@ public class FP256 {
 
         t = a.d[0];
         r = t + b.d[0];
-        carry = (r < t) ? 1 : 0;
+        carry = getCarry(r,t);
         res.d[0] = r;
 
         t = a.d[1];
         t += carry;
-        carry = (t < carry) ? 1 : 0;;
+        carry = getCarry(t,carry);
         r = t + b.d[1];
-        carry |= (r < t) ? 1 : 0;
+        carry |= getCarry(r,t);
         res.d[1] = r;
 
         t = a.d[2];
         t += carry;
-        carry = (t < carry) ? 1 : 0;
+        carry = getCarry(t,carry);
         r = t + b.d[2];
-        carry |= (r < t) ? 1 : 0;
+        carry |= getCarry(r,t);
         res.d[2] = r;
 
         t = a.d[3];
         t += carry;
-        carry = (t < carry) ? 1 : 0;
+        carry = getCarry(t,carry);
         r = t + b.d[3];
-        carry |= (r < t) ? 1 : 0;
+        carry |= getCarry(r,t);
         res.d[3] = r;
         
     }

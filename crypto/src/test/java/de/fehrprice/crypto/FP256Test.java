@@ -72,6 +72,15 @@ class FP256Test {
         }
         
     }
+    
+    /**
+     * Map BigInteger to allowed 256 bit range
+     * @param b
+     * @return
+     */
+    private BigInteger mod(BigInteger b) {
+        return b.mod(BigInteger.TWO.pow(256));
+    }
 
     @Test
     void testAdditions() {
@@ -82,21 +91,30 @@ class FP256Test {
         fp.add(r, a, b);
         System.out.println(fp.dump(r));
         assertEquals(new BigInteger("8000000000000000", 16), fp.toBigInteger(r));
-        if (true) return;
+        //if (true) return;
 
         // test with random numbers:
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10000; i++) {
             // first make add ition with BigInteger:
             String h = Conv.toString(aes.random(32)); 
             BigInteger big = new BigInteger(h, 16);
             h = Conv.toString(aes.random(32)); 
             BigInteger big2 = new BigInteger(h, 16);
-            BigInteger bigr = big.add(big2);
+            BigInteger bigr = mod(big.add(big2));
             
             // now add with fp256
             fp256 f = fp.fromBigInteger(big);
             fp256 f2 = fp.fromBigInteger(big2);
             fp.add(r, f, f2);
+            if (!bigr.equals(fp.toBigInteger(r))) {
+                System.out.println("error on run " + i + 1);
+                System.out.println(fp.dump(f));
+                System.out.println(fp.dump(f2));
+                System.out.println(fp.dump(r));
+                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+                System.out.println(bigr.toString(16));
+                System.out.println(fp.toBigInteger(r).toString(16));
+            }
             assertEquals(bigr, fp.toBigInteger(r));
         }
     }
