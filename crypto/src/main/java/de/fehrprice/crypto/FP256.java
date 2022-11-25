@@ -6,6 +6,10 @@ import java.util.Arrays;
 /**
  * An efficient library for 256 bit modular integer arithmetic
  * Adapted from C source code: https://github.com/piggypiggy/fp256
+ * 
+ * Needed for speeding up Edwards curve calculations.
+ * We need: add, subtract, multiply, modulo, modular exponentiation (modPow) 
+ * done and tested: add, subtract
  *
  */
 
@@ -134,6 +138,14 @@ public class FP256 {
         }
     }
     
+    private long getBorrow(long a, long b) {
+        if (Long.compareUnsigned(a, b) > 0) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    
     // /src/ll/ll_u256_add.c
     public void add(fp256 res, fp256 a, fp256 b) {
         //u64 t, r, carry;
@@ -166,5 +178,35 @@ public class FP256 {
         res.d[3] = r;
         
     }
-    
+
+    // /src/ll/ll_u256_add.c
+    public void subtract(fp256 res, fp256 a, fp256 b) {
+        long t, r, borrow;
+
+        t = a.d[0];
+        r = t - b.d[0];
+        borrow = getBorrow(r,t);
+        res.d[0] = r;
+
+        t = a.d[1];
+        t -= borrow;
+        borrow = getBorrow(t,a.d[1]);
+        r = t - b.d[1];
+        borrow |= getBorrow(r,t);
+        res.d[1] = r;
+
+        t = a.d[2];
+        t -= borrow;
+        borrow = getBorrow(t,a.d[2]);
+        r = t - b.d[2];
+        borrow |= getBorrow(r,t);
+        res.d[2] = r;
+
+        t = a.d[3];
+        t -= borrow;
+        borrow = getBorrow(t,a.d[3]);
+        r = t - b.d[3];
+        borrow |= getBorrow(r,t);
+        res.d[3] = r;
+    }
 }

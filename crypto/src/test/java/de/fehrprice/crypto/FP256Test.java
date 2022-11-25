@@ -94,7 +94,7 @@ class FP256Test {
         //if (true) return;
 
         // test with random numbers:
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
             // first make add ition with BigInteger:
             String h = Conv.toString(aes.random(32)); 
             BigInteger big = new BigInteger(h, 16);
@@ -106,6 +106,43 @@ class FP256Test {
             fp256 f = fp.fromBigInteger(big);
             fp256 f2 = fp.fromBigInteger(big2);
             fp.add(r, f, f2);
+            if (!bigr.equals(fp.toBigInteger(r))) {
+                System.out.println("error on run " + i + 1);
+                System.out.println(fp.dump(f));
+                System.out.println(fp.dump(f2));
+                System.out.println(fp.dump(r));
+                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+                System.out.println(bigr.toString(16));
+                System.out.println(fp.toBigInteger(r).toString(16));
+            }
+            assertEquals(bigr, fp.toBigInteger(r));
+        }
+    }
+
+    @Test
+    void testSubtractions() {
+        fp256 a = fp.fromBigInteger(new BigInteger("10000000000000000", 16));
+        fp256 b = fp.fromBigInteger(new BigInteger("1"));
+        fp256 r = fp.zero();
+        
+        fp.subtract(r, a, b);
+        System.out.println(fp.dump(r));
+        assertEquals(new BigInteger("ffffffffffffffff", 16), fp.toBigInteger(r));
+        //if (true) return;
+
+        // test with random numbers:
+        for (int i = 0; i < 1000; i++) {
+            // first make add ition with BigInteger:
+            String h = Conv.toString(aes.random(32)); 
+            BigInteger big = new BigInteger(h, 16);
+            h = Conv.toString(aes.random(32)); 
+            BigInteger big2 = new BigInteger(h, 16);
+            BigInteger bigr = mod(big.subtract(big2));
+            
+            // now add with fp256
+            fp256 f = fp.fromBigInteger(big);
+            fp256 f2 = fp.fromBigInteger(big2);
+            fp.subtract(r, f, f2);
             if (!bigr.equals(fp.toBigInteger(r))) {
                 System.out.println("error on run " + i + 1);
                 System.out.println(fp.dump(f));
