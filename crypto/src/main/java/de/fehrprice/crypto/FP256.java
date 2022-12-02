@@ -10,6 +10,8 @@ import java.util.Arrays;
  * Needed for speeding up Edwards curve calculations.
  * We need: add, subtract, multiply, modulo, modular exponentiation (modPow) 
  * done and tested: add, subtract
+ * 
+ * https://programming.guide/java/unsigned-long.html
  *
  */
 
@@ -208,5 +210,26 @@ public class FP256 {
         r = t - b.d[3];
         borrow |= getBorrow(r,t);
         res.d[3] = r;
+    }
+    
+    // unsigned 64 bit multiplication --> 128 bit result
+    // https://stackoverflow.com/questions/31652875/fastest-way-to-multiply-two-64-bit-ints-to-128-bit-then-to-64-bit
+    // d[0} and d[1] used for result
+    public void umul64wide(fp256 res, long a, long b) {
+        long a_lo = (int)a;
+        long a_hi = a >>> 32; // unsigned right shift
+        long b_lo = (int)b;
+        long b_hi = b >>> 32;
+
+        long p0 = a_lo * b_lo;
+        long p1 = a_lo * b_hi;
+        long p2 = a_hi * b_lo;
+        long p3 = a_hi * b_hi;
+
+        int cy = 0; //(int)(((p0 >>> 32) + (int)p1 + (int)p2) >>> 32);
+
+        res.d[0] = p0 + (p1 << 32) + (p2 << 32);
+        res.d[1] = p3 + (p1 >>> 32) + (p2 >>> 32) + cy;
+    	
     }
 }
