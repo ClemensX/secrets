@@ -17,6 +17,8 @@ class ModularWhiteBoxPatchRuntimeTests {
 	@Test
 	void accessPublicClass() {
 		Assertions.assertEquals("de.fehrprice.secrets.client", OptionHandler.class.getPackageName());
-		Assertions.assertEquals("client", OptionHandler.class.getModule().getName());
+		var module_name = OptionHandler.class.getModule().getName();
+		if (module_name != null) Assertions.assertEquals("client", module_name);
+		else System.out.println("Could not get module name!!!");
 	}
 }
