@@ -98,6 +98,15 @@ public class FP256 {
         return res;
     }
     
+    public String dumpLong(long l) {
+        String res = "";
+        long l0 = l & 0xFFFFFFFFL;
+        long l1 = l >>> 32;
+        res += String.format("%016x ", l1);
+        res += String.format("%016x ", l0);
+        return String.format("%016x ", l);
+    }
+    
     /**
      * Convert from BigInteger. Only lowest 256 bits are used.
      * NumberFormatException if negative number is passed
@@ -212,6 +221,86 @@ public class FP256 {
         res.d[3] = r;
     }
     
+    // unsigned 64 bit multiplication --> 128 bit result
+    // https://en.wikipedia.org/wiki/Karatsuba_algorithm
+    // d[0} and d[1] used for result
+    // 64 bit input is divided into 32 bit parts 
+    // karatsuba is applied then parts are summed and returned in lower 2 fp256 longs
+    public void karatsuba64(fp256 res, long a, long b) {
+    	// divide 64 bit input into 32 bit parts:
+    	long x0 = a & 0xFFFFFFFFL;
+    	long x1 = a >>> 32;
+    	long y0 = b & 0xFFFFFFFFL;
+    	long y1 = b >>> 32;
+    	
+    	// middle section:
+    	long m1 = x0 * y1;
+    	System.out.println(dumpLong(m1));
+    	long m2 = x1 * y0;
+    	System.out.println(dumpLong(m2));
+    	long m = m1 + m2;
+    	System.out.println(dumpLong(m));
+    	
+    	// calc Karatsuba coefficients, sure to be <=64 bit, so simply use long arithmetic:
+    	long z0 = x0 * y0;
+    	long z2 = x1 * y1;
+    	long z1_t1 = (x1 + x0) * (y1 + y0);
+    	boolean isCarryHigh = false;
+    	long z1_t2 = z2 + z0;
+    	if (Long.compareUnsigned(z1_t2, z2) < 0)
+    		isCarryHigh = true;
+    	long z1 =  z1_t1 - z1_t2;
+    	if (Long.compareUnsigned(z1, z1_t1) > 0)
+    		isCarryHigh = true;
+    	//long carryHigh = (Long.compareUnsigned(z1, z1_t1) < 0) ? 0x0100000000L : 0x0L; 
+    	long carryHigh = (isCarryHigh) ? 0x0100000000L : 0x0L; 
+    	
+    	// sum up results, now we are in 128 bit so no simple long arithmetics possible
+    	// lower 64 bits:
+    	long t1 = z1 << 32;
+    	long r0 = t1 + z0;
+    	long carry = (Long.compareUnsigned(r0, t1) < 0) ? 0x01L : 0x00L;
+    	long r1 = z2 + (z1 >>> 32) + carryHigh + carry;
+    	
+    	// copy result to res
+    	res.d[0] = r0;
+    	res.d[1] = r1;
+    }
+    
+    // unsigned 64 bit multiplication --> 128 bit result
+    // simple divide and conquer: do 32 bit mult and shift/add accordingly (schoolbook mutliplication)
+    // d[0} and d[1] used for result
+    public void umul64(fp256 res, long a, long b) {
+    	long x0 = a & 0xFFFFFFFFL;
+    	long x1 = a >>> 32;
+    	long y0 = b & 0xFFFFFFFFL;
+    	long y1 = b >>> 32;
+
+        // high 64 bits:
+        long m2 = x1 * y1;
+        
+        // low 64 bits:
+        long m0 = x0 * y0;
+        
+        // middle 64 bits:
+        long t1 = x0 * y1;
+        long t2 = x1 * y0;
+        long m1 = t1 + t2; // overflow possible
+        long carry = (Long.compareUnsigned(m1, t1) < 0) ? 0x0100000000L : 0x00;
+        
+        // result
+        long r1 = m2 + carry + (m1 >>> 32);
+        long r0 = (m1 << 32) + m0;
+        if (Long.compareUnsigned(r0, m0) < 0) {
+        	//System.out.println("dreck");
+        	r1++;
+        }
+        
+    	// copy result to res
+    	res.d[0] = r0;
+    	res.d[1] = r1;
+    }
+
     // unsigned 64 bit multiplication --> 128 bit result
     // https://stackoverflow.com/questions/31652875/fastest-way-to-multiply-two-64-bit-ints-to-128-bit-then-to-64-bit
     // d[0} and d[1] used for result
