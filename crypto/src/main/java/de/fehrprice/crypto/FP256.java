@@ -235,32 +235,28 @@ public class FP256 {
     	
     	// middle section:
     	long m1 = x0 * y1;
-    	System.out.println(dumpLong(m1));
+    	//System.out.println(dumpLong(m1));
     	long m2 = x1 * y0;
-    	System.out.println(dumpLong(m2));
+    	//System.out.println(dumpLong(m2));
     	long m = m1 + m2;
-    	System.out.println(dumpLong(m));
+    	//System.out.println(dumpLong(m));
+        long carry = (Long.compareUnsigned(m, m1) < 0) ? 0x0100000000L : 0x00;
     	
     	// calc Karatsuba coefficients, sure to be <=64 bit, so simply use long arithmetic:
     	long z0 = x0 * y0;
     	long z2 = x1 * y1;
     	long z1_t1 = (x1 + x0) * (y1 + y0);
-    	boolean isCarryHigh = false;
     	long z1_t2 = z2 + z0;
-    	if (Long.compareUnsigned(z1_t2, z2) < 0)
-    		isCarryHigh = true;
     	long z1 =  z1_t1 - z1_t2;
-    	if (Long.compareUnsigned(z1, z1_t1) > 0)
-    		isCarryHigh = true;
-    	//long carryHigh = (Long.compareUnsigned(z1, z1_t1) < 0) ? 0x0100000000L : 0x0L; 
-    	long carryHigh = (isCarryHigh) ? 0x0100000000L : 0x0L; 
     	
     	// sum up results, now we are in 128 bit so no simple long arithmetics possible
     	// lower 64 bits:
+    	long r1 = z2 + (z1 >>> 32) + carry;
     	long t1 = z1 << 32;
     	long r0 = t1 + z0;
-    	long carry = (Long.compareUnsigned(r0, t1) < 0) ? 0x01L : 0x00L;
-    	long r1 = z2 + (z1 >>> 32) + carryHigh + carry;
+        if (Long.compareUnsigned(r0, z0) < 0) {
+        	r1++;
+        }
     	
     	// copy result to res
     	res.d[0] = r0;
@@ -292,7 +288,6 @@ public class FP256 {
         long r1 = m2 + carry + (m1 >>> 32);
         long r0 = (m1 << 32) + m0;
         if (Long.compareUnsigned(r0, m0) < 0) {
-        	//System.out.println("dreck");
         	r1++;
         }
         

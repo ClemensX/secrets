@@ -178,14 +178,14 @@ class FP256Test {
         BigInteger bmul = new BigInteger(Long.toHexString(a), 16).multiply(new BigInteger(Long.toHexString(b), 16));
         System.out.println(bmul.toString(16));
         //fp.umul64wide(r, a, b);
-        //fp.karatsuba64(r, a, b);
-        fp.umul64(r, a, b);
+        fp.karatsuba64(r, a, b);
+        //fp.umul64(r, a, b);
         System.out.println(fp.dump(r));
         System.out.println(fp.dump(fp.fromBigInteger(bmul)));
         assertEquals(bmul, fp.toBigInteger(r));
 
         // test with random numbers:
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10000000; i++) {
             // first make multiplication with BigInteger:
             String h = Conv.toString(aes.random(8)); 
             BigInteger big = new BigInteger(h, 16);
@@ -199,8 +199,8 @@ class FP256Test {
             b = big2.longValue();
             r = fp.zero();
             //fp.umul64wide(r, a, b);
-            //fp.karatsuba64(r, a, b);
-            fp.umul64(r, a, b);
+            fp.karatsuba64(r, a, b);
+            //fp.umul64(r, a, b);
             if (!bigr.equals(fp.toBigInteger(r))) {
                 System.out.println("error on run " + i + 1);
                 System.out.println("a " + Long.toHexString(a));
