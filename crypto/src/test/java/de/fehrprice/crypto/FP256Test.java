@@ -185,7 +185,7 @@ class FP256Test {
         assertEquals(bmul, fp.toBigInteger(r));
 
         // test with random numbers:
-        for (int i = 0; i < 10000000; i++) {
+        for (int i = 0; i < 1000; i++) {
             // first make multiplication with BigInteger:
             String h = Conv.toString(aes.random(8)); 
             BigInteger big = new BigInteger(h, 16);

@@ -245,9 +245,33 @@ public class FP256 {
     	// calc Karatsuba coefficients, sure to be <=64 bit, so simply use long arithmetic:
     	long z0 = x0 * y0;
     	long z2 = x1 * y1;
-    	long z1_t1 = (x1 + x0) * (y1 + y0);
+    	long xs = x1 + x0;
+    	long ys = y1 + y0;
+    	// we add 32 bit numbers, so sure to be in range
+    	//assert(Long.compareUnsigned(xs, x1) > 0);
+    	//assert(Long.compareUnsigned(ys, y1) > 0);
+    	long z1_t1 = (xs) * (ys);
+    	assert(Long.compareUnsigned(z1_t1, xs) > 0);
+    	assert(Long.compareUnsigned(z1_t1, ys) > 0);
     	long z1_t2 = z2 + z0;
+    	boolean b1 = false;
+    	boolean b2 = false;
+    	if (Long.compareUnsigned(z1_t2, z2) < 0) {
+    		//System.out.println("mist 1");
+    		b1 = true;
+    	}
+    	//assert(Long.compareUnsigned(z1_t2, z2) > 0);
+    	//assert(Long.compareUnsigned(z1_t2, z0) > 0);
     	long z1 =  z1_t1 - z1_t2;
+    	if (Long.compareUnsigned(z1, z1_t1) > 0) {
+    		//System.out.println("mist 2");
+    		b2 = true;
+    	}
+    	if (carry > 0 ) {
+    		System.out.println("carry on " + b1 + " " + b2);
+    	}
+    	//assert(Long.compareUnsigned(z1, z1_t1) < 0);
+    	//assert(Long.compareUnsigned(z1, z1_t2) < 0);
     	
     	// sum up results, now we are in 128 bit so no simple long arithmetics possible
     	// lower 64 bits:
