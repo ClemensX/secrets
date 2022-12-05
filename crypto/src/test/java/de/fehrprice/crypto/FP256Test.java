@@ -14,203 +14,221 @@ import de.fehrprice.crypto.FP256.fp256;
 
 class FP256Test {
 
-    FP256 fp;
-    AES aes; 
-    
-    @BeforeAll
-    static void setUpBeforeClass() throws Exception {
-    }
+	FP256 fp;
+	AES aes;
 
-    @AfterAll
-    static void tearDownAfterClass() throws Exception {
-    }
+	@BeforeAll
+	static void setUpBeforeClass() throws Exception {
+	}
 
-    @BeforeEach
-    void setUp() throws Exception {
-        fp = new FP256();
-        aes = new AES();
-        aes.setSeed(RandomSeed.createSeed());
-    }
+	@AfterAll
+	static void tearDownAfterClass() throws Exception {
+	}
 
-    @AfterEach
-    void tearDown() throws Exception {
-    }
+	@BeforeEach
+	void setUp() throws Exception {
+		fp = new FP256();
+		aes = new AES();
+		aes.setSeed(RandomSeed.createSeed());
+	}
 
-    @Test
-    void testConversions() {
-        // String conversions
-        String hex = "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
-        System.out.println("hex: " + hex);
-        fp256 f = fp.fromString(hex);
-        System.out.println(fp.dump(f));
-        assertEquals(hex, fp.toString(f));
-        
-        // test with random numbers:
-        for (int i = 0; i < 100; i++) {
-            String h = Conv.toString(aes.random(32)); 
-            f = fp.fromString(h);
-            assertEquals(h, fp.toString(f));
-        }
-        
-        // BigInteger conversions
-        hex = "a9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
-        System.out.println("hex: " + hex);
-        BigInteger big = new BigInteger(hex, 16);
-        System.out.println("BigInteger: " + big.toString(16));
-        f = fp.fromBigInteger(big);
-        System.out.println(fp.dump(f));
+	@AfterEach
+	void tearDown() throws Exception {
+	}
 
-        // test with random numbers:
-        for (int i = 0; i < 100; i++) {
-            String h = Conv.toString(aes.random(32)); 
-            big = new BigInteger(h, 16);
-            f = fp.fromString(h);
-            fp256 f2 = fp.fromBigInteger(big);
-            assertEquals(f, f2);
-            BigInteger big2 = fp.toBigInteger(f2);
-            assertEquals(big, big2);
-        }
-        
-    }
-    
+	@Test
+	void testConversions() {
+		// String conversions
+		String hex = "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
+		//System.out.println("hex: " + hex);
+		fp256 f = fp.fromString(hex);
+		//System.out.println(fp.dump(f));
+		assertEquals(hex, fp.toString(f));
+
+		// test with random numbers:
+		for (int i = 0; i < 100; i++) {
+			String h = Conv.toString(aes.random(32));
+			f = fp.fromString(h);
+			assertEquals(h, fp.toString(f));
+		}
+
+		// BigInteger conversions
+		hex = "a9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
+		//System.out.println("hex: " + hex);
+		BigInteger big = new BigInteger(hex, 16);
+		//System.out.println("BigInteger: " + big.toString(16));
+		f = fp.fromBigInteger(big);
+		//System.out.println(fp.dump(f));
+
+		// test with random numbers:
+		for (int i = 0; i < 100; i++) {
+			String h = Conv.toString(aes.random(32));
+			big = new BigInteger(h, 16);
+			f = fp.fromString(h);
+			fp256 f2 = fp.fromBigInteger(big);
+			assertEquals(f, f2);
+			BigInteger big2 = fp.toBigInteger(f2);
+			assertEquals(big, big2);
+		}
+
+	}
+
+	/**
+	 * Map BigInteger to allowed 256 bit range
+	 * 
+	 * @param b
+	 * @return
+	 */
+	private BigInteger mod(BigInteger b) {
+		return b.mod(BigInteger.TWO.pow(256));
+	}
+
+	@Test
+	void testAdditions() {
+		fp256 a = fp.fromBigInteger(new BigInteger("7fffffffffffffff", 16));
+		fp256 b = fp.fromBigInteger(new BigInteger("1"));
+		fp256 r = fp.zero();
+
+		fp.add(r, a, b);
+		System.out.println(fp.dump(r));
+		assertEquals(new BigInteger("8000000000000000", 16), fp.toBigInteger(r));
+		// if (true) return;
+
+		// test with random numbers:
+		for (int i = 0; i < 1000; i++) {
+			// first make add ition with BigInteger:
+			String h = Conv.toString(aes.random(32));
+			BigInteger big = new BigInteger(h, 16);
+			h = Conv.toString(aes.random(32));
+			BigInteger big2 = new BigInteger(h, 16);
+			BigInteger bigr = mod(big.add(big2));
+
+			// now add with fp256
+			fp256 f = fp.fromBigInteger(big);
+			fp256 f2 = fp.fromBigInteger(big2);
+			fp.add(r, f, f2);
+			if (!bigr.equals(fp.toBigInteger(r))) {
+				System.out.println("error on run " + i + 1);
+				System.out.println(fp.dump(f));
+				System.out.println(fp.dump(f2));
+				System.out.println(fp.dump(r));
+				System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+				System.out.println(bigr.toString(16));
+				System.out.println(fp.toBigInteger(r).toString(16));
+			}
+			assertEquals(bigr, fp.toBigInteger(r));
+		}
+	}
+
+	@Test
+	void testSubtractions() {
+		fp256 a = fp.fromBigInteger(new BigInteger("10000000000000000", 16));
+		fp256 b = fp.fromBigInteger(new BigInteger("1"));
+		fp256 r = fp.zero();
+
+		fp.subtract(r, a, b);
+		System.out.println(fp.dump(r));
+		assertEquals(new BigInteger("ffffffffffffffff", 16), fp.toBigInteger(r));
+		// if (true) return;
+
+		// test with random numbers:
+		for (int i = 0; i < 1000; i++) {
+			// first make add ition with BigInteger:
+			String h = Conv.toString(aes.random(32));
+			BigInteger big = new BigInteger(h, 16);
+			h = Conv.toString(aes.random(32));
+			BigInteger big2 = new BigInteger(h, 16);
+			BigInteger bigr = mod(big.subtract(big2));
+
+			// now add with fp256
+			fp256 f = fp.fromBigInteger(big);
+			fp256 f2 = fp.fromBigInteger(big2);
+			fp.subtract(r, f, f2);
+			if (!bigr.equals(fp.toBigInteger(r))) {
+				System.out.println("error on run " + i + 1);
+				System.out.println(fp.dump(f));
+				System.out.println(fp.dump(f2));
+				System.out.println(fp.dump(r));
+				System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+				System.out.println(bigr.toString(16));
+				System.out.println(fp.toBigInteger(r).toString(16));
+			}
+			assertEquals(bigr, fp.toBigInteger(r));
+		}
+	}
+
+	@Test
+	void test64Mul() {
+		//System.out.println("umul64:");
+		long a = 0x8102030405060708L;
+		long a_lo = (int) a;
+		long a_hi = a >>> 32; // unsigned right shift
+//		System.out.println("lo " + Long.toHexString(a_lo));
+//		System.out.println("hi " + Long.toHexString(a_hi));
+		assertEquals(0x81020304L, a_hi);
+		assertEquals(0x05060708L, a_lo);
+
+		a = 0x2a209b1f1bf45e04L;
+		a = 0x1b08f66dfe33d144L; // 453.572.205
+		// a = 0xffffffffffffffffL;
+		// long b = 0x8102030405060708L;
+		long b = 0x9cbab0f69f229cffL;
+		b = 0xf4974b7dbf47cf91L; // 4.103.555.965
+		// b = 0xffffffffffffffffL;
+		fp256 r = fp.zero();
+		BigInteger bmul = new BigInteger(Long.toHexString(a), 16).multiply(new BigInteger(Long.toHexString(b), 16));
+//		System.out.println(bmul.toString(16));
+		// fp.karatsuba64(r, a, b);
+		fp.umul64(r, a, b);
+//		System.out.println(fp.dump(r));
+//		System.out.println(fp.dump(fp.fromBigInteger(bmul)));
+		assertEquals(bmul, fp.toBigInteger(r));
+
+		// test with random numbers:
+		for (long i = 0; i < 1000; i++) {
+			// first make multiplication with BigInteger:
+			String h = Conv.toString(aes.random(8));
+			BigInteger big = new BigInteger(h, 16);
+			h = Conv.toString(aes.random(8));
+			BigInteger big2 = new BigInteger(h, 16);
+			BigInteger bigr = big.multiply(big2);
+
+			// now mult 64 bit values with fp256
+			fp256 f = fp.fromBigInteger(big);
+			a = big.longValue();
+			b = big2.longValue();
+			r = fp.zero();
+			// fp.karatsuba64(r, a, b);
+			fp.umul64(r, a, b);
+			if (!bigr.equals(fp.toBigInteger(r))) {
+				System.out.println("error on run " + i + 1);
+				System.out.println("a " + Long.toHexString(a));
+				System.out.println("b " + Long.toHexString(b));
+				System.out.println(fp.dump(r));
+				System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+				System.out.println(bigr.toString(16));
+				System.out.println(fp.toBigInteger(r).toString(16));
+			}
+			assertEquals(bigr, fp.toBigInteger(r));
+		}
+	}
+	
     /**
-     * Map BigInteger to allowed 256 bit range
-     * @param b
-     * @return
+     * Test 256 bit multiplication
      */
-    private BigInteger mod(BigInteger b) {
-        return b.mod(BigInteger.TWO.pow(256));
-    }
-
     @Test
-    void testAdditions() {
-        fp256 a = fp.fromBigInteger(new BigInteger("7fffffffffffffff", 16));
-        fp256 b = fp.fromBigInteger(new BigInteger("1"));
-        fp256 r = fp.zero();
-        
-        fp.add(r, a, b);
-        System.out.println(fp.dump(r));
-        assertEquals(new BigInteger("8000000000000000", 16), fp.toBigInteger(r));
-        //if (true) return;
-
-        // test with random numbers:
-        for (int i = 0; i < 1000; i++) {
-            // first make add ition with BigInteger:
-            String h = Conv.toString(aes.random(32)); 
-            BigInteger big = new BigInteger(h, 16);
-            h = Conv.toString(aes.random(32)); 
-            BigInteger big2 = new BigInteger(h, 16);
-            BigInteger bigr = mod(big.add(big2));
-            
-            // now add with fp256
-            fp256 f = fp.fromBigInteger(big);
-            fp256 f2 = fp.fromBigInteger(big2);
-            fp.add(r, f, f2);
-            if (!bigr.equals(fp.toBigInteger(r))) {
-                System.out.println("error on run " + i + 1);
-                System.out.println(fp.dump(f));
-                System.out.println(fp.dump(f2));
-                System.out.println(fp.dump(r));
-                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
-                System.out.println(bigr.toString(16));
-                System.out.println(fp.toBigInteger(r).toString(16));
-            }
-            assertEquals(bigr, fp.toBigInteger(r));
-        }
-    }
-
-    @Test
-    void testSubtractions() {
-        fp256 a = fp.fromBigInteger(new BigInteger("10000000000000000", 16));
-        fp256 b = fp.fromBigInteger(new BigInteger("1"));
-        fp256 r = fp.zero();
-        
-        fp.subtract(r, a, b);
-        System.out.println(fp.dump(r));
-        assertEquals(new BigInteger("ffffffffffffffff", 16), fp.toBigInteger(r));
-        //if (true) return;
-
-        // test with random numbers:
-        for (int i = 0; i < 1000; i++) {
-            // first make add ition with BigInteger:
-            String h = Conv.toString(aes.random(32)); 
-            BigInteger big = new BigInteger(h, 16);
-            h = Conv.toString(aes.random(32)); 
-            BigInteger big2 = new BigInteger(h, 16);
-            BigInteger bigr = mod(big.subtract(big2));
-            
-            // now add with fp256
-            fp256 f = fp.fromBigInteger(big);
-            fp256 f2 = fp.fromBigInteger(big2);
-            fp.subtract(r, f, f2);
-            if (!bigr.equals(fp.toBigInteger(r))) {
-                System.out.println("error on run " + i + 1);
-                System.out.println(fp.dump(f));
-                System.out.println(fp.dump(f2));
-                System.out.println(fp.dump(r));
-                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
-                System.out.println(bigr.toString(16));
-                System.out.println(fp.toBigInteger(r).toString(16));
-            }
-            assertEquals(bigr, fp.toBigInteger(r));
-        }
-    }
-    
-    @Test
-    void test64Mul() {
+    void testMul() {
         System.out.println("umul:");
-    	long a = 0x8102030405060708L;
-        long a_lo = (int)a;
-        long a_hi = a >>> 32; // unsigned right shift
-        System.out.println("lo " + Long.toHexString(a_lo));
-        System.out.println("hi " + Long.toHexString(a_hi));
-        assertEquals(0x81020304L, a_hi);
-        assertEquals(0x05060708L, a_lo);
-        
-        a = 0x2a209b1f1bf45e04L;
-        a = 0x1b08f66dfe33d144L; // 453.572.205
-        //a = 0xffffffffffffffffL;
-    	//long b = 0x8102030405060708L;
-    	long b =   0x9cbab0f69f229cffL;
-        b = 0xf4974b7dbf47cf91L; // 4.103.555.965
-        //b = 0xffffffffffffffffL;
+    	BigInteger biga = new BigInteger("0f0e0d0c0b0a0908070605040302010011223344556677889900988776655443", 16);
+    	BigInteger bigb = new BigInteger("f00e0d0c0b0a0908070605040302010011223344556677889900988776655443", 16);
+        BigInteger bmul = biga.multiply(bigb);
         fp256 r = fp.zero();
-        BigInteger bmul = new BigInteger(Long.toHexString(a), 16).multiply(new BigInteger(Long.toHexString(b), 16));
+        fp256 a = fp.fromBigInteger(biga);
+        fp256 b = fp.fromBigInteger(bigb);
         System.out.println(bmul.toString(16));
-        //fp.umul64wide(r, a, b);
-        fp.karatsuba64(r, a, b);
-        //fp.umul64(r, a, b);
+        fp.umul(r, a, b);
         System.out.println(fp.dump(r));
         System.out.println(fp.dump(fp.fromBigInteger(bmul)));
         assertEquals(bmul, fp.toBigInteger(r));
-
-        // test with random numbers:
-        for (int i = 0; i < 1000; i++) {
-            // first make multiplication with BigInteger:
-            String h = Conv.toString(aes.random(8)); 
-            BigInteger big = new BigInteger(h, 16);
-            h = Conv.toString(aes.random(8)); 
-            BigInteger big2 = new BigInteger(h, 16);
-            BigInteger bigr = big.multiply(big2);
-            
-            // now mult 64 bit values with fp256
-            fp256 f = fp.fromBigInteger(big);
-            a = big.longValue();
-            b = big2.longValue();
-            r = fp.zero();
-            //fp.umul64wide(r, a, b);
-            fp.karatsuba64(r, a, b);
-            //fp.umul64(r, a, b);
-            if (!bigr.equals(fp.toBigInteger(r))) {
-                System.out.println("error on run " + i + 1);
-                System.out.println("a " + Long.toHexString(a));
-                System.out.println("b " + Long.toHexString(b));
-                System.out.println(fp.dump(r));
-                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
-                System.out.println(bigr.toString(16));
-                System.out.println(fp.toBigInteger(r).toString(16));
-            }
-            assertEquals(bigr, fp.toBigInteger(r));
-        }
-}
+    }
 }

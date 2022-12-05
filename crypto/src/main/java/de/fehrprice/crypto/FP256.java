@@ -226,70 +226,16 @@ public class FP256 {
     // d[0} and d[1] used for result
     // 64 bit input is divided into 32 bit parts 
     // karatsuba is applied then parts are summed and returned in lower 2 fp256 longs
+    // NOTE: implementation cancelled, because I could not find a way to efficiently compute carry bit for z2 
     public void karatsuba64(fp256 res, long a, long b) {
-    	// divide 64 bit input into 32 bit parts:
-    	long x0 = a & 0xFFFFFFFFL;
-    	long x1 = a >>> 32;
-    	long y0 = b & 0xFFFFFFFFL;
-    	long y1 = b >>> 32;
-    	
-    	// middle section:
-    	long m1 = x0 * y1;
-    	//System.out.println(dumpLong(m1));
-    	long m2 = x1 * y0;
-    	//System.out.println(dumpLong(m2));
-    	long m = m1 + m2;
-    	//System.out.println(dumpLong(m));
-        long carry = (Long.compareUnsigned(m, m1) < 0) ? 0x0100000000L : 0x00;
-    	
-    	// calc Karatsuba coefficients, sure to be <=64 bit, so simply use long arithmetic:
-    	long z0 = x0 * y0;
-    	long z2 = x1 * y1;
-    	long xs = x1 + x0;
-    	long ys = y1 + y0;
-    	// we add 32 bit numbers, so sure to be in range
-    	//assert(Long.compareUnsigned(xs, x1) > 0);
-    	//assert(Long.compareUnsigned(ys, y1) > 0);
-    	long z1_t1 = (xs) * (ys);
-    	assert(Long.compareUnsigned(z1_t1, xs) > 0);
-    	assert(Long.compareUnsigned(z1_t1, ys) > 0);
-    	long z1_t2 = z2 + z0;
-    	boolean b1 = false;
-    	boolean b2 = false;
-    	if (Long.compareUnsigned(z1_t2, z2) < 0) {
-    		//System.out.println("mist 1");
-    		b1 = true;
-    	}
-    	//assert(Long.compareUnsigned(z1_t2, z2) > 0);
-    	//assert(Long.compareUnsigned(z1_t2, z0) > 0);
-    	long z1 =  z1_t1 - z1_t2;
-    	if (Long.compareUnsigned(z1, z1_t1) > 0) {
-    		//System.out.println("mist 2");
-    		b2 = true;
-    	}
-    	if (carry > 0 ) {
-    		System.out.println("carry on " + b1 + " " + b2);
-    	}
-    	//assert(Long.compareUnsigned(z1, z1_t1) < 0);
-    	//assert(Long.compareUnsigned(z1, z1_t2) < 0);
-    	
-    	// sum up results, now we are in 128 bit so no simple long arithmetics possible
-    	// lower 64 bits:
-    	long r1 = z2 + (z1 >>> 32) + carry;
-    	long t1 = z1 << 32;
-    	long r0 = t1 + z0;
-        if (Long.compareUnsigned(r0, z0) < 0) {
-        	r1++;
-        }
-    	
-    	// copy result to res
-    	res.d[0] = r0;
-    	res.d[1] = r1;
+    	throw new UnsupportedOperationException("Karatsuba not implemented due to carry bit problem");
     }
     
     // unsigned 64 bit multiplication --> 128 bit result
     // simple divide and conquer: do 32 bit mult and shift/add accordingly (schoolbook mutliplication)
     // d[0} and d[1] used for result
+    // according to /crypto/src/main/java/de/fehrprice/crypto/run/PerformanceCheck.java:
+    // ~ double speed of simple BigInteger multiplication
     public void umul64(fp256 res, long a, long b) {
     	long x0 = a & 0xFFFFFFFFL;
     	long x1 = a >>> 32;
@@ -320,24 +266,9 @@ public class FP256 {
     	res.d[1] = r1;
     }
 
-    // unsigned 64 bit multiplication --> 128 bit result
-    // https://stackoverflow.com/questions/31652875/fastest-way-to-multiply-two-64-bit-ints-to-128-bit-then-to-64-bit
-    // d[0} and d[1] used for result
-    public void umul64wide(fp256 res, long a, long b) {
-        long a_lo = (int)a;
-        long a_hi = a >>> 32; // unsigned right shift
-        long b_lo = (int)b;
-        long b_hi = b >>> 32;
+	public void umul(fp256 r, fp256 a, fp256 b) {
+		// TODO Auto-generated method stub
+		
+	}
 
-        long p0 = a_lo * b_lo;
-        long p1 = a_lo * b_hi;
-        long p2 = a_hi * b_lo;
-        long p3 = a_hi * b_hi;
-
-        int cy = 0; //(int)(((p0 >>> 32) + (int)p1 + (int)p2) >>> 32);
-
-        res.d[0] = p0 + (p1 << 32) + (p2 << 32);
-        res.d[1] = p3 + (p1 >>> 32) + (p2 >>> 32) + cy;
-    	
-    }
 }

@@ -1,11 +1,14 @@
 package de.fehrprice.crypto.run;
 
+import java.math.BigInteger;
 import java.text.DecimalFormat;
 
 import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Curve25519;
 import de.fehrprice.crypto.Ed25519;
+import de.fehrprice.crypto.FP256;
+import de.fehrprice.crypto.FP256.fp256;
 import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
@@ -17,7 +20,75 @@ public class PerformanceCheck {
     final static int count = 100;
     
     public static void main(String[] args) {
-        long start = System.nanoTime();
+        perfECDSA();
+        perf64Mult();
+    }
+
+    
+	/**
+	 * Test performnace of 62 bit multiplication with FP256 and BigInteger 
+	 */
+	private static void perf64Mult() {
+        AES aes = new AES();
+        aes.setSeed(RandomSeed.createSeed());
+        FP256 fp = new FP256();
+
+        int count = 10000000;
+        // create all arrays we need to prepare mult data
+        BigInteger[] bia = new BigInteger[count];
+        BigInteger[] bib = new BigInteger[count];
+        long[] fpa = new long[count];
+        long[] fpb = new long[count];
+
+        // create random numbers and store as multiplicants:
+        for(int i = 0; i < count; i++) {
+            String h = Conv.toString(aes.random(8)); 
+            BigInteger big = new BigInteger(h, 16);
+            bia[i] = big;
+            fpa[i] = big.longValue();
+            h = Conv.toString(aes.random(8)); 
+            big = new BigInteger(h, 16);
+            bib[i] = big;
+            fpb[i] = big.longValue();
+        }
+		long start = System.nanoTime();
+		for (int i = 0; i < count; i++) {
+			BigInteger r = bia[i].multiply(bib[i]);
+			//System.out.println(r);
+		}
+
+		System.out.println("prep done, calculating...");
+        long now = System.nanoTime();
+        long duration = now - start;
+        double duration_seconds = ((double) duration) / 1E9;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("BigIntegert 64 bit multipication " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+
+		start = System.nanoTime();
+		for (int i = 0; i < count; i++) {
+			fp256 f = fp.zero();
+			fp.umul64(f, fpa[i], fpb[i]);
+			//System.out.println(r);
+		}
+
+        now = System.nanoTime();
+        duration = now - start;
+        duration_seconds = ((double) duration) / 1E9;
+        df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("FP256 64 bit multipication " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+        
+	}
+
+	private static void perfECDSA() {
+		long start = System.nanoTime();
 
         Curve25519 x = new Curve25519();
         Ed25519 ed = new Ed25519();
@@ -41,7 +112,7 @@ public class PerformanceCheck {
         duration /= count; // for single ECDSA communication:
         duration_seconds = ((double) duration) / 1E9;
         System.out.println("  single iteration: [s] " + df.format(duration_seconds));
-    }
+	}
 
     // do full conversation like in real world scenario, for performance tests, minimal assertions
     public static void doECDSACommunication(Curve25519 x, Ed25519 ed, AES aes, String alicePrivate, String alicePublic, String bobPrivate, String bobPublic) {
