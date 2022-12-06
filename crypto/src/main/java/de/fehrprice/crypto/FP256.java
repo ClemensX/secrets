@@ -54,6 +54,12 @@ public class FP256 {
         private FP256 getEnclosingInstance() {
             return FP256.this;
         }
+        /**
+         * Set to zero.
+         */
+        public void zero() {
+        	d[0] = d[1] = d[2] = d[3] = 0L;
+        }
     }
     
     public fp256 fromString(String s) {
@@ -266,9 +272,132 @@ public class FP256 {
     	res.d[1] = r1;
     }
 
+    /*
+u64 ll_mul(u64 *rd, const u64 *ad, const u64 *bd, size_t al, size_t bl)
+{
+    size_t i;
+
+    ll_set_zero(rd, al);
+
+    for (i = 0; i < bl; i++) {
+        / rd[0:al-1] += ad[0:al-1]*b, rd[al] is set accordingly. 
+        ll_muladd_limb(rd, ad, bd[i], al, al);
+        rd++;
+    }
+
+    i += al;
+    // in case (al = bl = 0) 
+    return (i > 0 ? rd[al - 1] : 0);
+}
+   */
+	/**
+	 * unsigned 256 bit multiplication (modulo 256 bit, no overflow)
+	 * https://github.com/piggypiggy/fp256/blob/master/src/ll/ll_mul.c
+	 * @param r result
+	 * @param a
+	 * @param b
+	 */
 	public void umul(fp256 r, fp256 a, fp256 b) {
-		// TODO Auto-generated method stub
-		
+		r.zero();
+		for(int i = 0; i < 4; i++) {
+			muladd_limb(r, a, b.d[i]);
+		}
 	}
+
+	/*
+u64 ll_muladd_limb(u64 *rd, const u64 *ad, u64 b, size_t rl, size_t al)
+{
+    u64 hi, lo, t1, t2;
+    size_t i;
+
+    // rd[0, (al-1)] += ad * b 
+    t1 = 0;
+    for (i = 0; i < al; i++) {
+        LL_MUL64(hi, lo, ad[0], b);
+        t1 += lo;
+        t2 = rd[0];
+        hi += (t1 < lo);
+        t1 += t2;
+        ad++;
+        rd[0] = t1;
+        hi += (t1 < t2);
+        rd++;
+        t1 = hi;
+    }
+
+    // rd[al, (rl-1)] += t1 
+    for (i = al; i < rl; i++) {
+        t2 = rd[0] + t1;
+        t1 = (t2 < t1);
+        rd[0] = t2;
+        rd++;
+    }
+
+    rd[0] = t1;
+    return t1;
+}
+*/
+	private void muladd_limb(fp256 r, fp256 a, long b) {
+		long hi, lo, t1 = 0, t2 = 0;
+		fp256 m = zero();
+		for( int i = 0; i < 4; i++) {
+			umul64(m,  a.d[i], b);
+			hi = m.d[1];
+			lo = m.d[0];
+			t1 += lo;
+			t2 = r.d[i];
+			hi += getCarry(t1, lo);
+			t1 += t2;
+			r.d[i] = t1;
+			hi += getCarry(t1, t2);
+			t1 = hi;
+		}
+		//for( int i = 0; i < 4; i++) {
+		//}
+		//r.d[3] = t1;
+	}
+
+	/**
+	 * multiply 256 unsigned via 64 bit parts, reduce complexity by avoiding sub-mults outside 256 bit range
+	 * @param r
+	 * @param a
+	 * @param b
+	 */
+	public void myumul(fp256 r, fp256 a, fp256 b) {
+		// setup
+		r.zero();
+		fp256 m = zero();
+		long a3 = a.d[3];
+		long a2 = a.d[2];
+		long a1 = a.d[1];
+		long a0 = a.d[0];
+		long b3 = b.d[3];
+		long b2 = b.d[2];
+		long b1 = b.d[1];
+		long b0 = b.d[0];
+
+		// a * b0:
+		umul64(m, a0, b0);
+		r.d[0] = m.d[0];
+		r.d[1] = m.d[1];
+		umul64(m, a1, b0);
+		plusWithCarry(1, r, m);
+		umul64(m, a2, b0);
+		plusWithCarry(2, r, m);
+		umul64(m, a3, b0);
+		r.d[3] += m.d[0];
+		
+		// + a * b1 (<-- shift 64)
+	}
+
+	private void plusWithCarry(int i, fp256 r, fp256 m) {
+		long res = r.d[i] + m.d[0];
+		r.d[i+1] = r.d[i+1] + m.d[1];
+		if (Long.compareUnsigned(res,  r.d[i]) < 0) {
+			r.d[i+1]++;
+		}
+		r.d[i] = res;
+	}
+
 
 }
