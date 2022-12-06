@@ -22,18 +22,19 @@ public class PerformanceCheck {
     public static void main(String[] args) {
         perfECDSA();
         perf64Mult();
+        perf256Mult();
     }
 
     
 	/**
-	 * Test performnace of 62 bit multiplication with FP256 and BigInteger 
+	 * Test performance of 64 bit multiplication with FP256 and BigInteger 
 	 */
 	private static void perf64Mult() {
         AES aes = new AES();
         aes.setSeed(RandomSeed.createSeed());
         FP256 fp = new FP256();
 
-        int count = 10000000;
+        int count = 100000;
         // create all arrays we need to prepare mult data
         BigInteger[] bia = new BigInteger[count];
         BigInteger[] bib = new BigInteger[count];
@@ -81,6 +82,67 @@ public class PerformanceCheck {
         df = new DecimalFormat();
         df.setMaximumFractionDigits(4);
         System.out.println("FP256 64 bit multipication " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+        
+	}
+	/**
+	 * Test performance of 256 bit multiplication with FP256 and BigInteger 
+	 */
+	private static void perf256Mult() {
+        AES aes = new AES();
+        aes.setSeed(RandomSeed.createSeed());
+        FP256 fp = new FP256();
+
+        int count = 100000;
+        // create all arrays we need to prepare mult data
+        BigInteger[] bia = new BigInteger[count];
+        BigInteger[] bib = new BigInteger[count];
+        fp256[] fpa = new fp256[count];
+        fp256[] fpb = new fp256[count];
+
+        // create random numbers and store as multiplicants:
+        for(int i = 0; i < count; i++) {
+            String h = Conv.toString(aes.random(32)); 
+            BigInteger big = new BigInteger(h, 16);
+            bia[i] = big;
+            fpa[i] = fp.fromBigInteger(big);
+            h = Conv.toString(aes.random(32)); 
+            big = new BigInteger(h, 16);
+            bib[i] = big;
+            fpb[i] = fp.fromBigInteger(big);
+        }
+		long start = System.nanoTime();
+		for (int i = 0; i < count; i++) {
+			BigInteger r = bia[i].multiply(bib[i]).mod(BigInteger.TWO.pow(256));
+			//System.out.println(fp.dump(fp.fromBigInteger(r)));
+		}
+
+		System.out.println("prep done, calculating...");
+        long now = System.nanoTime();
+        long duration = now - start;
+        double duration_seconds = ((double) duration) / 1E9;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("BigInteger 256 bit multipication " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+
+		start = System.nanoTime();
+		for (int i = 0; i < count; i++) {
+			fp256 f = fp.zero();
+			fp.umul(f, fpa[i], fpb[i]);
+			//System.out.println(fp.dump(f));
+		}
+
+        now = System.nanoTime();
+        duration = now - start;
+        duration_seconds = ((double) duration) / 1E9;
+        df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("FP256 256 bit multipication " + count + " iterations total time: [s] " + df.format(duration_seconds));
         duration /= count; // for single mult:
         duration_seconds = ((double) duration) / 1E9;
         System.out.println("  single iteration: [s] " + df.format(duration_seconds));

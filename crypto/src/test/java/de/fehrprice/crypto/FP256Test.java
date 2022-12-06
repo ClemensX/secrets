@@ -194,7 +194,6 @@ class FP256Test {
 			BigInteger bigr = big.multiply(big2);
 
 			// now mult 64 bit values with fp256
-			fp256 f = fp.fromBigInteger(big);
 			a = big.longValue();
 			b = big2.longValue();
 			r = fp.zero();
@@ -226,9 +225,9 @@ class FP256Test {
         // e3ef34cfde49 251b97b1eed92004
 //    	BigInteger biga = new BigInteger("ffffffffffffffffff", 16);
 //    	BigInteger bigb = new BigInteger("010000000000000000", 16);
-    	BigInteger bigb = new BigInteger("e3ef34cfde49251b97b1eed92004", 16);
+//    	BigInteger bigb = new BigInteger("e3ef34cfde49251b97b1eed92004", 16);
 //      BigInteger bigb = new BigInteger("0100000000000000", 16);
-//    	BigInteger bigb = new BigInteger("ffffffffffffffff", 16);
+    	BigInteger bigb = new BigInteger("ffffffffffffffffffffffffffffffffff", 16);
 //    	BigInteger bigb = new BigInteger("f00e0d0c0b0a090800", 16);
         BigInteger bmul = biga.multiply(bigb).mod(BigInteger.TWO.pow(256));
         fp256 r = fp.zero();
@@ -236,7 +235,6 @@ class FP256Test {
         fp256 b = fp.fromBigInteger(bigb);
         System.out.println(bmul.toString(16));
         fp.umul(r, a, b);
-        fp.myumul(r, a, b);
         System.out.println(fp.dump(r));
         System.out.println(fp.dump(fp.fromBigInteger(bmul)));
         assertEquals(bmul, fp.toBigInteger(r));
@@ -247,15 +245,15 @@ class FP256Test {
 			BigInteger big = new BigInteger(h, 16);
 			h = Conv.toString(aes.random(32));
 			BigInteger big2 = new BigInteger(h, 16);
-			// limit b to 64 bit for now:
-			big2 = big2.mod(BigInteger.TWO.pow(128));
-			BigInteger bigr = big.multiply(big2).mod(BigInteger.TWO.pow(256));;
+			// limit b for now:
+			//big2 = big2.mod(BigInteger.TWO.pow(192));
+			BigInteger bigr = big.multiply(big2).mod(BigInteger.TWO.pow(256));
 
 			// now mult big with big2
 			a = fp.fromBigInteger(big);
 			b = fp.fromBigInteger(big2);
 			r = fp.zero();
-			fp.myumul(r, a, b);
+			fp.umul(r, a, b);
 	        //System.out.println(fp.dump(r));
 			if (!bigr.equals(fp.toBigInteger(r))) {
 				System.out.println("error on run " + (i + 1));
