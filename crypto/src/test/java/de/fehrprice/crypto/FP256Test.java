@@ -221,10 +221,14 @@ class FP256Test {
         System.out.println("umul:");
 //    	BigInteger biga = new BigInteger("0f0e0d0c0b0a0908070605040302010011223344556677889900988776655443", 16);
 //    	BigInteger bigb = new BigInteger("f00e0d0c0b0a0908070605040302010011223344556677889900988776655443", 16);
-    	BigInteger biga = new BigInteger("ffffffffffffffffff", 16);
+    	//BigInteger biga = new BigInteger("b54444f2feda55f6e6948b2039ff54e63f51f7bde5af9db19b2a6db6685f04db", 16);
+    	BigInteger biga = new BigInteger("b54444f2feda55f6e6948b2039ff54e63f51f7bde5af9db19b2a6db6685f04db", 16);
+        // e3ef34cfde49 251b97b1eed92004
+//    	BigInteger biga = new BigInteger("ffffffffffffffffff", 16);
 //    	BigInteger bigb = new BigInteger("010000000000000000", 16);
-//    	BigInteger bigb = new BigInteger("0100000000000000", 16);
-    	BigInteger bigb = new BigInteger("ffffffffffffffff", 16);
+    	BigInteger bigb = new BigInteger("e3ef34cfde49251b97b1eed92004", 16);
+//      BigInteger bigb = new BigInteger("0100000000000000", 16);
+//    	BigInteger bigb = new BigInteger("ffffffffffffffff", 16);
 //    	BigInteger bigb = new BigInteger("f00e0d0c0b0a090800", 16);
         BigInteger bmul = biga.multiply(bigb).mod(BigInteger.TWO.pow(256));
         fp256 r = fp.zero();
@@ -237,14 +241,14 @@ class FP256Test {
         System.out.println(fp.dump(fp.fromBigInteger(bmul)));
         assertEquals(bmul, fp.toBigInteger(r));
 		// test with random numbers:
-		for (long i = 0; i < 10; i++) {
+		for (long i = 0; i < 1000; i++) {
 			// first make multiplication with BigInteger:
-			String h = Conv.toString(aes.random(8));
-			BigInteger big = new BigInteger(h, 32);
-			h = Conv.toString(aes.random(8));
-			BigInteger big2 = new BigInteger(h, 32);
+			String h = Conv.toString(aes.random(32));
+			BigInteger big = new BigInteger(h, 16);
+			h = Conv.toString(aes.random(32));
+			BigInteger big2 = new BigInteger(h, 16);
 			// limit b to 64 bit for now:
-			big2 = big2.mod(BigInteger.TWO.pow(64));
+			big2 = big2.mod(BigInteger.TWO.pow(128));
 			BigInteger bigr = big.multiply(big2).mod(BigInteger.TWO.pow(256));;
 
 			// now mult big with big2
@@ -254,11 +258,13 @@ class FP256Test {
 			fp.myumul(r, a, b);
 	        //System.out.println(fp.dump(r));
 			if (!bigr.equals(fp.toBigInteger(r))) {
-				System.out.println("error on run " + i + 1);
+				System.out.println("error on run " + (i + 1));
+				System.out.println("a " + fp.dump(a));
+				System.out.println("b " + fp.dump(b));
 				System.out.println(fp.dump(r));
 				System.out.println(fp.dump(fp.fromBigInteger(bigr)));
-				System.out.println(bigr.toString(16));
-				System.out.println(fp.toBigInteger(r).toString(16));
+//				System.out.println(bigr.toString(16));
+//				System.out.println(fp.toBigInteger(r).toString(16));
 			}
 			assertEquals(bigr, fp.toBigInteger(r));
 		}

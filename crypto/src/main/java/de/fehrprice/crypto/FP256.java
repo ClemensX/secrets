@@ -388,15 +388,28 @@ u64 ll_muladd_limb(u64 *rd, const u64 *ad, u64 b, size_t rl, size_t al)
 		r.d[3] += m.d[0];
 		
 		// + a * b1 (<-- shift 64)
+		umul64(m, a0, b1);
+		plusWithCarry(1, r, m);
+		umul64(m, a1, b1);
+		plusWithCarry(2, r, m);
+		umul64(m, a2, b1);
+		r.d[3] += m.d[0];
 	}
 
 	private void plusWithCarry(int i, fp256 r, fp256 m) {
-		long res = r.d[i] + m.d[0];
+		long lo = r.d[i] + m.d[0];
+		long hi = r.d[i+1] + m.d[1];
+		if (Long.compareUnsigned(hi, r.d[i+1]) < 0) {
+			//System.out.println("bad");
+			if (i < 2) {
+				r.d[i+2]++;
+			}
+		}
 		r.d[i+1] = r.d[i+1] + m.d[1];
-		if (Long.compareUnsigned(res,  r.d[i]) < 0) {
+		if (Long.compareUnsigned(lo,  r.d[i]) < 0) {
 			r.d[i+1]++;
 		}
-		r.d[i] = res;
+		r.d[i] = lo;
 	}
 
 
