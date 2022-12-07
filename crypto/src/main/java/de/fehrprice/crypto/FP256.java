@@ -11,6 +11,12 @@ import java.util.Arrays;
  * We need: add, subtract, multiply, modulo, modular exponentiation (modPow) 
  * done and tested: add, subtract, multiply
  * 
+ * BigInteger operations used:
+ * de.fehrprice.crypto.Curve25519.x25519(BigInteger, BigInteger, int):
+ *   shiftRight(), and(), xor(), add(), pow(2), subtract, multiply, mod(p)
+ * de.fehrprice.crypto.Ed25519.signature(byte[], String, String)
+ *   equals(), divide(2), modPow(q_minus2, q), testBit(0), mod(L)
+ * 
  * https://programming.guide/java/unsigned-long.html
  *
  */

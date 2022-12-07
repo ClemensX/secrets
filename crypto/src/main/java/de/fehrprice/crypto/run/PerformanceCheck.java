@@ -17,12 +17,10 @@ import de.fehrprice.net.Session;
 // run ECDSH and message exchange in a main class
 public class PerformanceCheck {
 
-    final static int count = 100;
-    
     public static void main(String[] args) {
         perfECDSA();
-        perf64Mult();
-        perf256Mult();
+        //perf64Mult();
+        //perf256Mult();
     }
 
     
@@ -150,6 +148,10 @@ public class PerformanceCheck {
 	}
 
 	private static void perfECDSA() {
+	    final int count = 100; // 1000 ~ 40 s
+//	    ECDSA 10000 iterations total time: [s] 394,5956
+//	    single iteration: [s] 0,0395
+	    
 		long start = System.nanoTime();
 
         Curve25519 x = new Curve25519();
