@@ -110,7 +110,34 @@ public class FP256 {
         return res;
     }
     
-    public String dumpLong(long l) {
+    /**
+     * modh - calculate modulo value
+     * We expect modulo to be very high and test for it, so modulo is at most one addition.
+     * in fact it should probably always be 7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed
+     * if used for ed25519 or curve25519
+     * @param f
+     * @param modulo
+     */
+    public void modh(fp256 r, fp256 f, fp256 modulo) {
+    	assert(modulo.d[3] != 0L);
+    	if (compare(f, modulo) < 0) {
+    		// nothing to do - we are already smaller than  modulo
+    		return;
+    	}
+    	add(r, f, modulo);
+    	assert(compare(f, modulo) < 0);
+    }
+    
+    private int compare(fp256 f, fp256 modulo) {
+    	int c;
+    	for( int i = 0; i < 4; i++) {
+        	c = Long.compareUnsigned(f.d[i], modulo.d[i]);
+        	if (c != 0) return c;
+    	}
+		return 0;
+	}
+
+	public String dumpLong(long l) {
         return String.format("%016x ", l);
     }
     

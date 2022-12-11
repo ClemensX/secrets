@@ -267,4 +267,50 @@ class FP256Test {
 			assertEquals(bigr, fp.toBigInteger(r));
 		}
     }
+    /**
+     * Test modular arithmetic assumptions
+     */
+    @Test
+    void testModular() {
+    	// can we calc modulo with word length and apply lower modulo afterwards?
+    	BigInteger base = new BigInteger("0500000001", 16);
+    	int exp = 33; // 4 bytes
+    	BigInteger modWord = new BigInteger("0100000000", 16);
+    	BigInteger modPrime = new BigInteger("4294967291");
+    	System.out.println("modPrime hex: " + modPrime.toString(16));
+    	BigInteger wordMod = base.mod(modWord);
+    	System.out.println("mod word: " + wordMod.toString(16));
+    	BigInteger wordPrimeMod = wordMod.mod(modPrime);
+    	System.out.println("mod word + prime: " + wordPrimeMod.toString(16));
+    	BigInteger primeMod = base.mod(modPrime); 
+    	System.out.println("mod prime: " + primeMod.toString(16));
+    }
+
+    /**
+     * Test 256 bit multiplication
+     */
+    @Test
+    void testMod() {
+    	BigInteger bigm = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed", 16);
+        fp256 m = fp.fromBigInteger(bigm);
+		// test with random numbers:
+		for (long i = 0; i < 1000; i++) {
+			// first make multiplication with BigInteger:
+			String h = Conv.toString(aes.random(32));
+			BigInteger big = new BigInteger(h, 16);
+			BigInteger bigr = big.mod(bigm);
+
+			// now mod with fp256
+			fp256 a = fp.fromBigInteger(big);
+			fp256 r = fp.zero();
+			fp.modh(r, a, m);
+	        //System.out.println(fp.dump(r));
+			if (!bigr.equals(fp.toBigInteger(a))) {
+				System.out.println("error on run " + (i + 1));
+				System.out.println("a " + fp.dump(a));
+				System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+			}
+			assertEquals(bigr, fp.toBigInteger(a));
+		}
+    }
 }

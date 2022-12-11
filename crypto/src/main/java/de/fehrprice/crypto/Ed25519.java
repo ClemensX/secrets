@@ -1,6 +1,7 @@
 package de.fehrprice.crypto;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 
 /**
  * Implementation blueprint here: http://ed25519.cr.yp.to/software.html
@@ -16,6 +17,10 @@ public class Ed25519 extends Curve25519 {
 	public static BigInteger I;
 	public static BigInteger L;
 	public static BigInteger B[];
+	
+	// tests:
+	 HashMap<String, BigInteger> p0 = new HashMap<>();
+	 HashMap<String, BigInteger> p1 = new HashMap<>();
 
 	public class KeyPair {
 		public String privateKey;
@@ -112,6 +117,11 @@ public class Ed25519 extends Curve25519 {
 	}
 
 	private BigInteger[] scalarmult(BigInteger[] P, BigInteger e) {
+		String p0s = P[0].toString(16);
+		if (!p0.containsKey(p0s)) {
+			p0.put(p0s, P[0]);
+			System.out.println("p0 contains # " + p0.size());
+		}
 		if (e.equals(BigInteger.ZERO)) {
 			BigInteger r[] = new BigInteger[2];
 			r[0] = BigInteger.ZERO;
@@ -168,6 +178,7 @@ public class Ed25519 extends Curve25519 {
 	}
 
 	private BigInteger expmod(BigInteger b, BigInteger e, BigInteger m) {
+		//System.out.println("mod " + m.toString(16));
 		return b.modPow(e, m);
 	}
 
