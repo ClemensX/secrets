@@ -133,7 +133,7 @@ class FP256Test {
 
 		// test with random numbers:
 		for (int i = 0; i < 1000; i++) {
-			// first make add ition with BigInteger:
+			// first make addition with BigInteger:
 			String h = Conv.toString(aes.random(32));
 			BigInteger big = new BigInteger(h, 16);
 			h = Conv.toString(aes.random(32));
@@ -298,19 +298,23 @@ class FP256Test {
 			// first make multiplication with BigInteger:
 			String h = Conv.toString(aes.random(32));
 			BigInteger big = new BigInteger(h, 16);
+			//System.out.println(big.compareTo(bigm));
 			BigInteger bigr = big.mod(bigm);
+            //System.out.println(fp.dump(fp.fromBigInteger(big)));
+            //System.out.println(fp.dump(fp.fromBigInteger(bigr)));
 
 			// now mod with fp256
 			fp256 a = fp.fromBigInteger(big);
 			fp256 r = fp.zero();
 			fp.modh(r, a, m);
+            //System.out.println("a " + fp.dump(a));
 	        //System.out.println(fp.dump(r));
-			if (!bigr.equals(fp.toBigInteger(a))) {
+			if (!bigr.equals(fp.toBigInteger(r))) {
 				System.out.println("error on run " + (i + 1));
 				System.out.println("a " + fp.dump(a));
 				System.out.println(fp.dump(fp.fromBigInteger(bigr)));
 			}
-			assertEquals(bigr, fp.toBigInteger(a));
+			assertEquals(bigr, fp.toBigInteger(r));
 		}
     }
 }

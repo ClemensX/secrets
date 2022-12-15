@@ -121,16 +121,20 @@ public class FP256 {
     public void modh(fp256 r, fp256 f, fp256 modulo) {
     	assert(modulo.d[3] != 0L);
     	if (compare(f, modulo) < 0) {
-    		// nothing to do - we are already smaller than  modulo
+    		// nothing to do - we are already smaller than modulo
+    	    // just copy input to output
+            for( int i = 0; i < 4; i++) {
+                r.d[i] = f.d[i];
+            }
     		return;
     	}
-    	add(r, f, modulo);
-    	assert(compare(f, modulo) < 0);
+    	subtract(r, f, modulo);
+    	assert(compare(r, modulo) < 0);
     }
     
     private int compare(fp256 f, fp256 modulo) {
     	int c;
-    	for( int i = 0; i < 4; i++) {
+    	for( int i = 3; i >= 0; i--) {
         	c = Long.compareUnsigned(f.d[i], modulo.d[i]);
         	if (c != 0) return c;
     	}
