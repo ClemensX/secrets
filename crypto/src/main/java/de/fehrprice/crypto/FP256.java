@@ -26,7 +26,7 @@ public class FP256 {
     
     /**
      * represent 256 bit unsigned integer values with 4 longs
-     * Liitle endian order: d[3] is highest value
+     * Little endian order: d[3] is highest value
      */
     public class fp256 {
 
@@ -67,7 +67,9 @@ public class FP256 {
         	d[0] = d[1] = d[2] = d[3] = 0L;
         }
     }
-    
+
+    public final long highBit = 0x8000000000000000L;
+
     public fp256 fromString(String s) {
         if (s.length() != 64) {
             throw new NumberFormatException("BigInteger outside allowed range");
@@ -112,7 +114,7 @@ public class FP256 {
     
     /**
      * modh - calculate modulo value
-     * We expect modulo to be very high and test for it, so modulo is at most one addition.
+     * We expect modulo to be very high and test for it, so modulo is at most one subtraction.
      * in fact it should probably always be 7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed
      * if used for ed25519 or curve25519
      * @param f
@@ -443,9 +445,15 @@ uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
             } else {
                 shiftLeft1(d);
             }
-            //if (a & 0x8000000000000000ULL) d += b;
-            //if (d >= m) d -= m;
-            //a <<= 1;
+            if ((a.d[3] & highBit) != 0) {
+                add(t1, d, b);
+                copy(d, t1);
+            }
+            if (compare(d, m) >= 0) {
+                subtract(t1,  d, m);
+                copy(d, t1);
+            }
+            shiftLeft1(a);
         }
 	}
 
@@ -454,10 +462,9 @@ uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
      * @param mp2
      */
     public void shiftRight1(fp256 f) {
-        final long orHighBit = 0x8000000000000000L;
-        long add0 = (f.d[1] & 0x01) == 0 ? 0 : orHighBit;
-        long add1 = (f.d[2] & 0x01) == 0 ? 0 : orHighBit;
-        long add2 = (f.d[3] & 0x01) == 0 ? 0 : orHighBit;
+        long add0 = (f.d[1] & 0x01) == 0 ? 0 : highBit;
+        long add1 = (f.d[2] & 0x01) == 0 ? 0 : highBit;
+        long add2 = (f.d[3] & 0x01) == 0 ? 0 : highBit;
         f.d[0] = (f.d[0] >>> 1) | add0;
         f.d[1] = (f.d[1] >>> 1) | add1;
         f.d[2] = (f.d[2] >>> 1) | add2;
@@ -470,7 +477,6 @@ uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
      */
     public void shiftLeft1(fp256 f) {
         final long orLowBit = 0x01L;
-        final long highBit = 0x8000000000000000L;
         long add1 = (f.d[0] & highBit) == 0 ? 0 : orLowBit;
         long add2 = (f.d[1] & highBit) == 0 ? 0 : orLowBit;
         long add3 = (f.d[2] & highBit) == 0 ? 0 : orLowBit;

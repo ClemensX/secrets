@@ -16,6 +16,7 @@ class FP256Test {
 
 	FP256 fp;
 	AES aes;
+    Curve25519 crv;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
@@ -30,6 +31,7 @@ class FP256Test {
 		fp = new FP256();
 		aes = new AES();
 		aes.setSeed(RandomSeed.createSeed());
+        crv = new Curve25519();
 	}
 
 	@AfterEach
@@ -287,7 +289,7 @@ class FP256Test {
     }
 
     /**
-     * Test 256 bit multiplication
+     * Test 256 bit modulo
      */
     @Test
     void testMod() {
@@ -379,4 +381,52 @@ class FP256Test {
             assertEquals(bigr, fp.toBigInteger(r));
         }
     }
+
+    /**
+     * Test 256 bit modulo multiplication
+     */
+    @Test
+    void testMulMod() {
+        BigInteger moduloB = Curve25519.p;
+        fp256 modulo = fp.fromBigInteger(moduloB);
+//        BigInteger biga = new BigInteger("b54444f2feda55f6e6948b2039ff54e63f51f7bde5af9db19b2a6db6685f04db", 16);
+//        BigInteger bigb = new BigInteger("ffffffffffffffffffffffffffffffffff", 16);
+//        BigInteger bmul = biga.multiply(bigb).mod(BigInteger.TWO.pow(256));
+//        fp256 r = fp.zero();
+//        fp256 a = fp.fromBigInteger(biga);
+//        fp256 b = fp.fromBigInteger(bigb);
+//        System.out.println(bmul.toString(16));
+//        fp.umul(r, a, b);
+//        System.out.println(fp.dump(r));
+//        System.out.println(fp.dump(fp.fromBigInteger(bmul)));
+//        assertEquals(bmul, fp.toBigInteger(r));
+        // test with random numbers:
+        fp256 a, b, r;
+        for (long i = 0; i < 1000; i++) {
+            // first make multiplication with BigInteger:
+            String h = Conv.toString(aes.random(32));
+            BigInteger big = new BigInteger(h, 16);
+            h = Conv.toString(aes.random(32));
+            BigInteger big2 = new BigInteger(h, 16);
+            BigInteger bigr = (big.multiply(big2)).mod(moduloB);
+
+            // now mul_mod big with big2
+            a = fp.fromBigInteger(big);
+            b = fp.fromBigInteger(big2);
+            r = fp.zero();
+            fp.mul_mod(r, a, b, modulo);
+            //System.out.println(fp.dump(r));
+            if (!bigr.equals(fp.toBigInteger(r))) {
+                System.out.println("error on run " + (i + 1));
+                System.out.println("a " + fp.dump(a));
+                System.out.println("b " + fp.dump(b));
+                System.out.println(fp.dump(r));
+                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+//              System.out.println(bigr.toString(16));
+//              System.out.println(fp.toBigInteger(r).toString(16));
+            }
+            assertEquals(bigr, fp.toBigInteger(r));
+        }
+    }
+
 }
