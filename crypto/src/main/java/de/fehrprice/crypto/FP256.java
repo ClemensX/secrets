@@ -438,7 +438,7 @@ uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
             copy(b, t1);
         }
         for (int i = 0; i < 256; ++i) {
-            if (compare(d, mp2) > 1) {
+            if (compare(d, mp2) > 0) {
                 shiftLeft1(d);
                 subtract(t1,  d, m);
                 copy(d, t1);
