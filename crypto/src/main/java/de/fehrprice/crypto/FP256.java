@@ -179,6 +179,11 @@ public class FP256 {
         return new fp256();
     }
 
+    /**
+     * copy fp256 into new() fp256
+     * @param f
+     * @return
+     */
     public fp256 copy(fp256 f) {
         var copy = zero();
         copy.d[0] = f.d[0];
@@ -186,6 +191,19 @@ public class FP256 {
         copy.d[2] = f.d[2];
         copy.d[3] = f.d[3];
         return copy;
+    }
+
+    /**
+     * copy fp256 into existing fp256
+     * @param t target
+     * @param s source
+     * @return
+     */
+    public void copy(fp256 t, fp256 s) {
+        t.d[0] = s.d[0];
+        t.d[1] = s.d[1];
+        t.d[2] = s.d[2];
+        t.d[3] = s.d[3];
     }
 
     private long getCarry(long a, long b) {
@@ -404,11 +422,31 @@ uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
 	// https://en.wikipedia.org/wiki/Modular_arithmetic
 	// An algorithmic way to compute a ⋅ b ( mod m ) {\displaystyle a\cdot b{\pmod {m}}}:[11]
 	// result is returned in d
-	void mul_mod(fp256 d, fp256 a, fp256 b, fp256 m) {
+	public void mul_mod(fp256 d, fp256 a, fp256 b, fp256 m) {
+        fp256 t1 = zero();
 	    d.zero();
 	    fp256 mp2 = copy(m);
 	    shiftRight1(mp2);
-	    int i;
+        if (compare(a, m) >= 0) {
+            modh(t1, a, m);
+            copy(a, t1);
+        }
+        if (compare(b, m) >= 0) {
+            modh(t1, b, m);
+            copy(b, t1);
+        }
+        for (int i = 0; i < 256; ++i) {
+            if (compare(d, mp2) > 1) {
+                shiftLeft1(d);
+                subtract(t1,  d, m);
+                copy(d, t1);
+            } else {
+                shiftLeft1(d);
+            }
+            //if (a & 0x8000000000000000ULL) d += b;
+            //if (d >= m) d -= m;
+            //a <<= 1;
+        }
 	}
 
     /**
@@ -424,5 +462,21 @@ uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
         f.d[1] = (f.d[1] >>> 1) | add1;
         f.d[2] = (f.d[2] >>> 1) | add2;
         f.d[3] = f.d[3] >>> 1;
+    }
+
+    /**
+     * in place left shift for 1 bit
+     * @param mp2
+     */
+    public void shiftLeft1(fp256 f) {
+        final long orLowBit = 0x01L;
+        final long highBit = 0x8000000000000000L;
+        long add1 = (f.d[0] & highBit) == 0 ? 0 : orLowBit;
+        long add2 = (f.d[1] & highBit) == 0 ? 0 : orLowBit;
+        long add3 = (f.d[2] & highBit) == 0 ? 0 : orLowBit;
+        f.d[0] = (f.d[0] << 1);
+        f.d[1] = (f.d[1] << 1) | add1;
+        f.d[2] = (f.d[2] << 1) | add2;
+        f.d[3] = (f.d[3] << 1) | add3;
     }
 }

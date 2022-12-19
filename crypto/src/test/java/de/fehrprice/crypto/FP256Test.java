@@ -324,7 +324,7 @@ class FP256Test {
     @Test
     void testRightShift1() {
         // test with random numbers:
-        for (long i = 0; i < 1000000; i++) {
+        for (long i = 0; i < 1000; i++) {
             // first make multiplication with BigInteger:
             String h = Conv.toString(aes.random(32));
             BigInteger big = new BigInteger(h, 16);
@@ -337,6 +337,37 @@ class FP256Test {
             fp256 a = fp.fromBigInteger(big);
             fp256 r = fp.copy(a);
             fp.shiftRight1(r);
+            //System.out.println("a " + fp.dump(a));
+            //System.out.println(fp.dump(r));
+            if (!bigr.equals(fp.toBigInteger(r))) {
+                System.out.println("error on run " + (i + 1));
+                //System.out.println("a " + fp.dump(a));
+                System.out.println(fp.dump(r));
+                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+            }
+            assertEquals(bigr, fp.toBigInteger(r));
+        }
+    }
+
+    /**
+     * Test 256 bit single left shift
+     */
+    @Test
+    void testLeftShift1() {
+        // test with random numbers:
+        for (long i = 0; i < 1000; i++) {
+            // first make multiplication with BigInteger:
+            String h = Conv.toString(aes.random(32));
+            BigInteger big = new BigInteger(h, 16);
+            //System.out.println(big.compareTo(bigm));
+            BigInteger bigr = mod(big.shiftLeft(1));
+            //System.out.println(fp.dump(fp.fromBigInteger(big)));
+            //System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+
+            // now shift with fp256
+            fp256 a = fp.fromBigInteger(big);
+            fp256 r = fp.copy(a);
+            fp.shiftLeft1(r);
             //System.out.println("a " + fp.dump(a));
             //System.out.println(fp.dump(r));
             if (!bigr.equals(fp.toBigInteger(r))) {
