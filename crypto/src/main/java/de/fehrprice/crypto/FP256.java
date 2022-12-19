@@ -8,7 +8,7 @@ import java.util.Arrays;
  * Adapted from C source code: https://github.com/piggypiggy/fp256
  * 
  * Needed for speeding up Edwards curve calculations.
- * We need: add, subtract, multiply, modulo, modular exponentiation (modPow) 
+ * We need: add, subtract, multiply, modulo, modular exponentiation (modPow)
  * done and tested: add, subtract, multiply
  * 
  * BigInteger operations used:
@@ -177,6 +177,15 @@ public class FP256 {
     
     public fp256 zero() {
         return new fp256();
+    }
+
+    public fp256 copy(fp256 f) {
+        var copy = zero();
+        copy.d[0] = f.d[0];
+        copy.d[1] = f.d[1];
+        copy.d[2] = f.d[2];
+        copy.d[3] = f.d[3];
+        return copy;
     }
 
     private long getCarry(long a, long b) {
@@ -372,5 +381,48 @@ public class FP256 {
 		r.d[i] = lo;
 	}
 
+/*
+ * https://en.wikipedia.org/wiki/Modular_arithmetic
+An algorithmic way to compute a ⋅ b ( mod m ) {\displaystyle a\cdot b{\pmod {m}}}:[11]
 
+uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
+    if (!((a | b) & (0xFFFFFFFFULL << 32))) return a * b % m;
+
+    uint64_t d = 0, mp2 = m >> 1;
+    int i;
+    if (a >= m) a %= m;
+    if (b >= m) b %= m;
+    for (i = 0; i < 64; ++i) {
+        d = (d > mp2) ? (d << 1) - m : d << 1;
+        if (a & 0x8000000000000000ULL) d += b;
+        if (d >= m) d -= m;
+        a <<= 1;
+    }
+    return d;
+}*/
+	
+	// https://en.wikipedia.org/wiki/Modular_arithmetic
+	// An algorithmic way to compute a ⋅ b ( mod m ) {\displaystyle a\cdot b{\pmod {m}}}:[11]
+	// result is returned in d
+	void mul_mod(fp256 d, fp256 a, fp256 b, fp256 m) {
+	    d.zero();
+	    fp256 mp2 = copy(m);
+	    shiftRight1(mp2);
+	    int i;
+	}
+
+    /**
+     * in place right shift for 1 bit
+     * @param mp2
+     */
+    public void shiftRight1(fp256 f) {
+        final long orHighBit = 0x8000000000000000L;
+        long add0 = (f.d[1] & 0x01) == 0 ? 0 : orHighBit;
+        long add1 = (f.d[2] & 0x01) == 0 ? 0 : orHighBit;
+        long add2 = (f.d[3] & 0x01) == 0 ? 0 : orHighBit;
+        f.d[0] = (f.d[0] >>> 1) | add0;
+        f.d[1] = (f.d[1] >>> 1) | add1;
+        f.d[2] = (f.d[2] >>> 1) | add2;
+        f.d[3] = f.d[3] >>> 1;
+    }
 }
