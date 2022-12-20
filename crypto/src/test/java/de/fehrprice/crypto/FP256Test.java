@@ -436,4 +436,57 @@ class FP256Test {
         }
     }
 
+    /**
+     * Test 256 bit modulo power
+     */
+    @Test
+    void testPowMod() {
+        BigInteger moduloB = Curve25519.p;
+        fp256 modulo = fp.fromBigInteger(moduloB);
+        //BigInteger biga = new BigInteger("b54444f2feda55f6e6948b2039ff54e63f51f7bde5af9db19b2a6db6685f04db", 16);
+        BigInteger biga =   new BigInteger("8000000000000000000000000000000000000000000000000000000000000000", 16);
+        BigInteger bigb =   new BigInteger("8e00000000000000000000000000000000000000000000000000000000000000", 16);
+        BigInteger bmul = biga.modPow(bigb, moduloB);
+        fp256 r = fp.zero();
+        fp256 a = fp.fromBigInteger(biga);
+        fp256 b = fp.fromBigInteger(bigb);
+        //System.out.println(bmul.toString(16));
+        fp.pow_mod(r, a, b, modulo);
+        //System.out.println(fp.dump(r));
+        //System.out.println(fp.dump(fp.fromBigInteger(bmul)));
+        assertEquals(bmul, fp.toBigInteger(r));
+        //fp256 a, b, r;
+        // test with random numbers:
+        for (long i = 0; i < 100000; i++) {
+            // first make multiplication with BigInteger:
+            String h = Conv.toString(aes.random(32));
+            BigInteger big = new BigInteger(h, 16);
+            h = Conv.toString(aes.random(32));
+            BigInteger big2 = new BigInteger(h, 16);
+            BigInteger bigr = big.modPow(big2, moduloB);
+
+            // now mul_mod big with big2
+            a = fp.fromBigInteger(big);
+            fp256 aSave = fp.zero() ;
+            fp.copy(aSave, a);
+            b = fp.fromBigInteger(big2);
+            fp256 bSave = fp.zero() ;
+            fp.copy(bSave, b);
+            r = fp.zero();
+            fp.pow_mod(r, a, b, modulo);
+            fp.copy(b, bSave);
+            fp.copy(a, aSave);
+            //System.out.println(fp.dump(r));
+            if (!bigr.equals(fp.toBigInteger(r))) {
+                System.out.println("error on run " + (i + 1));
+                System.out.println("a " + fp.dump(a));
+                System.out.println("b " + fp.dump(b));
+                System.out.println(fp.dump(r));
+                System.out.println(fp.dump(fp.fromBigInteger(bigr)));
+//              System.out.println(bigr.toString(16));
+//              System.out.println(fp.toBigInteger(r).toString(16));
+            }
+            assertEquals(bigr, fp.toBigInteger(r));
+        }
+    }
 }

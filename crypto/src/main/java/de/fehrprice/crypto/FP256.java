@@ -485,4 +485,42 @@ uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
         f.d[2] = (f.d[2] << 1) | add2;
         f.d[3] = (f.d[3] << 1) | add3;
     }
+    
+    /*
+uint64_t pow_mod(uint64_t a, uint64_t b, uint64_t m) {
+    uint64_t r = m == 1 ? 0 : 1;
+    while (b > 0) {
+        if (b & 1) r = mul_mod(r, a, m);
+        b = b >> 1;
+        a = mul_mod(a, a, m);
+    }
+    return r;
+}
+     */
+    
+    // https://en.wikipedia.org/wiki/Modular_arithmetic
+    // An algorithmic way to compute a ^ b ( mod m ) {\displaystyle a^{b}{\pmod {m}}}: 
+    // result is returned in r
+    public void pow_mod(fp256 r, fp256 a, fp256 b, fp256 modulo) {
+        fp256 t1 = zero();
+        fp256 aCopy = zero();
+        fp256 one = zero();
+        one.d[0] = 1;
+        fp256 zero = zero();
+        if (compare(modulo, one) == 0) {
+            r.zero();     // r = 0
+        } else {
+            copy(r, one); // r = 1
+        }
+        while (compare(b, zero) > 0) {
+            if ((b.d[0] & 1) != 0) {
+                mul_mod(t1, r, a, modulo);
+                copy(r, t1);
+            }
+            shiftRight1(b);
+            copy(aCopy, a);
+            mul_mod(t1, a, aCopy, modulo);
+            copy(a, t1);
+        }
+    }
 }

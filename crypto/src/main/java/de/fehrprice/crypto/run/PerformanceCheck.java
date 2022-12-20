@@ -18,9 +18,10 @@ import de.fehrprice.net.Session;
 public class PerformanceCheck {
 
     public static void main(String[] args) {
+        perf256ModPow();
         perfECDSA();
-        //perf64Mult();
-        //perf256Mult();
+        perf64Mult();
+        perf256Mult();
     }
 
     
@@ -93,7 +94,7 @@ public class PerformanceCheck {
         aes.setSeed(RandomSeed.createSeed());
         FP256 fp = new FP256();
 
-        int count = 100000;
+        int count = 10000;
         // create all arrays we need to prepare mult data
         BigInteger[] bia = new BigInteger[count];
         BigInteger[] bib = new BigInteger[count];
@@ -148,7 +149,7 @@ public class PerformanceCheck {
 	}
 
 	private static void perfECDSA() {
-	    final int count = 100; // 1000 ~ 40 s
+	    final int count = 10; // 1000 ~ 40 s
 //	    ECDSA 10000 iterations total time: [s] 394,5956
 //	    single iteration: [s] 0,0395
 	    
@@ -216,5 +217,70 @@ public class PerformanceCheck {
         // Alice receives answer:
         decryptedMessage = comm.decryptAES(aliceSession, encrypted);
         //System.out.println(decryptedMessage);
+    }
+
+    /**
+     * Test performance of 256 bit modular power with FP256 and BigInteger 
+     */
+    private static void perf256ModPow() {
+        AES aes = new AES();
+        aes.setSeed(RandomSeed.createSeed());
+        FP256 fp = new FP256();
+        Curve25519 crv = new Curve25519();
+        BigInteger moduloB = Curve25519.p;
+        fp256 modulo = fp.fromBigInteger(moduloB);
+
+        int count = 40;
+        // create all arrays we need to prepare mult data
+        BigInteger[] bia = new BigInteger[count];
+        BigInteger[] bib = new BigInteger[count];
+        fp256[] fpa = new fp256[count];
+        fp256[] fpb = new fp256[count];
+
+        // create random numbers and store as base and exponent:
+        for(int i = 0; i < count; i++) {
+            String h = Conv.toString(aes.random(32)); 
+            BigInteger big = new BigInteger(h, 16);
+            bia[i] = big;
+            fpa[i] = fp.fromBigInteger(big);
+            h = Conv.toString(aes.random(32)); 
+            big = new BigInteger(h, 16);
+            bib[i] = big;
+            fpb[i] = fp.fromBigInteger(big);
+        }
+        long start = System.nanoTime();
+        for (int i = 0; i < count; i++) {
+            BigInteger r = bia[i].modPow(bib[i], moduloB);
+            //System.out.println(fp.dump(fp.fromBigInteger(r)));
+        }
+
+        System.out.println("prep done, calculating...");
+        long now = System.nanoTime();
+        long duration = now - start;
+        double duration_seconds = ((double) duration) / 1E9;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("BigInteger 256 bit power " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+
+        start = System.nanoTime();
+        for (int i = 0; i < count; i++) {
+            fp256 f = fp.zero();
+            fp.pow_mod(f, fpa[i], fpb[i], modulo);
+            //System.out.println(fp.dump(f));
+        }
+
+        now = System.nanoTime();
+        duration = now - start;
+        duration_seconds = ((double) duration) / 1E9;
+        df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("FP256 256 bit power " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+        
     }
 }
