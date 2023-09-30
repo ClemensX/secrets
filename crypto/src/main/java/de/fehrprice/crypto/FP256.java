@@ -66,6 +66,9 @@ public class FP256 {
         public void zero() {
         	d[0] = d[1] = d[2] = d[3] = 0L;
         }
+		public long[] getInternalLongArray() {
+			return d;
+		}
     }
 
     public final long highBit = 0x8000000000000000L;

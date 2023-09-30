@@ -2,6 +2,11 @@ package de.fehrprice.crypto;
 
 import java.math.BigInteger;
 
+import de.fehrprice.crypto.edu25519.Field;
+import de.fehrprice.crypto.edu25519.Montgomery;
+import static de.fehrprice.crypto.edu25519.Field.s64Array;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.*;
+import static de.fehrprice.crypto.edu25519.Montgomery.print_s64;
 /**
  * Curve25519 implementation.
  * 
@@ -243,6 +248,34 @@ public class Curve25519 {
 		return ret;
 	}
 	
+	
+	public BigInteger x25519Eff(byte[] scalar, BigInteger uIn) {
+		FP256 fp = new FP256();
+		FP256.fp256 reduced = fp.zero();
+		s64Array z_inv = new s64Array();
+		Montgomery.point P = new Montgomery.point();
+		//assert(false);
+		assert(scalar.length == 32);
+		byte[] e = new byte[32];
+		System.arraycopy(scalar, 0, e, 0, 32);
+		
+		// set lowest 3 bits to zero to get multiple of 8, to avoid small subgroups
+		e[0] &= 0xF8;
+		
+		// discard highest bit
+		e[31] &= 0x7F;
+		e[31] |= 0x40;
+		
+		Montgomery.montgomery_ladder(P, e, Field.s64Array.fromFP256(fp.fromBigInteger(uIn)));
+		invert(z_inv, P.z);
+		mul_reduced(P.z, P.x, z_inv);
+		//print_s64("Px", result.x);
+		print_s64("Pz", P.z);
+		//serialize(out, P.z);
+		return fp.toBigInteger(reduced); // TODO return reduced point
+	}
+	
+	
 	private BigInteger[] cswap(BigInteger swap, BigInteger x_2, BigInteger x_3) {
 		// swap is 0 or 1
 		//out(x_2, "swap a");
@@ -307,5 +340,5 @@ public class Curve25519 {
 		BigInteger uOut = x25519(scalar, uIn, 255);
 		return asLittleEndianHexString(uOut);
 	}
-
+	
 }
