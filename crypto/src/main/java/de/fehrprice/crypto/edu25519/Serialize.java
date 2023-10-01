@@ -2,14 +2,73 @@ package de.fehrprice.crypto.edu25519;
 
 import static de.fehrprice.crypto.edu25519.Field.s64Array;
 import static de.fehrprice.crypto.edu25519.Field.s64Array.IS_ODD;
+import static de.fehrprice.crypto.edu25519.Montgomery.print_s64;
+
 public class Serialize {
 	
 	private static int MASK_L25 = 0x1ffffff;
 	private static int MASK_L26 = 0x3ffffff;
 	
 	
+	/*
+	 * As the serialization code is quite boring, it was taken from Adam Langleys Donna Code:
+	 * https://github.com/agl/curve25519-donna/blob/master/LICENSE.md
+	 */
+
+	private static int buildIntFromBytes(byte lo, byte b2, byte b3, byte hi) {
+		int r = 0;
+		r |= lo & 0x000000ff;
+		r |= (b2 << 8) & 0x0000ff00;
+		r |= (b3 << 16) & 0x00ff0000;
+		r |= (hi << 24) & 0xff000000;
+		return r;
+	}
+/***
+ * Assigns a polynomial coefficient by shuffling the byte array.
+ * Helper function for deserialize.
+ * @param poly Pointer to polynomial
+ * @param bytes pointer to input bytes
+ * @param index index of coefficient
+ * @param offset offset in bytes at which to start
+ * @param cutoff How many bits have to be cut off at the end of the coeff (because they were part of the previous coeff)
+ * @param mask How many bits to keep (26 for even index, 25 for odd...)
+ */
+	private static void assign_coeff(
+			s64Array poly, byte[] bytes, int index, int offset, int cutoff, int mask) {
+		//print_s64("str", poly);
+		poly.it[index] = buildIntFromBytes(bytes[offset + 0], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
+		//poly.it[index] = ((int) bytes[offset + 0]) | ((int) bytes[offset + 1]) << 8 | ((int) bytes[offset + 2]) << 16 |
+		//		((int) bytes[offset + 3]) << 24;
+		poly.it[index] >>= cutoff;
+		poly.it[index] &= mask;
+		//print_s64("end", poly);
+	}
+
+	/***
+	 * Turn a 32 byte string into polynomial form.
+	 * @param poly Output Poly, array of 10 64 bit limbs
+	 * @param bytes Little endian 32B byte array
+	 */
 	public static void deserialize(s64Array poly, byte[] bytes) {
-	
+//		System.out.print("des bytes ");
+//		for (int i = 31; i >= 0; --i) {
+//			byte cur_byte = bytes[i];
+//			System.out.printf("%02x ", cur_byte);
+//		}
+//		System.out.print("\n");
+		// This is hard coded, just so we don't need to compute anything at runtime
+		assign_coeff(poly, bytes, 0, 0, 0, MASK_L26);
+		assign_coeff(poly, bytes, 1, 3, 2, MASK_L25);
+		assign_coeff(poly, bytes, 2, 6, 3, MASK_L26);
+		assign_coeff(poly, bytes, 3, 9, 5, MASK_L25);
+		assign_coeff(poly, bytes, 4, 12, 6, MASK_L26);
+		assign_coeff(poly, bytes, 5, 16, 0, MASK_L25);
+		assign_coeff(poly, bytes, 6, 19, 1, MASK_L26);
+		assign_coeff(poly, bytes, 7, 22, 3, MASK_L25);
+		assign_coeff(poly, bytes, 8, 25, 4, MASK_L26);
+		assign_coeff(poly, bytes, 9, 28, 6, MASK_L25);
+		
+		//print_s64("poly", poly);
 	}
 	
 	

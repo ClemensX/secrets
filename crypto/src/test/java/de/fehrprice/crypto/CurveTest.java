@@ -1,10 +1,13 @@
 package de.fehrprice.crypto;
 
+import static de.fehrprice.crypto.edu25519.Montgomery.print_s64;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.math.BigInteger;
+import static de.fehrprice.crypto.edu25519.Serialize.deserialize;
 
+import de.fehrprice.crypto.edu25519.Field;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -368,12 +371,14 @@ public class CurveTest {
 		// compute Bobs public key
 		scalar = crv.decodeScalar25519(crv.toByteArray(b));
 		uOut = crv.x25519(scalar, uIn, 255);
+		crv.out(uOut, "Pubkey 2:");
 		assertEquals(b_pub, crv.asLittleEndianHexString(uOut));
 		bobPublicKey = uOut;
 		
 		// compute shared secret for both and check
 		scalar = crv.decodeScalar25519(crv.toByteArray(a));
 		uIn = crv.decodeUCoordinate(crv.toByteArray(b_pub), 255);
+		
 		uOut = crv.x25519(scalar, uIn, 255);
 		assertEquals(secret_k, crv.asLittleEndianHexString(uOut));
 		scalar = crv.decodeScalar25519(crv.toByteArray(b));
@@ -434,11 +439,16 @@ public class CurveTest {
 		// compute shared secret for both and check
 		scalar = crv.toByteArray(a);
 		uIn = crv.decodeUCoordinate(crv.toByteArray(b_pub), 255);
+		Field.s64Array b_pub_ar = new Field.s64Array();
+		deserialize(b_pub_ar, crv.toByteArray(b_pub));
+		print_s64("crv bp", b_pub_ar);
 		uOut = crv.x25519Eff(scalar, uIn);
+		crv.out(uOut, "Shared key 1:");
 		assertEquals(secret_k, crv.asLittleEndianHexString(uOut));
 		scalar = crv.toByteArray(b);
 		uIn = crv.decodeUCoordinate(crv.toByteArray(a_pub), 255);
 		uOut = crv.x25519Eff(scalar, uIn);
+		crv.out(uOut, "Shared key 2:");
 		assertEquals(secret_k, crv.asLittleEndianHexString(uOut));
 		secretKey = uOut;
 		
@@ -453,5 +463,12 @@ public class CurveTest {
 		assertEquals(secretKey, uOut);
 	}
 	
+	@Test
+	void deserializeTest() {
+		String b_pub          = "de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f";
+		Field.s64Array b_pub_ar = new Field.s64Array();
+		deserialize(b_pub_ar, crv.toByteArray(b_pub));
+		
+	}
 }
 
