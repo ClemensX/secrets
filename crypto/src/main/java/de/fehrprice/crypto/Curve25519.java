@@ -8,7 +8,6 @@ import static de.fehrprice.crypto.edu25519.Field.s64Array;
 import static de.fehrprice.crypto.edu25519.Field.s64Array.*;
 import static de.fehrprice.crypto.edu25519.Montgomery.print_s64;
 import static de.fehrprice.crypto.edu25519.Serialize.serialize;
-import static de.fehrprice.crypto.edu25519.Serialize.deserialize;
 
 /**
  * Curve25519 implementation.
@@ -261,9 +260,9 @@ public class Curve25519 {
 	}
 	
 	
-	public BigInteger x25519Eff(byte[] scalar, BigInteger uIn) {
+	public BigInteger x25519Eff(byte[] scalar, s64Array uIn) {
 		FP256 fp = new FP256();
-		print_s64("crv bp", Field.s64Array.fromFP256(fp.fromBigInteger(uIn)));
+		print_s64("crv bp", uIn);
 		System.out.print("crv sc ");
 		for (int i = 31; i >= 0; --i) {
 			byte cur_byte = scalar[i];
@@ -285,7 +284,7 @@ public class Curve25519 {
 		e[31] &= 0x7F;
 		e[31] |= 0x40;
 		
-		Montgomery.montgomery_ladder(P, e, Field.s64Array.fromFP256(fp.fromBigInteger(uIn)));
+		Montgomery.montgomery_ladder(P, e, uIn);
 		invert(z_inv, P.z);
 		mul_reduced(P.z, P.x, z_inv);
 		//print_s64("Px", result.x);
