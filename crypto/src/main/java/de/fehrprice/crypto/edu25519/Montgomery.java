@@ -2,7 +2,13 @@ package de.fehrprice.crypto.edu25519;
 
 import de.fehrprice.crypto.edu25519.Field.s64Array;
 import static de.fehrprice.crypto.edu25519.Field.s64Array.COPY_ELEM;
-import static de.fehrprice.crypto.edu25519.Field.s64Array.*;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.add;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.mul_constant;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.mul_reduced;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.reduce_coefficients;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.square_reduced;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.sub;
+
 public class Montgomery {
 
 	public static void print_s64(String name, s64Array src) {

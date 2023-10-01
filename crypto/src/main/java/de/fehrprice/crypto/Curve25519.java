@@ -7,6 +7,8 @@ import de.fehrprice.crypto.edu25519.Montgomery;
 import static de.fehrprice.crypto.edu25519.Field.s64Array;
 import static de.fehrprice.crypto.edu25519.Field.s64Array.*;
 import static de.fehrprice.crypto.edu25519.Montgomery.print_s64;
+import static de.fehrprice.crypto.edu25519.Serialize.serialize;
+
 /**
  * Curve25519 implementation.
  * 
@@ -271,8 +273,11 @@ public class Curve25519 {
 		mul_reduced(P.z, P.x, z_inv);
 		//print_s64("Px", result.x);
 		print_s64("Pz", P.z);
-		//serialize(out, P.z);
-		return fp.toBigInteger(reduced); // TODO return reduced point
+		byte[] out = new byte[32];
+		serialize(out, P.z);
+		System.out.println("out " + asString(out) );
+		BigInteger big = decodeLittleEndian(out, 255);
+		return big;
 	}
 	
 	

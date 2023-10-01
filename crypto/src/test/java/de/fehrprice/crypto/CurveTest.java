@@ -420,13 +420,14 @@ public class CurveTest {
 		scalar = crv.toByteArray(a);
 		uIn = crv.decodeUCoordinate(crv.toByteArray(uBasePoint), 255);
 		uOut = crv.x25519Eff(scalar, uIn);
-		//crv.out(uOut, "a_out");
+		crv.out(uOut, "Pubkey 1:");
 		assertEquals(a_pub, crv.asLittleEndianHexString(uOut));
 		alicePublicKey = uOut;
 		
 		// compute Bobs public key
 		scalar = crv.toByteArray(b);
 		uOut = crv.x25519Eff(scalar, uIn);
+		crv.out(uOut, "Pubkey 2:");
 		assertEquals(b_pub, crv.asLittleEndianHexString(uOut));
 		bobPublicKey = uOut;
 		
