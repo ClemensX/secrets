@@ -178,14 +178,14 @@ public class Curve25519 {
 	
 	public BigInteger x25519( BigInteger k, BigInteger u, int bits) {
 		FP256 fp = new FP256();
-		print_s64("crv bp", Field.s64Array.fromFP256(fp.fromBigInteger(u)));
+		//print_s64("crv bp", Field.s64Array.fromFP256(fp.fromBigInteger(u)));
 		var scalar = decodeFromBigIntegerLittleEndian(k);
-		System.out.print("crv sc ");
-		for (int i = 31; i >= 0; --i) {
-			byte cur_byte = scalar[i];
-			System.out.printf("%02x ", cur_byte);
-		}
-		System.out.print("\n");
+//		System.out.print("crv sc ");
+//		for (int i = 31; i >= 0; --i) {
+//			byte cur_byte = scalar[i];
+//			System.out.printf("%02x ", cur_byte);
+//		}
+//		System.out.print("\n");
 		BigInteger x_1, x_2, z_2, x_3, z_3, swap;
 		x_1 = u;
 		x_2 = BigInteger.ONE;
@@ -262,13 +262,13 @@ public class Curve25519 {
 	
 	public BigInteger x25519Eff(byte[] scalar, s64Array uIn) {
 		FP256 fp = new FP256();
-		print_s64("crv bp", uIn);
-		System.out.print("crv sc ");
-		for (int i = 31; i >= 0; --i) {
-			byte cur_byte = scalar[i];
-			System.out.printf("%02x ", cur_byte);
-		}
-		System.out.print("\n");
+		//print_s64("crv bp", uIn);
+//		System.out.print("crv sc ");
+//		for (int i = 31; i >= 0; --i) {
+//			byte cur_byte = scalar[i];
+//			System.out.printf("%02x ", cur_byte);
+//		}
+//		System.out.print("\n");
 		FP256.fp256 reduced = fp.zero();
 		s64Array z_inv = new s64Array();
 		Montgomery.point P = new Montgomery.point();
@@ -288,10 +288,10 @@ public class Curve25519 {
 		invert(z_inv, P.z);
 		mul_reduced(P.z, P.x, z_inv);
 		//print_s64("Px", result.x);
-		print_s64("Pz", P.z);
+		//print_s64("Pz", P.z);
 		byte[] out = new byte[32];
 		serialize(out, P.z);
-		System.out.println("out " + asString(out) );
+		//System.out.println("out " + asString(out) );
 		BigInteger big = decodeLittleEndian(out, 255);
 		return big;
 	}

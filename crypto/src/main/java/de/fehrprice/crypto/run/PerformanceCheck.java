@@ -10,6 +10,7 @@ import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.FP256;
 import de.fehrprice.crypto.FP256.fp256;
 import de.fehrprice.crypto.RandomSeed;
+import de.fehrprice.crypto.edu25519.Field;
 import de.fehrprice.net.DTO;
 import de.fehrprice.net.ECConnection;
 import de.fehrprice.net.Session;
@@ -18,12 +19,74 @@ import de.fehrprice.net.Session;
 public class PerformanceCheck {
 
     public static void main(String[] args) {
-        perf256ModPow();
+        //perfX25519Compare();
         perfECDSA();
-        perf64Mult();
-        perf256Mult();
+        if (false) {
+            perf256ModPow();
+            perf64Mult();
+            perf256Mult();
+        }
     }
-
+    
+    /**
+     * Test performance naive X25519 impl vs. edu25519 Java port
+     */
+    private static void perfX25519Compare() {
+        
+        int count = 1000;
+        // prep
+        // create all arrays we need to prepare mult data
+        BigInteger scalar, uIn, uOut, bobPublicKey, alicePublicKey, secretKey;
+        String uBasePoint, a, b, a_pub, b_pub, secret_k;
+        byte[] scalarEff;
+        FP256 fp = new FP256();
+        
+        
+        uBasePoint     = "0900000000000000000000000000000000000000000000000000000000000000";
+        a              = "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
+        b              = "5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb";
+        var crv = new Curve25519();
+        for (int i = 0; i < 100; i++) {
+            scalar = crv.decodeScalar25519(crv.toByteArray(a));
+            uIn = crv.decodeUCoordinate(crv.toByteArray(uBasePoint), 255);
+            uOut = crv.x25519(scalar, uIn, 255);
+        }
+        
+        System.out.println("prep done, calculating...");
+        long start = System.nanoTime();
+        for (int i = 0; i < count; i++) {
+            scalar = crv.decodeScalar25519(crv.toByteArray(a));
+            uIn = crv.decodeUCoordinate(crv.toByteArray(uBasePoint), 255);
+            uOut = crv.x25519(scalar, uIn, 255);
+        }
+        long now = System.nanoTime();
+        long duration = now - start;
+        double duration_seconds = ((double) duration) / 1E9;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("Naive X25519 impl " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+        
+        start = System.nanoTime();
+        for (int i = 0; i < count; i++) {
+            scalarEff = crv.toByteArray(a);
+            uIn = crv.decodeUCoordinate(crv.toByteArray(uBasePoint), 255);
+            uOut = crv.x25519Eff(scalarEff, Field.s64Array.fromFP256(fp.fromBigInteger(uIn)));
+        }
+        
+        now = System.nanoTime();
+        duration = now - start;
+        duration_seconds = ((double) duration) / 1E9;
+        df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("edu25519 X25519 impl " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+        
+    }
     
 	/**
 	 * Test performance of 64 bit multiplication with FP256 and BigInteger 
