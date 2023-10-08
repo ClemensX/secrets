@@ -90,7 +90,12 @@ public class FP256 {
         f.d[3] = Conv.bytesToUnsignedLong(higharr);
         return f;
     }
-    
+ 
+	public fp256 fromLong(long l) {
+		fp256 f = zero();
+		f.d[0] = l;
+		return f;
+	}
     /**
      * Return Hex String representation of fp256 value with no whitespace.
      * @param f
@@ -302,8 +307,8 @@ public class FP256 {
     }
     
     // unsigned 64 bit multiplication --> 128 bit result
-    // simple divide and conquer: do 32 bit mult and shift/add accordingly (schoolbook mutliplication)
-    // d[0} and d[1] used for result
+    // simple divide and conquer: do 64 bit mult and shift/add accordingly (schoolbook mutliplication)
+    // d[0] and d[1] used for result
     // according to /crypto/src/main/java/de/fehrprice/crypto/run/PerformanceCheck.java:
     // ~ double speed of simple BigInteger multiplication
     public void umul64(fp256 res, long a, long b) {
