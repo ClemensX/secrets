@@ -1,13 +1,28 @@
 package de.fehrprice.crypto.donna;
 
+import de.fehrprice.crypto.Curve25519;
 import de.fehrprice.crypto.FP256;
 import de.fehrprice.crypto.SHA;
-import de.fehrprice.crypto.edu25519.Field;
+import de.fehrprice.crypto.donna.niels.Bignum25519;
+import de.fehrprice.crypto.donna.niels.ConstDef;
+import de.fehrprice.crypto.donna.niels.Niels;
 import de.fehrprice.crypto.FP256.fp256;
+import de.fehrprice.crypto.donna.niels.ge25519;
+import de.fehrprice.crypto.Long4;
 
 public class ED25519 {
 	
 	private FP256 fp = new FP256();
+	private Curve25519 cv = new Curve25519();
+	private Niels niels = new Niels();
+	private ConstDef constDef = new ConstDef();
+	private Long4 long4 = new Long4();
+	public static final long reduce_mask_51 = 0x0007ffffffffffffL;
+	/* multiples of p */
+	public static final long twoP0      = 0x0fffffffffffdaL;
+	public static final long twoP1234   = 0x0ffffffffffffeL;
+	public static final long fourP0     = 0x1fffffffffffb4L;
+	public static final long fourP1234  = 0x1ffffffffffffcL;
 	
 	public static void print64(String name, byte[] b) {
 		System.out.print(name + " ");
@@ -17,9 +32,30 @@ public class ED25519 {
 		System.out.println();
 	}
 	
+	public static void print96(String name, byte[] b) {
+		System.out.print(name + " ");
+		for (int i = 0; i < 96; i++) {
+			System.out.printf("%02x", b[i]);
+		}
+		System.out.println();
+	}
+	
 	private void print128(String txt, fp256 f) {
 		System.out.printf("%s ", txt); for (int i = 1; i >= 0; i--) printLong(f.getInternalLongArray()[i]); System.out.println();
 	}
+	
+	public static void printBig(String txt, Bignum25519 v) {
+		printB256modm(txt, v);
+//		int i;
+//		System.out.printf("%s ", txt);
+//		System.out.printf("%016x ", v.m[0]);
+//		System.out.printf("%016x ", v.m[1]);
+//		System.out.printf("%016x ", v.m[2]);
+//		System.out.printf("%016x ", v.m[3]);
+//		System.out.printf("%016x ", v.m[4]);
+//		System.out.printf("\n");
+	}
+	
 	
 	public static void printLong(long l) {
 		System.out.printf("%016x ", l);
@@ -31,13 +67,7 @@ public class ED25519 {
 		int i;
 		System.out.printf("%s ", txt); for (i = 0; i < 5; i++) printLong(a.m[i]); System.out.println();
 	}
-	public class Key {
-		public byte[] k = new byte[32];
-	}
 	
-	public class Bignum256modm {
-		public long[] m = new long[5];
-	}
 	
 	public String publicKey(String secretKeyString) {
 		Key secretKey = new Key();
@@ -55,8 +85,7 @@ public class ED25519 {
 	 */
 	public void publicKey(Key secretKey, Key publicKey) {
 		Bignum256modm a = new Bignum256modm();
-		//ge25519 ALIGN(16) A;
-		//hash_512bits extsk;
+		ge25519 A = new ge25519();
 		
 		/* A = aB */
 		System.out.println("publickey()");
@@ -64,12 +93,51 @@ public class ED25519 {
 		extsk(extsk, secretKey);
 		print64("sk SHA", extsk);
 		expand256_modm(a, extsk, 32);
-		//ge25519_scalarmult_base_niels(&A, ge25519_niels_base_multiples, a);
+		niels.scalarmult_base_niels(A, ConstDef.ge25519_niels_base_multiples, a);
 		//ge25519_pack(pk, &A);
 	}
 	
+	/* Take a little-endian, 32-byte number and expand it into polynomial form */
+	public static void expand32(Bignum256modm out, byte[] in) {
+		Bignum256modm x = new Bignum256modm();
+		x.m[0] = U8TO64_LE(in,0);
+		x.m[1] = U8TO64_LE(in,8);
+		x.m[2] = U8TO64_LE(in,16);
+		x.m[3] = U8TO64_LE(in,24);
+		//System.out.print("x8 "); for (int i = 0; i < 5; i++) printLong(x.m[i]); System.out.println();
+		
+		out.m[0] = x.m[0] & reduce_mask_51; x.m[0] = (x.m[0] >>> 51) | (x.m[1] << 13);
+		out.m[1] = x.m[0] & reduce_mask_51; x.m[1] = (x.m[1] >>> 38) | (x.m[2] << 26);
+		out.m[2] = x.m[1] & reduce_mask_51; x.m[2] = (x.m[2] >>> 25) | (x.m[3] << 39);
+		out.m[3] = x.m[2] & reduce_mask_51; x.m[3] = (x.m[3] >>> 12);
+		out.m[4] = x.m[3] & reduce_mask_51;
+		
+		//printB256modm("exp32", out);
+	}
 	
-	private void expand256_modm(Bignum256modm out, byte[] in, int len) {
+	public static void swap_conditional(Bignum25519 a, Bignum25519 b, long iswap) {
+		long swap = -iswap;
+		long x0,x1,x2,x3,x4;
+		
+		x0 = swap & (a.m[0] ^ b.m[0]); a.m[0] ^= x0; b.m[0] ^= x0;
+		x1 = swap & (a.m[1] ^ b.m[1]); a.m[1] ^= x1; b.m[1] ^= x1;
+		x2 = swap & (a.m[2] ^ b.m[2]); a.m[2] ^= x2; b.m[2] ^= x2;
+		x3 = swap & (a.m[3] ^ b.m[3]); a.m[3] ^= x3; b.m[3] ^= x3;
+		x4 = swap & (a.m[4] ^ b.m[4]); a.m[4] ^= x4; b.m[4] ^= x4;
+	}
+	
+	/* out = -a */
+	public static void neg(Bignum25519 out, Bignum25519 a) {
+		long c;
+		out.m[0] = twoP0    - a.m[0]    ; c = (out.m[0] >>> 51); out.m[0] &= reduce_mask_51;
+		out.m[1] = twoP1234 - a.m[1] + c; c = (out.m[1] >>> 51); out.m[1] &= reduce_mask_51;
+		out.m[2] = twoP1234 - a.m[2] + c; c = (out.m[2] >>> 51); out.m[2] &= reduce_mask_51;
+		out.m[3] = twoP1234 - a.m[3] + c; c = (out.m[3] >>> 51); out.m[3] &= reduce_mask_51;
+		out.m[4] = twoP1234 - a.m[4] + c; c = (out.m[4] >>> 51); out.m[4] &= reduce_mask_51;
+		out.m[0] += c * 19;
+	}
+	
+	public void expand256_modm(Bignum256modm out, byte[] in, int len) {
 		byte work[] = new byte[64];
 		long x[] = new long[16];
 		Bignum256modm q1 = new Bignum256modm();
@@ -83,7 +151,7 @@ public class ED25519 {
 		x[5] = U8TO64_LE(work,40);
 		x[6] = U8TO64_LE(work,48);
 		x[7] = U8TO64_LE(work,56);
-		//System.out.print("x8 "); for (int i = 0; i < 8; i++) printLong(x[i]); System.out.println();
+		System.out.print("x8 "); for (int i = 0; i < 8; i++) printLong(x[i]); System.out.println();
 		
 		
 		/* r1 = (x mod 256^(32+1)) = x mod (2^8)(31+1) = x & ((1 << 264) - 1) */
@@ -92,7 +160,7 @@ public class ED25519 {
 		out.m[2] = ((x[ 1] >>> 48) | (x[ 2] << 16)) & 0xffffffffffffffL;
 		out.m[3] = ((x[ 2] >>> 40) | (x[ 3] << 24)) & 0xffffffffffffffL;
 		out.m[4] = ((x[ 3] >>> 32) | (x[ 4] << 32)) & 0x0000ffffffffffL;
-		//printB256modm("b256", out);
+		printB256modm("exp no red", out);
 		
 		/* under 252 bits, no need to reduce */
 		if (len < 32)
@@ -107,6 +175,39 @@ public class ED25519 {
 		
 		barrett_reduce256_modm(out, q1, out);
 		printB256modm("q b256", out);
+	}
+	
+	
+	/**
+	 * @param r byte[64]
+	 * @param in
+	 */
+	public static void contract256_window4_modm(byte r[], Bignum256modm in) {
+		byte carry;
+		//signed char *quads = r;
+		int quads = 0; // iterate index of r[]
+		int i, j;
+		long v, m;
+		
+		for (i = 0; i < 5; i++) {
+			v = in.m[i];
+			m = (i == 4) ? 8 : 14;
+			for (j = 0; j < m; j++) {
+			    r[quads++] = (byte)(v & 15);
+				v >>= 4;
+			}
+		}
+		
+		/* making it signed */
+		carry = 0;
+		for(i = 0; i < 63; i++) {
+			r[i] += carry;
+			r[i+1] += (r[i] >> 4);
+			r[i] &= 15;
+			carry = (byte)(r[i] >> 3);
+			r[i] -= (carry << 4);
+		}
+		r[63] += carry;
 	}
 	
 	static long modm_m[] = {
@@ -242,7 +343,7 @@ public class ED25519 {
 	 * @param idx start index
 	 * @return
 	 */
-	private long U8TO64_LE(byte[] b, int idx) {
+	private static long U8TO64_LE(byte[] b, int idx) {
 		long l = ((long) b[7+idx] << 56)
 				| ((long) b[6+idx] & 0xff) << 48
 				| ((long) b[5+idx] & 0xff) << 40

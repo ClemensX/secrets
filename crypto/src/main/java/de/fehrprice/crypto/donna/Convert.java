@@ -1,7 +1,6 @@
 package de.fehrprice.crypto.donna;
 
 import de.fehrprice.crypto.Conv;
-import de.fehrprice.crypto.donna.ED25519.Key;
 
 public class Convert {
 	/**
