@@ -12,11 +12,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import de.fehrprice.crypto.AES;
-import de.fehrprice.crypto.Conv;
-import de.fehrprice.crypto.Curve25519;
-import de.fehrprice.crypto.RandomSeed;
-
 public class CurveTest {
 	
     public static boolean disableLongRunningTest = true;
@@ -421,7 +416,7 @@ public class CurveTest {
 		// shared secret
 		secret_k       = "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742";
 		
-		FP256 fp = new FP256();
+		FixedPointOp fp = new FixedPointOp();
 		// compute Alices public key
 		scalar = crv.toByteArray(a);
 		uIn = crv.decodeUCoordinate(crv.toByteArray(uBasePoint), 255);

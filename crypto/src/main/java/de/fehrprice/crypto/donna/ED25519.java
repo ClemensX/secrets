@@ -1,20 +1,20 @@
 package de.fehrprice.crypto.donna;
 
 import de.fehrprice.crypto.Curve25519;
-import de.fehrprice.crypto.FP256;
+import de.fehrprice.crypto.FixedPointOp;
 import de.fehrprice.crypto.SHA;
 import de.fehrprice.crypto.donna.niels.Bignum25519;
 import de.fehrprice.crypto.donna.niels.ConstDef;
 import de.fehrprice.crypto.donna.niels.Niels;
-import de.fehrprice.crypto.FP256.fp256;
+import de.fehrprice.crypto.fp256;
 import de.fehrprice.crypto.donna.niels.ge25519;
 import de.fehrprice.crypto.Long4;
 
 public class ED25519 {
 	
-	private FP256 fp = new FP256();
+	private FixedPointOp fp = new FixedPointOp();
 	private Curve25519 cv = new Curve25519();
-	private Niels niels = new Niels();
+	private Niels niels = new Niels(this);
 	private ConstDef constDef = new ConstDef();
 	private Long4 long4 = new Long4();
 	public static final long reduce_mask_51 = 0x0007ffffffffffffL;
@@ -136,6 +136,31 @@ public class ED25519 {
 		out.m[4] = twoP1234 - a.m[4] + c; c = (out.m[4] >>> 51); out.m[4] &= reduce_mask_51;
 		out.m[0] += c * 19;
 	}
+	
+	public static void add_reduce(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
+		long c;
+		out.m[0] = a.m[0] + b.m[0]    ; c = (out.m[0] >>> 51); out.m[0] &= reduce_mask_51;
+		out.m[1] = a.m[1] + b.m[1] + c; c = (out.m[1] >>> 51); out.m[1] &= reduce_mask_51;
+		out.m[2] = a.m[2] + b.m[2] + c; c = (out.m[2] >>> 51); out.m[2] &= reduce_mask_51;
+		out.m[3] = a.m[3] + b.m[3] + c; c = (out.m[3] >>> 51); out.m[3] &= reduce_mask_51;
+		out.m[4] = a.m[4] + b.m[4] + c; c = (out.m[4] >>> 51); out.m[4] &= reduce_mask_51;
+		out.m[0] += c * 19;
+	}
+	
+	public static void sub_reduce(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
+		long c;
+		out.m[0] = a.m[0] + fourP0    - b.m[0]    ; c = (out.m[0] >>> 51); out.m[0] &= reduce_mask_51;
+		out.m[1] = a.m[1] + fourP1234 - b.m[1] + c; c = (out.m[1] >>> 51); out.m[1] &= reduce_mask_51;
+		out.m[2] = a.m[2] + fourP1234 - b.m[2] + c; c = (out.m[2] >>> 51); out.m[2] &= reduce_mask_51;
+		out.m[3] = a.m[3] + fourP1234 - b.m[3] + c; c = (out.m[3] >>> 51); out.m[3] &= reduce_mask_51;
+		out.m[4] = a.m[4] + fourP1234 - b.m[4] + c; c = (out.m[4] >>> 51); out.m[4] &= reduce_mask_51;
+		out.m[0] += c * 19;
+	}
+	
+	public static void copy(Bignum25519 out, Bignum25519 in) {
+		System.arraycopy(in.m, 0, out.m, 0, 5);
+	}
+	
 	
 	public void expand256_modm(Bignum256modm out, byte[] in, int len) {
 		byte work[] = new byte[64];
@@ -375,5 +400,96 @@ public class ED25519 {
 		//System.out.println("digest = " + aes.toString(digest));
 		return digest;
 	}
+	
+	/* out = a - b */
+	public void sub(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
+		out.m[0] = a.m[0] + twoP0    - b.m[0];
+		out.m[1] = a.m[1] + twoP1234 - b.m[1];
+		out.m[2] = a.m[2] + twoP1234 - b.m[2];
+		out.m[3] = a.m[3] + twoP1234 - b.m[3];
+		out.m[4] = a.m[4] + twoP1234 - b.m[4];
+	}
+	/* out = a + b */
+	public void add(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
+		out.m[0] = a.m[0] + b.m[0];
+		out.m[1] = a.m[1] + b.m[1];
+		out.m[2] = a.m[2] + b.m[2];
+		out.m[3] = a.m[3] + b.m[3];
+		out.m[4] = a.m[4] + b.m[4];
+	}
+	
+	/* out = a + b, where a and/or b are the result of a basic op (add,sub) */
+	public void add_after_basic(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
+		// TODO no diff to add() ?
+		out.m[0] = a.m[0] + b.m[0];
+		out.m[1] = a.m[1] + b.m[1];
+		out.m[2] = a.m[2] + b.m[2];
+		out.m[3] = a.m[3] + b.m[3];
+		out.m[4] = a.m[4] + b.m[4];
+	}
+	/* out = a - b, where a and/or b are the result of a basic op (add,sub) */
+	public void sub_after_basic(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
+		out.m[0] = a.m[0] + fourP0    - b.m[0];
+		out.m[1] = a.m[1] + fourP1234 - b.m[1];
+		out.m[2] = a.m[2] + fourP1234 - b.m[2];
+		out.m[3] = a.m[3] + fourP1234 - b.m[3];
+		out.m[4] = a.m[4] + fourP1234 - b.m[4];
+	}
+	
+	/* out = a * b */
+	public void mul(Bignum25519 out, Bignum25519 in2, Bignum25519 in) {
+		fp256 t[] = new fp256[5];
+		FixedPointOp fp = new FixedPointOp();
+		for (int i = 0; i < 5; i++)
+			t[i] = fp.zero();
+		//fp256 c = fp.zero();
+		fp256 mul = fp.zero();
+
+		long r0,r1,r2,r3,r4,s0,s1,s2,s3,s4,c;
+		
+		r0 = in.m[0];
+		r1 = in.m[1];
+		r2 = in.m[2];
+		r3 = in.m[3];
+		r4 = in.m[4];
+		
+		s0 = in2.m[0];
+		s1 = in2.m[1];
+		s2 = in2.m[2];
+		s3 = in2.m[3];
+		s4 = in2.m[4];
+
+		mul64x64_128(t[0], r0, s0);
+		mul64x64_128(t[1], r0, s1); mul64x64_128(mul, r1, s0); add128(t[1], mul);
+		mul64x64_128(t[2], r0, s2); mul64x64_128(mul, r2, s0); add128(t[2], mul); mul64x64_128(mul, r1, s1); add128(t[2], mul);
+		mul64x64_128(t[3], r0, s3); mul64x64_128(mul, r3, s0); add128(t[3], mul); mul64x64_128(mul, r1, s2); add128(t[3], mul); mul64x64_128(mul, r2, s1); add128(t[3], mul);
+		mul64x64_128(t[4], r0, s4); mul64x64_128(mul, r4, s0); add128(t[4], mul); mul64x64_128(mul, r3, s1); add128(t[4], mul); mul64x64_128(mul, r1, s3); add128(t[4], mul); mul64x64_128(mul, r2, s2); add128(t[4], mul);
+		
+		r1 *= 19;
+		r2 *= 19;
+		r3 *= 19;
+		r4 *= 19;
+
+		mul64x64_128(mul, r4, s1); add128(t[0], mul); mul64x64_128(mul, r1, s4); add128(t[0], mul); mul64x64_128(mul, r2, s3); add128(t[0], mul); mul64x64_128(mul, r3, s2); add128(t[0], mul);
+		mul64x64_128(mul, r4, s2); add128(t[1], mul); mul64x64_128(mul, r2, s4); add128(t[1], mul); mul64x64_128(mul, r3, s3); add128(t[1], mul);
+		mul64x64_128(mul, r4, s3); add128(t[2], mul); mul64x64_128(mul, r3, s4); add128(t[2], mul);
+		mul64x64_128(mul, r4, s4); add128(t[3], mul);
+				
+				
+				              r0 = lo128(t[0]) & reduce_mask_51; c = shr128(t[0], 51);
+		add128_64(t[1], c);   r1 = lo128(t[1]) & reduce_mask_51; c = shr128(t[1], 51);
+		add128_64(t[2], c);   r2 = lo128(t[2]) & reduce_mask_51; c = shr128(t[2], 51);
+		add128_64(t[3], c);   r3 = lo128(t[3]) & reduce_mask_51; c = shr128(t[3], 51);
+		add128_64(t[4], c);   r4 = lo128(t[4]) & reduce_mask_51; c = shr128(t[4], 51);
+		r0 +=   c * 19; c = r0 >> 51; r0 = r0 & reduce_mask_51;
+		r1 +=   c;
+
+		out.m[0] = r0;
+		out.m[1] = r1;
+		out.m[2] = r2;
+		out.m[3] = r3;
+		out.m[4] = r4;
+	}
+	
 	
 }

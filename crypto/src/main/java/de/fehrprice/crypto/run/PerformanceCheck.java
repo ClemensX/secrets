@@ -7,8 +7,8 @@ import de.fehrprice.crypto.AES;
 import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Curve25519;
 import de.fehrprice.crypto.Ed25519;
-import de.fehrprice.crypto.FP256;
-import de.fehrprice.crypto.FP256.fp256;
+import de.fehrprice.crypto.FixedPointOp;
+import de.fehrprice.crypto.fp256;
 import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.crypto.edu25519.Field;
 import de.fehrprice.net.DTO;
@@ -39,7 +39,7 @@ public class PerformanceCheck {
         BigInteger scalar, uIn, uOut, bobPublicKey, alicePublicKey, secretKey;
         String uBasePoint, a, b, a_pub, b_pub, secret_k;
         byte[] scalarEff;
-        FP256 fp = new FP256();
+        FixedPointOp fp = new FixedPointOp();
         
         
         uBasePoint     = "0900000000000000000000000000000000000000000000000000000000000000";
@@ -94,7 +94,7 @@ public class PerformanceCheck {
 	private static void perf64Mult() {
         AES aes = new AES();
         aes.setSeed(RandomSeed.createSeed());
-        FP256 fp = new FP256();
+        FixedPointOp fp = new FixedPointOp();
 
         int count = 100000;
         // create all arrays we need to prepare mult data
@@ -155,7 +155,7 @@ public class PerformanceCheck {
 	private static void perf256Mult() {
         AES aes = new AES();
         aes.setSeed(RandomSeed.createSeed());
-        FP256 fp = new FP256();
+        FixedPointOp fp = new FixedPointOp();
 
         int count = 10000;
         // create all arrays we need to prepare mult data
@@ -288,7 +288,7 @@ public class PerformanceCheck {
     private static void perf256ModPow() {
         AES aes = new AES();
         aes.setSeed(RandomSeed.createSeed());
-        FP256 fp = new FP256();
+        FixedPointOp fp = new FixedPointOp();
         Curve25519 crv = new Curve25519();
         BigInteger moduloB = Curve25519.p;
         fp256 modulo = fp.fromBigInteger(moduloB);

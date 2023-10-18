@@ -1,8 +1,7 @@
 package de.fehrprice.crypto.edu25519;
 
-import de.fehrprice.crypto.FP256;
+import de.fehrprice.crypto.fp256;
 
-import static de.fehrprice.crypto.edu25519.Montgomery.print_s64;
 public class Field {
 	
 	public static final int ELEMENT_SIZE = 20;
@@ -204,7 +203,7 @@ public class Field {
 		}
 		
 		
-		public static s64Array fromFP256(FP256.fp256 fp) {
+		public static s64Array fromFP256(fp256 fp) {
 			var r = new s64Array();
 			long[] d = fp.getInternalLongArray();
 			r.it[0] = d[0];

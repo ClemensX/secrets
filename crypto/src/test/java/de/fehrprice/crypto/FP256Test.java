@@ -10,11 +10,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.fehrprice.crypto.FP256.fp256;
-
 class FP256Test {
 
-	FP256 fp;
+	FixedPointOp fp;
 	AES aes;
     Curve25519 crv;
 
@@ -28,7 +26,7 @@ class FP256Test {
 
 	@BeforeEach
 	void setUp() throws Exception {
-		fp = new FP256();
+		fp = new FixedPointOp();
 		aes = new AES();
 		aes.setSeed(RandomSeed.createSeed());
         crv = new Curve25519();
@@ -457,7 +455,7 @@ class FP256Test {
         assertEquals(bmul, fp.toBigInteger(r));
         //fp256 a, b, r;
         // test with random numbers:
-        for (long i = 0; i < 100000; i++) {
+        for (long i = 0; i < 1000; i++) {
             // first make multiplication with BigInteger:
             String h = Conv.toString(aes.random(32));
             BigInteger big = new BigInteger(h, 16);

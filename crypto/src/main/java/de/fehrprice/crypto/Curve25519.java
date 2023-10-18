@@ -2,11 +2,9 @@ package de.fehrprice.crypto;
 
 import java.math.BigInteger;
 
-import de.fehrprice.crypto.edu25519.Field;
 import de.fehrprice.crypto.edu25519.Montgomery;
 import static de.fehrprice.crypto.edu25519.Field.s64Array;
 import static de.fehrprice.crypto.edu25519.Field.s64Array.*;
-import static de.fehrprice.crypto.edu25519.Montgomery.print_s64;
 import static de.fehrprice.crypto.edu25519.Serialize.serialize;
 
 /**
@@ -177,7 +175,7 @@ public class Curve25519 {
 	}
 	
 	public BigInteger x25519( BigInteger k, BigInteger u, int bits) {
-		FP256 fp = new FP256();
+		FixedPointOp fp = new FixedPointOp();
 		//print_s64("crv bp", Field.s64Array.fromFP256(fp.fromBigInteger(u)));
 		var scalar = decodeFromBigIntegerLittleEndian(k);
 //		System.out.print("crv sc ");
@@ -261,7 +259,7 @@ public class Curve25519 {
 	
 	
 	public BigInteger x25519Eff(byte[] scalar, s64Array uIn) {
-		FP256 fp = new FP256();
+		FixedPointOp fp = new FixedPointOp();
 		//print_s64("crv bp", uIn);
 //		System.out.print("crv sc ");
 //		for (int i = 31; i >= 0; --i) {
@@ -269,7 +267,7 @@ public class Curve25519 {
 //			System.out.printf("%02x ", cur_byte);
 //		}
 //		System.out.print("\n");
-		FP256.fp256 reduced = fp.zero();
+		fp256 reduced = fp.zero();
 		s64Array z_inv = new s64Array();
 		Montgomery.point P = new Montgomery.point();
 		//assert(false);

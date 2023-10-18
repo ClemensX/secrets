@@ -22,8 +22,15 @@ public class Niels {
 	 * Base point: (15112221349535400772501151409588531511454012693041857206046113283949847762202,46316835694926478169428394003475163141307993866256225615783033603165251855960);
 	 */
 	
-	//private ED25519 ed25519 = new ED25519();
+	private ED25519 ed25519;
 	private Long4 long4 = new Long4();
+	
+	
+	public Niels(ED25519 ed25519) {
+		this.ed25519 = ed25519;
+	}
+	
+	
 	private int
 	windowb_equal(int b, int c) {
 		return ((b ^ c) - 1) >>> 31;
@@ -136,7 +143,33 @@ public class Niels {
 		//System.arraycopy(fa.it, 0, out.m, 0, 5);
 	}
 	
+	public void nielsadd2(ge25519 r, ge25519_niels q) {
+		Bignum25519 a = new Bignum25519();
+		Bignum25519 b = new Bignum25519();
+		Bignum25519 c = new Bignum25519();
+		Bignum25519 d = new Bignum25519();
+		Bignum25519 e = new Bignum25519();
+		Bignum25519 f = new Bignum25519();
+		Bignum25519 g = new Bignum25519();
+		Bignum25519 h = new Bignum25519();
+		
+		ed25519.sub(a, r.y, r.x);
+		ed25519.add(b, r.y, r.x);
+		ed25519.mul(a, a, q.ysubx);
+		ed25519.mul(e, b, q.xaddy);
+		ed25519.add(h, e, a);
+		ed25519.sub(e, e, a);
+		ed25519.mul(c, r.t, q.t2d);
+		ed25519.add(f, r.z, r.z);
+		ed25519.add_after_basic(g, f, c);
+		ed25519.sub_after_basic(f, f, c);
+		ed25519.mul(r.x, e, f);
+		ed25519.mul(r.y, h, g);
+		ed25519.mul(r.z, g, f);
+		ed25519.mul(r.t, e, h);
+	}
 	
+
 	/* computes [s]basepoint */
 	public void scalarmult_base_niels(ge25519 r, byte[][] basepoint_table, Bignum256modm s) {
 		byte b[] = new byte[64];
@@ -147,6 +180,39 @@ public class Niels {
 		print64("b", b);
 		
 		scalarmult_base_choose_niels(t, basepoint_table, 0, b[1]);
+		
+		ED25519.sub_reduce(r.x, t.xaddy, t.ysubx);
+		printBig("sub_red r.x", r.x);
+		ED25519.add_reduce(r.y, t.xaddy, t.ysubx);
+		printBig("add_red r.x", r.y);
+		r.z = new Bignum25519();
+		//memset(r->z, 0, sizeof(bignum25519));
+		ED25519.copy(r.t, t.t2d);
+		r.z.m[0] = 2;
+		printBig("r.z", r.z);
+
+		for (i = 3; i < 64; i += 2) {
+			scalarmult_base_choose_niels(t, basepoint_table, i / 2, b[i]);
+			nielsadd2(r, t);
+		}
+		printBig("r.x", r.x);
+		printBig("r.y", r.y);
+		printBig("r.z", r.z);
+		printBig("r.t", r.t);
+		/*
+		ge25519_double_partial(r, r);
+		ge25519_double_partial(r, r);
+		ge25519_double_partial(r, r);
+		ge25519_double(r, r);
+		ge25519_scalarmult_base_choose_niels(&t, basepoint_table, 0, b[0]);
+		curve25519_mul(t.t2d, t.t2d, ge25519_ecd);
+		ge25519_nielsadd2(r, &t);
+		for(i = 2; i < 64; i += 2) {
+			ge25519_scalarmult_base_choose_niels(&t, basepoint_table, i / 2, b[i]);
+			ge25519_nielsadd2(r, &t);
+		}
+			
+		 */
 	}
 	
 	
