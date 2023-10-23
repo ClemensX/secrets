@@ -10,6 +10,7 @@ import de.fehrprice.crypto.edu25519.Field;
 import de.fehrprice.crypto.edu25519.Serialize;
 
 import static de.fehrprice.crypto.donna.ED25519.contract256_window4_modm;
+import static de.fehrprice.crypto.donna.ED25519.ge25519_ecd;
 import static de.fehrprice.crypto.donna.ED25519.print64;
 import static de.fehrprice.crypto.donna.ED25519.print96;
 import static de.fehrprice.crypto.donna.ED25519.printBig;
@@ -195,24 +196,23 @@ public class Niels {
 			scalarmult_base_choose_niels(t, basepoint_table, i / 2, b[i]);
 			nielsadd2(r, t);
 		}
+		ed25519.double_partial(r, r);
+		ed25519.double_partial(r, r);
+		ed25519.double_partial(r, r);
+		ed25519.double_(r, r);
+		scalarmult_base_choose_niels(t, basepoint_table, 0, b[0]);
+		ed25519.mul(t.t2d, t.t2d, ED25519.ge25519_ecd);
+
+		nielsadd2(r, t);
+		for(i = 2; i < 64; i += 2) {
+			scalarmult_base_choose_niels(t, basepoint_table, i / 2, b[i]);
+			nielsadd2(r, t);
+		}
+		
 		printBig("r.x", r.x);
 		printBig("r.y", r.y);
 		printBig("r.z", r.z);
 		printBig("r.t", r.t);
-		/*
-		ge25519_double_partial(r, r);
-		ge25519_double_partial(r, r);
-		ge25519_double_partial(r, r);
-		ge25519_double(r, r);
-		ge25519_scalarmult_base_choose_niels(&t, basepoint_table, 0, b[0]);
-		curve25519_mul(t.t2d, t.t2d, ge25519_ecd);
-		ge25519_nielsadd2(r, &t);
-		for(i = 2; i < 64; i += 2) {
-			ge25519_scalarmult_base_choose_niels(&t, basepoint_table, i / 2, b[i]);
-			ge25519_nielsadd2(r, &t);
-		}
-			
-		 */
 	}
 	
 	
