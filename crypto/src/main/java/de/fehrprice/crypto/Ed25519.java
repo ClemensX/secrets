@@ -226,7 +226,7 @@ public class Ed25519 extends Curve25519 {
 		return keygen(secretKeyString).publicKey;
 	}
 
-	private byte[] concat_r_pk_m(byte[] enc_r, byte[] pk, byte[] m) {
+	public byte[] concat_r_pk_m(byte[] enc_r, byte[] pk, byte[] m) {
 		byte[] concat = new byte[enc_r.length + pk.length + m.length];
 		System.arraycopy(enc_r, 0, concat, 0, enc_r.length);
 		System.arraycopy(pk, 0, concat, enc_r.length, pk.length);

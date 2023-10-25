@@ -30,4 +30,13 @@ public class Convert {
 	public static String fromKey(Key k) {
 		return Conv.toString(k.k);
 	}
+
+	/**
+	 * Convert Signature to 128 char hex string. First byte is most significant (BigEndian).
+	 * @param s
+	 * @return
+	 */
+	public static String fromSignature(Signature k) {
+		return Conv.toString(k.k);
+	}
 }

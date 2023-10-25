@@ -1,6 +1,8 @@
 package de.fehrprice.crypto.donna;
 
+import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Curve25519;
+import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.FixedPointOp;
 import de.fehrprice.crypto.SHA;
 import de.fehrprice.crypto.donna.niels.Bignum25519;
@@ -14,6 +16,7 @@ import de.fehrprice.crypto.Long4;
 
 public class ED25519 {
 	
+	private Ed25519 simpleEd = new Ed25519();
 	private FixedPointOp fp = new FixedPointOp();
 	private Curve25519 cv = new Curve25519();
 	private Niels niels = new Niels(this);
@@ -81,7 +84,6 @@ public class ED25519 {
 		return Convert.fromKey(publicKey);
 	}
 	
-	
 	/**
 	 * Create public key from secret key.
 	 * @param secretKey
@@ -100,6 +102,71 @@ public class ED25519 {
 		niels.scalarmult_base_niels(A, ConstDef.ge25519_niels_base_multiples, a);
 		//byte[] pk = new byte[32];
 		pack(publicKey.k, A);
+	}
+	
+	public String signature(String messageString, String secretKeyString, String pubk) {
+		byte[] m = Conv.toByteArray(messageString);
+		Key secretKey = new Key();
+		Key publicKey = new Key();
+		Signature sig = new Signature();
+		Convert.toKey(secretKey, secretKeyString);
+		Convert.toKey(publicKey, pubk);
+		signature(m, secretKey, publicKey, sig);
+		return Convert.fromSignature(sig);
+	}
+
+	public void signature(byte[] m, Key sk, Key pk, Signature RS) {
+		//ed25519_hash_context ctx;
+		Bignum256modm r = new Bignum256modm();
+		Bignum256modm S = new Bignum256modm();
+		Bignum256modm a = new Bignum256modm();
+		ge25519 R = new ge25519();
+		
+		byte[] extsk = new byte[64];
+		//byte[] hashr = new byte[64];
+		//byte[] hram = new byte[64];
+		extsk(extsk, sk);
+
+		/* r = H(aExt[32..64], m) */
+		// create array for 2nd half of signature + message
+		byte[] r_arr = new byte[32 + m.length];
+		System.arraycopy(extsk, 32, r_arr, 0, 32);
+		System.arraycopy(m, 0, r_arr, 32, m.length);
+		byte[] hashr = h(r_arr); // digest
+		print64("hashr", hashr);
+//		ed25519_hash_init(&ctx);
+//		ed25519_hash_update(&ctx, extsk + 32, 32);
+//		ed25519_hash_update(&ctx, m, mlen);
+//		ed25519_hash_final(&ctx, hashr);
+		expand256_modm(r, hashr, 64);
+		printB256modm("r", r);
+		
+		/* R = rB */
+		niels.scalarmult_base_niels(R, ConstDef.ge25519_niels_base_multiples, r);
+		pack(RS.k, R);
+		
+		/* S = H(R,A,m).. */
+		//ed25519_hram(hram, RS, pk, m, mlen);
+		byte[] hram = h(concat_r_pk_m(RS.k, pk.k, m));
+		expand256_modm(S, hram, 64);
+		printB256modm("S", S);
+		
+		/* S = H(R,A,m)a */
+		expand256_modm(a, extsk, 32);
+		//mul256_modm(S, S, a);
+		
+		/* S = (r + H(R,A,m)a) */
+		//add256_modm(S, S, r);
+		
+		/* S = (r + H(R,A,m)a) mod L */
+		//contract256_modm(RS + 32, S);
+	}
+	public byte[] concat_r_pk_m(byte[] RS, byte[] pk, byte[] m) {
+		byte[] concat = new byte[32 + pk.length + m.length];
+		System.arraycopy(RS, 0, concat, 0, 32);
+		System.arraycopy(pk, 0, concat, 32, pk.length);
+		System.arraycopy(m, 0, concat, 32 + pk.length, m.length);
+		return concat;
 	}
 	
 	// unsigned char r[32]
