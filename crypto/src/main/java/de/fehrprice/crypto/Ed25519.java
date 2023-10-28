@@ -234,6 +234,13 @@ public class Ed25519 extends Curve25519 {
 		return concat;
 	}
 	
+	
+	/**
+	 * @param messageString hex string coded message
+	 * @param secretKeyString hex string coded private key
+	 * @param pubk hex string coded public key
+	 * @return
+	 */
 	public String signature(String messageString, String secretKeyString, String pubk) {
 		byte[] m = Conv.toByteArray(messageString);
 		return signature(m, secretKeyString, pubk);

@@ -93,14 +93,14 @@ public class Niels {
 	}
 	
 	private void scalarmult_base_choose_niels(ge25519_niels t, byte[][] table, int pos, byte b) {
-		System.out.printf("b %02x\n", b);
+		//System.out.printf("b %02x\n", b);
 		Bignum25519 neg = new Bignum25519();
 		int sign = (int)(((b & 0xff) >>> 7) & 0xff);
-		System.out.printf("sign %08x\n", sign);
+		//System.out.printf("sign %08x\n", sign);
 		int mask = ~(sign - 1);
-		System.out.printf("mask %08x\n", mask);
+		//System.out.printf("mask %08x\n", mask);
 		int u = (b + mask) ^ mask;
-		System.out.printf("u %08x\n", u);
+		//System.out.printf("u %08x\n", u);
 		int i;
 		
 		/* ysubx, xaddy, t2d in packed form. initialize to ysubx = 1, xaddy = 1, t2d = 0 */
@@ -111,7 +111,7 @@ public class Niels {
 		for (i = 0; i < 8; i++) {
 			move_conditional_bytes(packed, table[(pos * 8) + i], windowb_equal(u, i + 1));
 		}
-		print96("packed", packed);
+		//print96("packed", packed);
 		
 		/* expand in to t */
 		expand(t.ysubx, packed, 0);
@@ -126,9 +126,9 @@ public class Niels {
 		ED25519.swap_conditional(t.ysubx, t.xaddy, sign);
 		ED25519.neg(neg, t.t2d);
 		ED25519.swap_conditional(t.t2d, neg, sign);
-		printBig("ysubx", t.ysubx);
-		printBig("xaddy", t.xaddy);
-		printBig("t2d", t.t2d);
+		//printBig("ysubx", t.ysubx);
+		//printBig("xaddy", t.xaddy);
+		//printBig("t2d", t.t2d);
 	}
 	
 	
@@ -178,19 +178,18 @@ public class Niels {
 		ge25519_niels t = new ge25519_niels();
 		
 		contract256_window4_modm(b, s);
-		print64("b", b);
+		//print64("b", b);
 		
 		scalarmult_base_choose_niels(t, basepoint_table, 0, b[1]);
 		
 		ED25519.sub_reduce(r.x, t.xaddy, t.ysubx);
-		printBig("sub_red r.x", r.x);
+		//printBig("sub_red r.x", r.x);
 		ED25519.add_reduce(r.y, t.xaddy, t.ysubx);
-		printBig("add_red r.x", r.y);
+		//printBig("add_red r.x", r.y);
 		r.z = new Bignum25519();
-		//memset(r->z, 0, sizeof(bignum25519));
 		ED25519.copy(r.t, t.t2d);
 		r.z.m[0] = 2;
-		printBig("r.z", r.z);
+		//printBig("r.z", r.z);
 
 		for (i = 3; i < 64; i += 2) {
 			scalarmult_base_choose_niels(t, basepoint_table, i / 2, b[i]);
@@ -209,10 +208,6 @@ public class Niels {
 			nielsadd2(r, t);
 		}
 		
-		printBig("r.x", r.x);
-		printBig("r.y", r.y);
-		printBig("r.z", r.z);
-		printBig("r.t", r.t);
 	}
 	
 	

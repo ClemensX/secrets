@@ -8,6 +8,7 @@ import de.fehrprice.crypto.Conv;
 import de.fehrprice.crypto.Curve25519;
 import de.fehrprice.crypto.Ed25519;
 import de.fehrprice.crypto.FixedPointOp;
+import de.fehrprice.crypto.donna.ED25519;
 import de.fehrprice.crypto.fp256;
 import de.fehrprice.crypto.RandomSeed;
 import de.fehrprice.crypto.edu25519.Field;
@@ -20,7 +21,8 @@ public class PerformanceCheck {
 
     public static void main(String[] args) {
         //perfX25519Compare();
-        perfECDSA();
+        //perfECDSA();
+        perfED25519Compare();
         if (false) {
             perf256ModPow();
             perf64Mult();
@@ -88,7 +90,59 @@ public class PerformanceCheck {
         
     }
     
-	/**
+    /**
+     * Test performance naive Ed25519 impl vs. ED25519 Donna Java port
+     */
+    private static void perfED25519Compare() {
+        
+        int count = 1000;
+        // prep
+        Ed25519 edNaive = new Ed25519();
+        ED25519 edDonna = new ED25519();
+        AES aes = new AES();
+        aes.setSeed(RandomSeed.createSeed());
+        
+        String alicePrivate = Conv.toString(aes.random(32));
+        String mshHexString = Conv.plaintextToHexString("yeah");
+        
+        // think about warming up both implementations...
+        
+        System.out.println("prep done, calculating...");
+        String publicKey, signature;
+        long start = System.nanoTime();
+        for (int i = 0; i < count; i++) {
+            publicKey = edNaive.publicKey(alicePrivate);
+            signature = edNaive.signature(mshHexString, alicePrivate, publicKey);
+        }
+        long now = System.nanoTime();
+        long duration = now - start;
+        double duration_seconds = ((double) duration) / 1E9;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("Naive Ed25519 impl " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+        
+        start = System.nanoTime();
+        for (int i = 0; i < count; i++) {
+            publicKey = edDonna.publicKey(alicePrivate);
+            signature = edDonna.signature(mshHexString, alicePrivate, publicKey);
+        }
+        
+        now = System.nanoTime();
+        duration = now - start;
+        duration_seconds = ((double) duration) / 1E9;
+        df = new DecimalFormat();
+        df.setMaximumFractionDigits(4);
+        System.out.println("ED25519 Donna impl " + count + " iterations total time: [s] " + df.format(duration_seconds));
+        duration /= count; // for single mult:
+        duration_seconds = ((double) duration) / 1E9;
+        System.out.println("  single iteration: [s] " + df.format(duration_seconds));
+        
+    }
+    
+    /**
 	 * Test performance of 64 bit multiplication with FP256 and BigInteger 
 	 */
 	private static void perf64Mult() {

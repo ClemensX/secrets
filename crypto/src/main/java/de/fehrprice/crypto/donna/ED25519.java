@@ -94,16 +94,22 @@ public class ED25519 {
 		ge25519 A = new ge25519();
 		
 		/* A = aB */
-		System.out.println("publickey()");
+		//System.out.println("publickey()");
 		byte[] extsk = new byte[64];
 		extsk(extsk, secretKey);
-		print64("sk SHA", extsk);
+		//print64("sk SHA", extsk);
 		expand256_modm(a, extsk, 32);
 		niels.scalarmult_base_niels(A, ConstDef.ge25519_niels_base_multiples, a);
 		//byte[] pk = new byte[32];
 		pack(publicKey.k, A);
 	}
 	
+	/**
+	 * @param messageString hex string coded message
+	 * @param secretKeyString hex string coded private key
+	 * @param pubk hex string coded public key
+	 * @return
+	 */
 	public String signature(String messageString, String secretKeyString, String pubk) {
 		byte[] m = Conv.toByteArray(messageString);
 		Key secretKey = new Key();
@@ -133,13 +139,13 @@ public class ED25519 {
 		System.arraycopy(extsk, 32, r_arr, 0, 32);
 		System.arraycopy(m, 0, r_arr, 32, m.length);
 		byte[] hashr = h(r_arr); // digest
-		print64("hashr", hashr);
+		//print64("hashr", hashr);
 //		ed25519_hash_init(&ctx);
 //		ed25519_hash_update(&ctx, extsk + 32, 32);
 //		ed25519_hash_update(&ctx, m, mlen);
 //		ed25519_hash_final(&ctx, hashr);
 		expand256_modm(r, hashr, 64);
-		printB256modm("r", r);
+		//printB256modm("r", r);
 		
 		/* R = rB */
 		niels.scalarmult_base_niels(R, ConstDef.ge25519_niels_base_multiples, r);
@@ -156,7 +162,7 @@ public class ED25519 {
 		
 		/* S = (r + H(R,A,m)a) */
 		add256_modm(S, S, r);
-		printB256modm("S", S);
+		//printB256modm("S", S);
 		
 		/* S = (r + H(R,A,m)a) mod L */
 		contract256_modm(RS.k, 32, S);
@@ -176,10 +182,10 @@ public class ED25519 {
 		Bignum25519 zi = new Bignum25519();
 		byte[] parity = new byte[32];
 		recip(zi, p.z);
-		printBig("zi", zi);
+		//printBig("zi", zi);
 		mul(tx, p.x, zi);
 		mul(ty, p.y, zi);
-		printBig("ty", ty);
+		//printBig("ty", ty);
 		contract(r, ty);
 		contract(parity, tx);
 		r[31] ^= ((parity[0] & 1) << 7);
@@ -259,9 +265,9 @@ public class ED25519 {
 		t[4] += (reduce_mask_51 + 1) - 1;
 		
 		/* now between 2^255 and 2^256-20, and offset by 2^255. */
-		print64t("t4 pre", t[4]);
+		//print64t("t4 pre", t[4]);
 		contract_carry_final(t);
-		print64t("t4 pos", t[4]);
+		//print64t("t4 pos", t[4]);
 
 		int outidx = 0;
 		outidx = write51(out, outidx,t,0);
@@ -332,7 +338,7 @@ public class ED25519 {
 		x[5] = U8TO64_LE(work,40);
 		x[6] = U8TO64_LE(work,48);
 		x[7] = U8TO64_LE(work,56);
-		System.out.print("x8 "); for (int i = 0; i < 8; i++) printLong(x[i]); System.out.println();
+		//System.out.print("x8 "); for (int i = 0; i < 8; i++) printLong(x[i]); System.out.println();
 		
 		
 		/* r1 = (x mod 256^(32+1)) = x mod (2^8)(31+1) = x & ((1 << 264) - 1) */
@@ -341,7 +347,7 @@ public class ED25519 {
 		out.m[2] = ((x[ 1] >>> 48) | (x[ 2] << 16)) & 0xffffffffffffffL;
 		out.m[3] = ((x[ 2] >>> 40) | (x[ 3] << 24)) & 0xffffffffffffffL;
 		out.m[4] = ((x[ 3] >>> 32) | (x[ 4] << 32)) & 0x0000ffffffffffL;
-		printB256modm("exp no red", out);
+		//printB256modm("exp no red", out);
 		
 		/* under 252 bits, no need to reduce */
 		if (len < 32)
@@ -355,7 +361,7 @@ public class ED25519 {
 		q1.m[4] = ((x[ 7] >>> 24)                );
 		
 		barrett_reduce256_modm(out, q1, out);
-		printB256modm("q b256", out);
+		//printB256modm("q b256", out);
 	}
 	
 	// unsigned char out[32]
@@ -483,10 +489,10 @@ public class ED25519 {
 		pb += r2.m[3]; b = lt_modm(r1.m[3], pb); r.m[3] = (r1.m[3] - pb + (b << 56)); pb = b;
 		pb += r2.m[4]; b = lt_modm(r1.m[4], pb); r.m[4] = (r1.m[4] - pb + (b << 40));
 		
-		printB256modm("r b256", r);
+		//printB256modm("r b256", r);
 		reduce256_modm(r);
 		reduce256_modm(r);
-		printB256modm("r b256", r);
+		//printB256modm("r b256", r);
 	}
 	
 	public void	add256_modm(Bignum256modm r, Bignum256modm x, Bignum256modm y) {
@@ -884,7 +890,7 @@ public class ED25519 {
 		Bignum25519 b = new Bignum25519();
 		
 		/* 2 */ square_times(a, z, 1); /* a = 2 */
-		printBig("a", a);
+		//printBig("a", a);
 		/* 8 */ square_times(t0, a, 2);
 		/* 9 */ mul(b, t0, z); /* b = 9 */
 		/* 11 */ mul(a, b, a); /* a = 11 */
