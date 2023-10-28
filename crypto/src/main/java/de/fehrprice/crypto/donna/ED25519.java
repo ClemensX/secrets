@@ -149,17 +149,17 @@ public class ED25519 {
 		//ed25519_hram(hram, RS, pk, m, mlen);
 		byte[] hram = h(concat_r_pk_m(RS.k, pk.k, m));
 		expand256_modm(S, hram, 64);
-		printB256modm("S", S);
 		
 		/* S = H(R,A,m)a */
 		expand256_modm(a, extsk, 32);
-		//mul256_modm(S, S, a);
+		mul256_modm(S, S, a);
 		
 		/* S = (r + H(R,A,m)a) */
-		//add256_modm(S, S, r);
+		add256_modm(S, S, r);
+		printB256modm("S", S);
 		
 		/* S = (r + H(R,A,m)a) mod L */
-		//contract256_modm(RS + 32, S);
+		contract256_modm(RS.k, 32, S);
 	}
 	public byte[] concat_r_pk_m(byte[] RS, byte[] pk, byte[] m) {
 		byte[] concat = new byte[32 + pk.length + m.length];
@@ -358,6 +358,13 @@ public class ED25519 {
 		printB256modm("q b256", out);
 	}
 	
+	// unsigned char out[32]
+	public void	contract256_modm(byte[] out, int idx, Bignum256modm in) {
+		U64TO8_LE(out,  0+idx, (in.m[0]       ) | (in.m[1] << 56));
+		U64TO8_LE(out,  8+idx, (in.m[1] >>>  8) | (in.m[2] << 48));
+		U64TO8_LE(out, 16+idx, (in.m[2] >>> 16) | (in.m[3] << 40));
+		U64TO8_LE(out, 24+idx, (in.m[3] >>> 24) | (in.m[4] << 32));
+	}
 	
 	/**
 	 * @param r byte[64]
@@ -482,6 +489,47 @@ public class ED25519 {
 		printB256modm("r b256", r);
 	}
 	
+	public void	add256_modm(Bignum256modm r, Bignum256modm x, Bignum256modm y) {
+		long c;
+		
+		c  = x.m[0] + y.m[0]; r.m[0] = c & 0xffffffffffffffL; c >>>= 56;
+		c += x.m[1] + y.m[1]; r.m[1] = c & 0xffffffffffffffL; c >>>= 56;
+		c += x.m[2] + y.m[2]; r.m[2] = c & 0xffffffffffffffL; c >>>= 56;
+		c += x.m[3] + y.m[3]; r.m[3] = c & 0xffffffffffffffL; c >>>= 56;
+		c += x.m[4] + y.m[4]; r.m[4] = c;
+		
+		reduce256_modm(r);
+	}
+	
+	public void	mul256_modm(Bignum256modm r, Bignum256modm x, Bignum256modm y) {
+		Bignum256modm q1 = new Bignum256modm();
+		Bignum256modm r1 = new Bignum256modm();
+		fp256 c = fp.zero();
+		fp256 mul = fp.zero();
+		long f;
+		
+		mul64x64_128(c, x.m[0], y.m[0]);
+		f = lo128(c); r1.m[0] = f & 0xffffffffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[0], y.m[1]); add128_64(c, f); mul64x64_128(mul, x.m[1], y.m[0]); add128(c, mul);
+		f = lo128(c); r1.m[1] = f & 0xffffffffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[0], y.m[2]); add128_64(c, f); mul64x64_128(mul, x.m[2], y.m[0]); add128(c, mul); mul64x64_128(mul, x.m[1], y.m[1]); add128(c, mul);
+		f = lo128(c); r1.m[2] = f & 0xffffffffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[0], y.m[3]); add128_64(c, f); mul64x64_128(mul, x.m[3], y.m[0]); add128(c, mul); mul64x64_128(mul, x.m[1], y.m[2]); add128(c, mul); mul64x64_128(mul, x.m[2], y.m[1]); add128(c, mul);
+		f = lo128(c); r1.m[3] = f & 0xffffffffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[0], y.m[4]); add128_64(c, f); mul64x64_128(mul, x.m[4], y.m[0]); add128(c, mul); mul64x64_128(mul, x.m[3], y.m[1]); add128(c, mul); mul64x64_128(mul, x.m[1], y.m[3]); add128(c, mul); mul64x64_128(mul, x.m[2], y.m[2]); add128(c, mul);
+		f = lo128(c); r1.m[4] = f & 0x0000ffffffffffL; q1.m[0] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[4], y.m[1]); add128_64(c, f); mul64x64_128(mul, x.m[1], y.m[4]); add128(c, mul); mul64x64_128(mul, x.m[2], y.m[3]); add128(c, mul); mul64x64_128(mul, x.m[3], y.m[2]); add128(c, mul);
+		f = lo128(c); q1.m[0] |= (f << 32) & 0xffffffffffffffL; q1.m[1] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[4], y.m[2]); add128_64(c, f); mul64x64_128(mul, x.m[2], y.m[4]); add128(c, mul); mul64x64_128(mul, x.m[3], y.m[3]); add128(c, mul);
+		f = lo128(c); q1.m[1] |= (f << 32) & 0xffffffffffffffL; q1.m[2] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[4], y.m[3]); add128_64(c, f); mul64x64_128(mul, x.m[3], y.m[4]); add128(c, mul);
+		f = lo128(c); q1.m[2] |= (f << 32) & 0xffffffffffffffL; q1.m[3] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
+		mul64x64_128(c, x.m[4], y.m[4]); add128_64(c, f);
+		f = lo128(c); q1.m[3] |= (f << 32) & 0xffffffffffffffL; q1.m[4] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
+		q1.m[4] |= (f << 32);
+		
+		barrett_reduce256_modm(r, q1, r1);
+	}
 	
 	private long lt_modm(long a, long b) {
 		return (a - b) >>> 63;
@@ -544,6 +592,26 @@ public class ED25519 {
 				| ((long) b[1+idx] & 0xff) << 8
 				| ((long) b[0+idx] & 0xff);
 		return l;
+	}
+	
+	
+	/**
+	 * convert long to 8 consecutive bytes in an array
+	 * least significant byte assumed to be in lowest index position
+	 * @param p
+	 * @param idx start index
+	 * @param v
+	 * @return
+	 */
+	private static void U64TO8_LE(byte[] p, int idx, long v) {
+		p[0+idx] = (byte)(v      );
+		p[1+idx] = (byte)(v >>>  8);
+		p[2+idx] = (byte)(v >>> 16);
+		p[3+idx] = (byte)(v >>> 24);
+		p[4+idx] = (byte)(v >>> 32);
+		p[5+idx] = (byte)(v >>> 40);
+		p[6+idx] = (byte)(v >>> 48);
+		p[7+idx] = (byte)(v >>> 56);
 	}
 	
 	
