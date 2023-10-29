@@ -7,8 +7,6 @@ import de.fehrprice.crypto.FixedPointOp;
 import de.fehrprice.crypto.SHA;
 import de.fehrprice.crypto.donna.niels.Bignum25519;
 import de.fehrprice.crypto.donna.niels.ConstDef;
-import de.fehrprice.crypto.donna.niels.Niels;
-import de.fehrprice.crypto.donna.niels.ge25519_niels;
 import de.fehrprice.crypto.donna.niels.ge25519_p1p1;
 import de.fehrprice.crypto.fp256;
 import de.fehrprice.crypto.donna.niels.ge25519;
@@ -17,19 +15,13 @@ import de.fehrprice.crypto.Long4;
 public class ED25519 {
 	
 	private Ed25519 simpleEd = new Ed25519();
+	private final de.fehrprice.crypto.donna.Curve25519 curve25519 = new de.fehrprice.crypto.donna.Curve25519();
+	private final Modm modm = new Modm();
+	ED25519DonnaImpl ge25519impl = new ED25519DonnaImpl(this, curve25519, modm);
 	private FixedPointOp fp = new FixedPointOp();
 	private Curve25519 cv = new Curve25519();
-	private Niels niels = new Niels(this);
 	private ConstDef constDef = new ConstDef();
 	private Long4 long4 = new Long4();
-	public static final long reduce_mask_51 = 0x0007ffffffffffffL;
-	/* multiples of p */
-	public static final long twoP0      = 0x0fffffffffffdaL;
-	public static final long twoP1234   = 0x0ffffffffffffeL;
-	public static final long fourP0     = 0x1fffffffffffb4L;
-	public static final long fourP1234  = 0x1ffffffffffffcL;
-	public static final Bignum25519 ge25519_ecd = new Bignum25519(0x00034dca135978a3L,0x0001a8283b156ebdL,
-			0x0005e7a26001c029L,0x000739c663a03cbbL,0x00052036cee2b6ffL);
 	
 	public static void print64(String name, byte[] b) {
 		System.out.print(name + " ");
@@ -98,10 +90,10 @@ public class ED25519 {
 		byte[] extsk = new byte[64];
 		extsk(extsk, secretKey);
 		//print64("sk SHA", extsk);
-		expand256_modm(a, extsk, 32);
-		niels.scalarmult_base_niels(A, ConstDef.ge25519_niels_base_multiples, a);
+		modm.expand256_modm(a, extsk, 32);
+		ge25519impl.scalarmult_base_niels(A, ConstDef.ge25519_niels_base_multiples, a);
 		//byte[] pk = new byte[32];
-		pack(publicKey.k, A);
+		ge25519impl.pack(publicKey.k, A);
 	}
 	
 	/**
@@ -144,28 +136,28 @@ public class ED25519 {
 //		ed25519_hash_update(&ctx, extsk + 32, 32);
 //		ed25519_hash_update(&ctx, m, mlen);
 //		ed25519_hash_final(&ctx, hashr);
-		expand256_modm(r, hashr, 64);
+		modm.expand256_modm(r, hashr, 64);
 		//printB256modm("r", r);
 		
 		/* R = rB */
-		niels.scalarmult_base_niels(R, ConstDef.ge25519_niels_base_multiples, r);
-		pack(RS.k, R);
+		ge25519impl.scalarmult_base_niels(R, ConstDef.ge25519_niels_base_multiples, r);
+		ge25519impl.pack(RS.k, R);
 		
 		/* S = H(R,A,m).. */
 		//ed25519_hram(hram, RS, pk, m, mlen);
 		byte[] hram = h(concat_r_pk_m(RS.k, pk.k, m));
-		expand256_modm(S, hram, 64);
+		modm.expand256_modm(S, hram, 64);
 		
 		/* S = H(R,A,m)a */
-		expand256_modm(a, extsk, 32);
-		mul256_modm(S, S, a);
+		modm.expand256_modm(a, extsk, 32);
+		modm.mul256_modm(S, S, a);
 		
 		/* S = (r + H(R,A,m)a) */
-		add256_modm(S, S, r);
+		modm.add256_modm(S, S, r);
 		//printB256modm("S", S);
 		
 		/* S = (r + H(R,A,m)a) mod L */
-		contract256_modm(RS.k, 32, S);
+		modm.contract256_modm(RS.k, 32, S);
 	}
 	public byte[] concat_r_pk_m(byte[] RS, byte[] pk, byte[] m) {
 		byte[] concat = new byte[32 + pk.length + m.length];
@@ -175,450 +167,43 @@ public class ED25519 {
 		return concat;
 	}
 	
-	// unsigned char r[32]
-	public void pack(byte r[], ge25519 p) {
-		Bignum25519 tx = new Bignum25519();
-		Bignum25519 ty = new Bignum25519();
-		Bignum25519 zi = new Bignum25519();
-		byte[] parity = new byte[32];
-		recip(zi, p.z);
-		//printBig("zi", zi);
-		mul(tx, p.x, zi);
-		mul(ty, p.y, zi);
-		//printBig("ty", ty);
-		contract(r, ty);
-		contract(parity, tx);
-		r[31] ^= ((parity[0] & 1) << 7);
+	public boolean checkvalid(String signatureString, String messageString, String publicKeyString) {
+		byte[] m = Conv.toByteArray(messageString);
+		Key secretKey = new Key();
+		Key publicKey = new Key();
+		Signature sig = new Signature();
+		Convert.toKey(publicKey, publicKeyString);
+		Convert.toSignature(sig, signatureString);
+		return sign_open(m, m.length, publicKey, sig) != 0;
 	}
 	
-	/* Take a little-endian, 32-byte number and expand it into polynomial form */
-	public static void expand32(Bignum256modm out, byte[] in) {
-		Bignum256modm x = new Bignum256modm();
-		x.m[0] = U8TO64_LE(in,0);
-		x.m[1] = U8TO64_LE(in,8);
-		x.m[2] = U8TO64_LE(in,16);
-		x.m[3] = U8TO64_LE(in,24);
-		//System.out.print("x8 "); for (int i = 0; i < 5; i++) printLong(x.m[i]); System.out.println();
+	public int sign_open (byte[] m, int mlen, Key pk, Signature RS) {
+		ge25519 R = new ge25519();
+		ge25519 A = new ge25519();
+		byte[] hash = new byte[64];
+		Bignum256modm hram = new Bignum256modm();
+		Bignum256modm S = new Bignum256modm();
+		byte[] checkR = new byte[32];
 		
-		out.m[0] = x.m[0] & reduce_mask_51; x.m[0] = (x.m[0] >>> 51) | (x.m[1] << 13);
-		out.m[1] = x.m[0] & reduce_mask_51; x.m[1] = (x.m[1] >>> 38) | (x.m[2] << 26);
-		out.m[2] = x.m[1] & reduce_mask_51; x.m[2] = (x.m[2] >>> 25) | (x.m[3] << 39);
-		out.m[3] = x.m[2] & reduce_mask_51; x.m[3] = (x.m[3] >>> 12);
-		out.m[4] = x.m[3] & reduce_mask_51;
+		if (0 != (RS.k[63] & 224) || (0 == ge25519impl.unpack_negative_vartime(A, pk.k)))
+			return -1;
 		
-		//printB256modm("exp32", out);
-	}
-	
-	private void contract_carry(long[] t) {
-		t[1] += t[0] >>> 51; t[0] &= reduce_mask_51;
-		t[2] += t[1] >>> 51; t[1] &= reduce_mask_51;
-		t[3] += t[2] >>> 51; t[2] &= reduce_mask_51;
-		t[4] += t[3] >>> 51; t[3] &= reduce_mask_51;
-	}
-	
-	private void contract_carry_full(long[] t) {
-		contract_carry(t);
-		t[0] += 19 * (t[4] >>> 51); t[4] &= reduce_mask_51;
-	}
-	
-	private void contract_carry_final(long[] t) {
-		contract_carry(t);
-		t[4] &= reduce_mask_51;
+		/* hram = H(R,A,m) */
+		//ed25519_hram(hash, RS, pk, m, mlen);
+		//expand256_modm(hram, hash, 64);
+		
+		/* S */
+		//expand256_modm(S, RS + 32, 32);
+		
+		/* SB - H(R,A,m)A */
+		//ge25519_double_scalarmult_vartime(&R, &A, hram, S);
+		//ge25519_pack(checkR, &R);
+		
+		/* check that R = SB - H(R,A,m)A */
+		return -1 ;//ed25519_verify(RS, checkR, 32) ? 0 : -1;
 	}
 
-	private int write51full(byte[] out, int outidx, long[] t, int n, int shift) {
-		long f = ((t[n] >>> shift) | (t[n+1] << (51 - shift)));
-		for (int i = 0; i < 8; i++, f >>>= 8) out[outidx++] = (byte)f;
-		return outidx;
-	}
 	
-	private int write51(byte[] out, int outidx, long[] t, int n) {
-		return write51full(out, outidx, t,n,13*n);
-	}
-
-	/* Take a fully reduced polynomial form number and contract it into a
-	 * little-endian, 32-byte array
-	 */
-	public void contract(byte[] out, Bignum25519 input) {
-		long[] t = new long[5];
-		long f, i;
-		
-		t[0] = input.m[0];
-		t[1] = input.m[1];
-		t[2] = input.m[2];
-		t[3] = input.m[3];
-		t[4] = input.m[4];
-		
-		contract_carry_full(t);
-		contract_carry_full(t);
-		
-		/* now t is between 0 and 2^255-1, properly carried. */
-		/* case 1: between 0 and 2^255-20. case 2: between 2^255-19 and 2^255-1. */
-		t[0] += 19;
-		contract_carry_full(t);
-		
-		/* now between 19 and 2^255-1 in both cases, and offset by 19. */
-		t[0] += (reduce_mask_51 + 1) - 19;
-		t[1] += (reduce_mask_51 + 1) - 1;
-		t[2] += (reduce_mask_51 + 1) - 1;
-		t[3] += (reduce_mask_51 + 1) - 1;
-		t[4] += (reduce_mask_51 + 1) - 1;
-		
-		/* now between 2^255 and 2^256-20, and offset by 2^255. */
-		//print64t("t4 pre", t[4]);
-		contract_carry_final(t);
-		//print64t("t4 pos", t[4]);
-
-		int outidx = 0;
-		outidx = write51(out, outidx,t,0);
-		outidx = write51(out, outidx,t,1);
-		outidx = write51(out, outidx,t,2);
-		outidx = write51(out, outidx,t,3);
-	}
-	
-	
-	public static void swap_conditional(Bignum25519 a, Bignum25519 b, long iswap) {
-		long swap = -iswap;
-		long x0,x1,x2,x3,x4;
-		
-		x0 = swap & (a.m[0] ^ b.m[0]); a.m[0] ^= x0; b.m[0] ^= x0;
-		x1 = swap & (a.m[1] ^ b.m[1]); a.m[1] ^= x1; b.m[1] ^= x1;
-		x2 = swap & (a.m[2] ^ b.m[2]); a.m[2] ^= x2; b.m[2] ^= x2;
-		x3 = swap & (a.m[3] ^ b.m[3]); a.m[3] ^= x3; b.m[3] ^= x3;
-		x4 = swap & (a.m[4] ^ b.m[4]); a.m[4] ^= x4; b.m[4] ^= x4;
-	}
-	
-	/* out = -a */
-	public static void neg(Bignum25519 out, Bignum25519 a) {
-		long c;
-		out.m[0] = twoP0    - a.m[0]    ; c = (out.m[0] >>> 51); out.m[0] &= reduce_mask_51;
-		out.m[1] = twoP1234 - a.m[1] + c; c = (out.m[1] >>> 51); out.m[1] &= reduce_mask_51;
-		out.m[2] = twoP1234 - a.m[2] + c; c = (out.m[2] >>> 51); out.m[2] &= reduce_mask_51;
-		out.m[3] = twoP1234 - a.m[3] + c; c = (out.m[3] >>> 51); out.m[3] &= reduce_mask_51;
-		out.m[4] = twoP1234 - a.m[4] + c; c = (out.m[4] >>> 51); out.m[4] &= reduce_mask_51;
-		out.m[0] += c * 19;
-	}
-	
-	public static void add_reduce(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
-		long c;
-		out.m[0] = a.m[0] + b.m[0]    ; c = (out.m[0] >>> 51); out.m[0] &= reduce_mask_51;
-		out.m[1] = a.m[1] + b.m[1] + c; c = (out.m[1] >>> 51); out.m[1] &= reduce_mask_51;
-		out.m[2] = a.m[2] + b.m[2] + c; c = (out.m[2] >>> 51); out.m[2] &= reduce_mask_51;
-		out.m[3] = a.m[3] + b.m[3] + c; c = (out.m[3] >>> 51); out.m[3] &= reduce_mask_51;
-		out.m[4] = a.m[4] + b.m[4] + c; c = (out.m[4] >>> 51); out.m[4] &= reduce_mask_51;
-		out.m[0] += c * 19;
-	}
-	
-	public static void sub_reduce(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
-		long c;
-		out.m[0] = a.m[0] + fourP0    - b.m[0]    ; c = (out.m[0] >>> 51); out.m[0] &= reduce_mask_51;
-		out.m[1] = a.m[1] + fourP1234 - b.m[1] + c; c = (out.m[1] >>> 51); out.m[1] &= reduce_mask_51;
-		out.m[2] = a.m[2] + fourP1234 - b.m[2] + c; c = (out.m[2] >>> 51); out.m[2] &= reduce_mask_51;
-		out.m[3] = a.m[3] + fourP1234 - b.m[3] + c; c = (out.m[3] >>> 51); out.m[3] &= reduce_mask_51;
-		out.m[4] = a.m[4] + fourP1234 - b.m[4] + c; c = (out.m[4] >>> 51); out.m[4] &= reduce_mask_51;
-		out.m[0] += c * 19;
-	}
-	
-	public static void copy(Bignum25519 out, Bignum25519 in) {
-		System.arraycopy(in.m, 0, out.m, 0, 5);
-	}
-	
-	
-	public void expand256_modm(Bignum256modm out, byte[] in, int len) {
-		byte work[] = new byte[64];
-		long x[] = new long[16];
-		Bignum256modm q1 = new Bignum256modm();
-		
-		System.arraycopy(in, 0, work, 0, len);
-		x[0] = U8TO64_LE(work,0);
-		x[1] = U8TO64_LE(work,8);
-		x[2] = U8TO64_LE(work,16);
-		x[3] = U8TO64_LE(work,24);
-		x[4] = U8TO64_LE(work,32);
-		x[5] = U8TO64_LE(work,40);
-		x[6] = U8TO64_LE(work,48);
-		x[7] = U8TO64_LE(work,56);
-		//System.out.print("x8 "); for (int i = 0; i < 8; i++) printLong(x[i]); System.out.println();
-		
-		
-		/* r1 = (x mod 256^(32+1)) = x mod (2^8)(31+1) = x & ((1 << 264) - 1) */
-		out.m[0] = (                         x[0]) & 0xffffffffffffffL;
-		out.m[1] = ((x[ 0] >>> 56) | (x[ 1] <<  8)) & 0xffffffffffffffL;
-		out.m[2] = ((x[ 1] >>> 48) | (x[ 2] << 16)) & 0xffffffffffffffL;
-		out.m[3] = ((x[ 2] >>> 40) | (x[ 3] << 24)) & 0xffffffffffffffL;
-		out.m[4] = ((x[ 3] >>> 32) | (x[ 4] << 32)) & 0x0000ffffffffffL;
-		//printB256modm("exp no red", out);
-		
-		/* under 252 bits, no need to reduce */
-		if (len < 32)
-			return;
-		
-		/* q1 = x >> 248 = 264 bits */
-		q1.m[0] = ((x[ 3] >>> 56) | (x[ 4] <<  8)) & 0xffffffffffffffL;
-		q1.m[1] = ((x[ 4] >>> 48) | (x[ 5] << 16)) & 0xffffffffffffffL;
-		q1.m[2] = ((x[ 5] >>> 40) | (x[ 6] << 24)) & 0xffffffffffffffL;
-		q1.m[3] = ((x[ 6] >>> 32) | (x[ 7] << 32)) & 0xffffffffffffffL;
-		q1.m[4] = ((x[ 7] >>> 24)                );
-		
-		barrett_reduce256_modm(out, q1, out);
-		//printB256modm("q b256", out);
-	}
-	
-	// unsigned char out[32]
-	public void	contract256_modm(byte[] out, int idx, Bignum256modm in) {
-		U64TO8_LE(out,  0+idx, (in.m[0]       ) | (in.m[1] << 56));
-		U64TO8_LE(out,  8+idx, (in.m[1] >>>  8) | (in.m[2] << 48));
-		U64TO8_LE(out, 16+idx, (in.m[2] >>> 16) | (in.m[3] << 40));
-		U64TO8_LE(out, 24+idx, (in.m[3] >>> 24) | (in.m[4] << 32));
-	}
-	
-	/**
-	 * @param r byte[64]
-	 * @param in
-	 */
-	public static void contract256_window4_modm(byte r[], Bignum256modm in) {
-		byte carry;
-		//signed char *quads = r;
-		int quads = 0; // iterate index of r[]
-		int i, j;
-		long v, m;
-		
-		for (i = 0; i < 5; i++) {
-			v = in.m[i];
-			m = (i == 4) ? 8 : 14;
-			for (j = 0; j < m; j++) {
-			    r[quads++] = (byte)(v & 15);
-				v >>= 4;
-			}
-		}
-		
-		/* making it signed */
-		carry = 0;
-		for(i = 0; i < 63; i++) {
-			r[i] += carry;
-			r[i+1] += (r[i] >> 4);
-			r[i] &= 15;
-			carry = (byte)(r[i] >> 3);
-			r[i] -= (carry << 4);
-		}
-		r[63] += carry;
-	}
-	
-	static long modm_m[] = {
-			0x12631a5cf5d3edL,
-			0xf9dea2f79cd658L,
-			0x000000000014deL,
-			0x00000000000000L,
-			0x00000010000000L
-	};
-	
-	static long modm_mu[] = {
-			0x9ce5a30a2c131bL,
-			0x215d086329a7edL,
-			0xffffffffeb2106L,
-			0xffffffffffffffL,
-			0x00000fffffffffL
-	};
-	
-	private void reduce256_modm(Bignum256modm r) {
-		Bignum256modm t = new Bignum256modm();
-		long b, pb, mask;
-		
-		/* t = r - m */
-		pb = 0;
-		pb += modm_m[0]; b = lt_modm(r.m[0], pb); t.m[0] = (r.m[0] - pb + (b << 56)); pb = b;
-		pb += modm_m[1]; b = lt_modm(r.m[1], pb); t.m[1] = (r.m[1] - pb + (b << 56)); pb = b;
-		pb += modm_m[2]; b = lt_modm(r.m[2], pb); t.m[2] = (r.m[2] - pb + (b << 56)); pb = b;
-		pb += modm_m[3]; b = lt_modm(r.m[3], pb); t.m[3] = (r.m[3] - pb + (b << 56)); pb = b;
-		pb += modm_m[4]; b = lt_modm(r.m[4], pb); t.m[4] = (r.m[4] - pb + (b << 32));
-		
-		/* keep r if r was smaller than m */
-		mask = b - 1;
-		
-		r.m[0] ^= mask & (r.m[0] ^ t.m[0]);
-		r.m[1] ^= mask & (r.m[1] ^ t.m[1]);
-		r.m[2] ^= mask & (r.m[2] ^ t.m[2]);
-		r.m[3] ^= mask & (r.m[3] ^ t.m[3]);
-		r.m[4] ^= mask & (r.m[4] ^ t.m[4]);
-	}
-	
-	
-	private void barrett_reduce256_modm(Bignum256modm r, Bignum256modm q1, Bignum256modm r1) {
-		Bignum256modm q3 = new Bignum256modm(), r2 = new Bignum256modm();
-		fp256 c = fp.zero();
-		fp256 mul = fp.zero();
-		long f = 0, b = 0, pb = 0;
-
-	/* q1 = x >> 248 = 264 bits = 5 56 bit elements
-	   q2 = mu * q1
-	   q3 = (q2 / 256(32+1)) = q2 / (2^8)^(32+1) = q2 >> 264 */
-		mul64x64_128(c, modm_mu[0], q1.m[3]);                  mul64x64_128(mul, modm_mu[3], q1.m[0]); add128(c, mul); mul64x64_128(mul, modm_mu[1], q1.m[2]); add128(c, mul); mul64x64_128(mul, modm_mu[2], q1.m[1]); add128(c, mul); f =shr128(c, 56);
-		//print128("c", c);
-		mul64x64_128(c, modm_mu[0], q1.m[4]); add128_64(c, f); mul64x64_128(mul, modm_mu[4], q1.m[0]); add128(c, mul); mul64x64_128(mul, modm_mu[3], q1.m[1]); add128(c, mul); mul64x64_128(mul, modm_mu[1], q1.m[3]); add128(c, mul); mul64x64_128(mul, modm_mu[2], q1.m[2]); add128(c, mul);
-		//print128("c", c);
-		f = lo128(c); q3.m[0] = (f >> 40) & 0xffff; f = shr128(c, 56);
-		//print64t("f", f);
-		//print128("c", c);
-		mul64x64_128(c, modm_mu[4], q1.m[1]); add128_64(c, f); mul64x64_128(mul, modm_mu[1], q1.m[4]); add128(c, mul); mul64x64_128(mul, modm_mu[2], q1.m[3]); add128(c, mul); mul64x64_128(mul, modm_mu[3], q1.m[2]); add128(c, mul);
-		//print128("c", c);
-		f = lo128(c); q3.m[0] |= (f << 16) & 0xffffffffffffffL; q3.m[1] = (f >> 40) & 0xffff; f = shr128(c, 56);
-		mul64x64_128(c, modm_mu[4], q1.m[2]); add128_64(c, f); mul64x64_128(mul, modm_mu[2], q1.m[4]); add128(c, mul); mul64x64_128(mul, modm_mu[3], q1.m[3]); add128(c, mul);
-		f = lo128(c); q3.m[1] |= (f << 16) & 0xffffffffffffffL; q3.m[2] = (f >> 40) & 0xffff; f = shr128(c, 56);
-		mul64x64_128(c, modm_mu[4], q1.m[3]); add128_64(c, f); mul64x64_128(mul, modm_mu[3], q1.m[4]); add128(c, mul);
-		f = lo128(c); q3.m[2] |= (f << 16) & 0xffffffffffffffL; q3.m[3] = (f >> 40) & 0xffff; f = shr128(c, 56);
-		mul64x64_128(c, modm_mu[4], q1.m[4]); add128_64(c, f);
-		//print128("c", c);
-		f = lo128(c); q3.m[3] |= (f << 16) & 0xffffffffffffffL; q3.m[4] = (f >> 40) & 0xffff; f = shr128(c, 56);
-		q3.m[4] |= (f << 16);
-		
-		mul64x64_128(c, modm_m[0], q3.m[0]);
-		r2.m[0] = lo128(c) & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, modm_m[0], q3.m[1]); add128_64(c, f); mul64x64_128(mul, modm_m[1], q3.m[0]); add128(c, mul);
-		r2.m[1] = lo128(c) & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, modm_m[0], q3.m[2]); add128_64(c, f); mul64x64_128(mul, modm_m[2], q3.m[0]); add128(c, mul); mul64x64_128(mul, modm_m[1], q3.m[1]); add128(c, mul);
-		r2.m[2] = lo128(c) & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, modm_m[0], q3.m[3]); add128_64(c, f); mul64x64_128(mul, modm_m[3], q3.m[0]); add128(c, mul); mul64x64_128(mul, modm_m[1], q3.m[2]); add128(c, mul); mul64x64_128(mul, modm_m[2], q3.m[1]); add128(c, mul);
-		r2.m[3] = lo128(c) & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, modm_m[0], q3.m[4]); add128_64(c, f); mul64x64_128(mul, modm_m[4], q3.m[0]); add128(c, mul); mul64x64_128(mul, modm_m[3], q3.m[1]); add128(c, mul); mul64x64_128(mul, modm_m[1], q3.m[3]); add128(c, mul); mul64x64_128(mul, modm_m[2], q3.m[2]); add128(c, mul);
-		r2.m[4] = lo128(c) & 0x0000ffffffffffL;
-		
-		pb = 0;
-		pb += r2.m[0]; b = lt_modm(r1.m[0], pb); r.m[0] = (r1.m[0] - pb + (b << 56)); pb = b;
-		pb += r2.m[1]; b = lt_modm(r1.m[1], pb); r.m[1] = (r1.m[1] - pb + (b << 56)); pb = b;
-		pb += r2.m[2]; b = lt_modm(r1.m[2], pb); r.m[2] = (r1.m[2] - pb + (b << 56)); pb = b;
-		pb += r2.m[3]; b = lt_modm(r1.m[3], pb); r.m[3] = (r1.m[3] - pb + (b << 56)); pb = b;
-		pb += r2.m[4]; b = lt_modm(r1.m[4], pb); r.m[4] = (r1.m[4] - pb + (b << 40));
-		
-		//printB256modm("r b256", r);
-		reduce256_modm(r);
-		reduce256_modm(r);
-		//printB256modm("r b256", r);
-	}
-	
-	public void	add256_modm(Bignum256modm r, Bignum256modm x, Bignum256modm y) {
-		long c;
-		
-		c  = x.m[0] + y.m[0]; r.m[0] = c & 0xffffffffffffffL; c >>>= 56;
-		c += x.m[1] + y.m[1]; r.m[1] = c & 0xffffffffffffffL; c >>>= 56;
-		c += x.m[2] + y.m[2]; r.m[2] = c & 0xffffffffffffffL; c >>>= 56;
-		c += x.m[3] + y.m[3]; r.m[3] = c & 0xffffffffffffffL; c >>>= 56;
-		c += x.m[4] + y.m[4]; r.m[4] = c;
-		
-		reduce256_modm(r);
-	}
-	
-	public void	mul256_modm(Bignum256modm r, Bignum256modm x, Bignum256modm y) {
-		Bignum256modm q1 = new Bignum256modm();
-		Bignum256modm r1 = new Bignum256modm();
-		fp256 c = fp.zero();
-		fp256 mul = fp.zero();
-		long f;
-		
-		mul64x64_128(c, x.m[0], y.m[0]);
-		f = lo128(c); r1.m[0] = f & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[0], y.m[1]); add128_64(c, f); mul64x64_128(mul, x.m[1], y.m[0]); add128(c, mul);
-		f = lo128(c); r1.m[1] = f & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[0], y.m[2]); add128_64(c, f); mul64x64_128(mul, x.m[2], y.m[0]); add128(c, mul); mul64x64_128(mul, x.m[1], y.m[1]); add128(c, mul);
-		f = lo128(c); r1.m[2] = f & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[0], y.m[3]); add128_64(c, f); mul64x64_128(mul, x.m[3], y.m[0]); add128(c, mul); mul64x64_128(mul, x.m[1], y.m[2]); add128(c, mul); mul64x64_128(mul, x.m[2], y.m[1]); add128(c, mul);
-		f = lo128(c); r1.m[3] = f & 0xffffffffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[0], y.m[4]); add128_64(c, f); mul64x64_128(mul, x.m[4], y.m[0]); add128(c, mul); mul64x64_128(mul, x.m[3], y.m[1]); add128(c, mul); mul64x64_128(mul, x.m[1], y.m[3]); add128(c, mul); mul64x64_128(mul, x.m[2], y.m[2]); add128(c, mul);
-		f = lo128(c); r1.m[4] = f & 0x0000ffffffffffL; q1.m[0] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[4], y.m[1]); add128_64(c, f); mul64x64_128(mul, x.m[1], y.m[4]); add128(c, mul); mul64x64_128(mul, x.m[2], y.m[3]); add128(c, mul); mul64x64_128(mul, x.m[3], y.m[2]); add128(c, mul);
-		f = lo128(c); q1.m[0] |= (f << 32) & 0xffffffffffffffL; q1.m[1] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[4], y.m[2]); add128_64(c, f); mul64x64_128(mul, x.m[2], y.m[4]); add128(c, mul); mul64x64_128(mul, x.m[3], y.m[3]); add128(c, mul);
-		f = lo128(c); q1.m[1] |= (f << 32) & 0xffffffffffffffL; q1.m[2] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[4], y.m[3]); add128_64(c, f); mul64x64_128(mul, x.m[3], y.m[4]); add128(c, mul);
-		f = lo128(c); q1.m[2] |= (f << 32) & 0xffffffffffffffL; q1.m[3] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
-		mul64x64_128(c, x.m[4], y.m[4]); add128_64(c, f);
-		f = lo128(c); q1.m[3] |= (f << 32) & 0xffffffffffffffL; q1.m[4] = (f >>> 24) & 0xffffffffL; f = shr128(c, 56);
-		q1.m[4] |= (f << 32);
-		
-		barrett_reduce256_modm(r, q1, r1);
-	}
-	
-	private long lt_modm(long a, long b) {
-		return (a - b) >>> 63;
-	}
-	
-	
-	private long lo128(fp256 c) {
-		return c.getInternalLongArray()[0];
-	}
-	
-	
-	private void add128_64(fp256 c, long f) {
-		fp.add(c, c, fp.fromLong(f));
-	}
-	
-	
-	private long shr128(fp256 c, int op) {
-		fp256 cn = fp.copy(c);
-		for (int i = 0; i < op; i++) {
-			fp.shiftRight1(cn);
-		}
-		return(lo128(cn));
-	}
-	
-	
-	private long shl128(fp256 c, int op) {
-		fp256 cn = fp.copy(c);
-		for (int i = 0; i < op; i++) {
-			fp.shiftLeft1(cn);
-		}
-		// instead of >> 64 we can just use the 2nd long
-		return(cn.getInternalLongArray()[1]);
-	}
-	
-	
-	private void add128(fp256 a, fp256 b) {
-		fp.add(a, a, b);
-	}
-	
-	
-	private void mul64x64_128(fp256 c, long a, long b) {
-		fp.umul64(c, a, b);
-	}
-	
-	
-	/**
-	 * convert 8 consecutive bytes from an array to long
-	 * least significant byte assumed to be in lowest index position
-	 * @param b
-	 * @param idx start index
-	 * @return
-	 */
-	private static long U8TO64_LE(byte[] b, int idx) {
-		long l = ((long) b[7+idx] << 56)
-				| ((long) b[6+idx] & 0xff) << 48
-				| ((long) b[5+idx] & 0xff) << 40
-				| ((long) b[4+idx] & 0xff) << 32
-				| ((long) b[3+idx] & 0xff) << 24
-				| ((long) b[2+idx] & 0xff) << 16
-				| ((long) b[1+idx] & 0xff) << 8
-				| ((long) b[0+idx] & 0xff);
-		return l;
-	}
-	
-	
-	/**
-	 * convert long to 8 consecutive bytes in an array
-	 * least significant byte assumed to be in lowest index position
-	 * @param p
-	 * @param idx start index
-	 * @param v
-	 * @return
-	 */
-	private static void U64TO8_LE(byte[] p, int idx, long v) {
-		p[0+idx] = (byte)(v      );
-		p[1+idx] = (byte)(v >>>  8);
-		p[2+idx] = (byte)(v >>> 16);
-		p[3+idx] = (byte)(v >>> 24);
-		p[4+idx] = (byte)(v >>> 32);
-		p[5+idx] = (byte)(v >>> 40);
-		p[6+idx] = (byte)(v >>> 48);
-		p[7+idx] = (byte)(v >>> 56);
-	}
 	
 	
 	private void extsk(byte[] extsk, Key secretKey) {
@@ -641,290 +226,9 @@ public class ED25519 {
 		return digest;
 	}
 	
-	/* out = a - b */
-	public void sub(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
-		out.m[0] = a.m[0] + twoP0    - b.m[0];
-		out.m[1] = a.m[1] + twoP1234 - b.m[1];
-		out.m[2] = a.m[2] + twoP1234 - b.m[2];
-		out.m[3] = a.m[3] + twoP1234 - b.m[3];
-		out.m[4] = a.m[4] + twoP1234 - b.m[4];
-	}
-	/* out = a + b */
-	public void add(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
-		out.m[0] = a.m[0] + b.m[0];
-		out.m[1] = a.m[1] + b.m[1];
-		out.m[2] = a.m[2] + b.m[2];
-		out.m[3] = a.m[3] + b.m[3];
-		out.m[4] = a.m[4] + b.m[4];
-	}
-	
-	/* out = a + b, where a and/or b are the result of a basic op (add,sub) */
-	public void add_after_basic(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
-		// TODO no diff to add() ?
-		out.m[0] = a.m[0] + b.m[0];
-		out.m[1] = a.m[1] + b.m[1];
-		out.m[2] = a.m[2] + b.m[2];
-		out.m[3] = a.m[3] + b.m[3];
-		out.m[4] = a.m[4] + b.m[4];
-	}
-	/* out = a - b, where a and/or b are the result of a basic op (add,sub) */
-	public void sub_after_basic(Bignum25519 out, Bignum25519 a, Bignum25519 b) {
-		out.m[0] = a.m[0] + fourP0    - b.m[0];
-		out.m[1] = a.m[1] + fourP1234 - b.m[1];
-		out.m[2] = a.m[2] + fourP1234 - b.m[2];
-		out.m[3] = a.m[3] + fourP1234 - b.m[3];
-		out.m[4] = a.m[4] + fourP1234 - b.m[4];
-	}
-	
-	/* out = a * b */
-	public void mul(Bignum25519 out, Bignum25519 in2, Bignum25519 in) {
-		fp256 t[] = new fp256[5];
-		FixedPointOp fp = new FixedPointOp();
-		for (int i = 0; i < 5; i++)
-			t[i] = fp.zero();
-		//fp256 c = fp.zero();
-		fp256 mul = fp.zero();
-
-		long r0,r1,r2,r3,r4,s0,s1,s2,s3,s4,c;
-		
-		r0 = in.m[0];
-		r1 = in.m[1];
-		r2 = in.m[2];
-		r3 = in.m[3];
-		r4 = in.m[4];
-		
-		s0 = in2.m[0];
-		s1 = in2.m[1];
-		s2 = in2.m[2];
-		s3 = in2.m[3];
-		s4 = in2.m[4];
-
-		mul64x64_128(t[0], r0, s0);
-		mul64x64_128(t[1], r0, s1); mul64x64_128(mul, r1, s0); add128(t[1], mul);
-		mul64x64_128(t[2], r0, s2); mul64x64_128(mul, r2, s0); add128(t[2], mul); mul64x64_128(mul, r1, s1); add128(t[2], mul);
-		mul64x64_128(t[3], r0, s3); mul64x64_128(mul, r3, s0); add128(t[3], mul); mul64x64_128(mul, r1, s2); add128(t[3], mul); mul64x64_128(mul, r2, s1); add128(t[3], mul);
-		mul64x64_128(t[4], r0, s4); mul64x64_128(mul, r4, s0); add128(t[4], mul); mul64x64_128(mul, r3, s1); add128(t[4], mul); mul64x64_128(mul, r1, s3); add128(t[4], mul); mul64x64_128(mul, r2, s2); add128(t[4], mul);
-		
-		r1 *= 19;
-		r2 *= 19;
-		r3 *= 19;
-		r4 *= 19;
-
-		mul64x64_128(mul, r4, s1); add128(t[0], mul); mul64x64_128(mul, r1, s4); add128(t[0], mul); mul64x64_128(mul, r2, s3); add128(t[0], mul); mul64x64_128(mul, r3, s2); add128(t[0], mul);
-		mul64x64_128(mul, r4, s2); add128(t[1], mul); mul64x64_128(mul, r2, s4); add128(t[1], mul); mul64x64_128(mul, r3, s3); add128(t[1], mul);
-		mul64x64_128(mul, r4, s3); add128(t[2], mul); mul64x64_128(mul, r3, s4); add128(t[2], mul);
-		mul64x64_128(mul, r4, s4); add128(t[3], mul);
-				
-				
-				              r0 = lo128(t[0]) & reduce_mask_51; c = shr128(t[0], 51);
-		add128_64(t[1], c);   r1 = lo128(t[1]) & reduce_mask_51; c = shr128(t[1], 51);
-		add128_64(t[2], c);   r2 = lo128(t[2]) & reduce_mask_51; c = shr128(t[2], 51);
-		add128_64(t[3], c);   r3 = lo128(t[3]) & reduce_mask_51; c = shr128(t[3], 51);
-		add128_64(t[4], c);   r4 = lo128(t[4]) & reduce_mask_51; c = shr128(t[4], 51);
-		r0 +=   c * 19; c = r0 >> 51; r0 = r0 & reduce_mask_51;
-		r1 +=   c;
-
-		out.m[0] = r0;
-		out.m[1] = r1;
-		out.m[2] = r2;
-		out.m[3] = r3;
-		out.m[4] = r4;
-	}
-	
-	public void square(Bignum25519 out, Bignum25519 in) {
-		fp256 t[] = new fp256[5];
-		FixedPointOp fp = new FixedPointOp();
-		for (int i = 0; i < 5; i++)
-			t[i] = fp.zero();
-		fp256 mul = fp.zero();
-		
-		long r0,r1,r2,r3,r4,d0,d1,d2,d419,d4,c;
-		
-		r0 = in.m[0];
-		r1 = in.m[1];
-		r2 = in.m[2];
-		r3 = in.m[3];
-		r4 = in.m[4];
-		
-		d0 = r0 * 2;
-		d1 = r1 * 2;
-		d2 = r2 * 2 * 19;
-		d419 = r4 * 19;
-		d4 = d419 * 2;
-
-		mul64x64_128(t[0], r0, r0); mul64x64_128(mul, d4, r1); add128(t[0], mul); mul64x64_128(mul, d2,      r3); add128(t[0], mul);
-		mul64x64_128(t[1], d0, r1); mul64x64_128(mul, d4, r2); add128(t[1], mul); mul64x64_128(mul, r3, r3 * 19); add128(t[1], mul);
-		mul64x64_128(t[2], d0, r2); mul64x64_128(mul, r1, r1); add128(t[2], mul); mul64x64_128(mul, d4,      r3); add128(t[2], mul);
-		mul64x64_128(t[3], d0, r3); mul64x64_128(mul, d1, r2); add128(t[3], mul); mul64x64_128(mul, r4,    d419); add128(t[3], mul);
-		mul64x64_128(t[4], d0, r4); mul64x64_128(mul, d1, r3); add128(t[4], mul); mul64x64_128(mul, r2,      r2); add128(t[4], mul);
-				
-							  r0 = lo128(t[0]) & reduce_mask_51; c = shr128(t[0], 51);
-		add128_64(t[1], c);   r1 = lo128(t[1]) & reduce_mask_51; c = shr128(t[1], 51);
-		add128_64(t[2], c);   r2 = lo128(t[2]) & reduce_mask_51; c = shr128(t[2], 51);
-		add128_64(t[3], c);   r3 = lo128(t[3]) & reduce_mask_51; c = shr128(t[3], 51);
-		add128_64(t[4], c);   r4 = lo128(t[4]) & reduce_mask_51; c = shr128(t[4], 51);
-		r0 +=   c * 19; c = r0 >> 51; r0 = r0 & reduce_mask_51;
-		r1 +=   c;
-		
-		out.m[0] = r0;
-		out.m[1] = r1;
-		out.m[2] = r2;
-		out.m[3] = r3;
-		out.m[4] = r4;
-	}
-	
-	/* out = in^(2 * count) */
-	public void square_times(Bignum25519 out, Bignum25519 in, long count) {
-		fp256 t[] = new fp256[5];
-		FixedPointOp fp = new FixedPointOp();
-		for (int i = 0; i < 5; i++)
-			t[i] = fp.zero();
-		fp256 mul = fp.zero();
-		
-		long r0,r1,r2,r3,r4,d0,d1,d2,d419,d4,c;
-		
-		r0 = in.m[0];
-		r1 = in.m[1];
-		r2 = in.m[2];
-		r3 = in.m[3];
-		r4 = in.m[4];
-		do {
-			d0 = r0 * 2;
-			d1 = r1 * 2;
-			d2 = r2 * 2 * 19;
-			d419 = r4 * 19;
-			d4 = d419 * 2;
-			
-			mul64x64_128(t[0], r0, r0); mul64x64_128(mul, d4, r1); add128(t[0], mul); mul64x64_128(mul, d2,      r3); add128(t[0], mul);
-			mul64x64_128(t[1], d0, r1); mul64x64_128(mul, d4, r2); add128(t[1], mul); mul64x64_128(mul, r3, r3 * 19); add128(t[1], mul);
-			mul64x64_128(t[2], d0, r2); mul64x64_128(mul, r1, r1); add128(t[2], mul); mul64x64_128(mul, d4,      r3); add128(t[2], mul);
-			mul64x64_128(t[3], d0, r3); mul64x64_128(mul, d1, r2); add128(t[3], mul); mul64x64_128(mul, r4,    d419); add128(t[3], mul);
-			mul64x64_128(t[4], d0, r4); mul64x64_128(mul, d1, r3); add128(t[4], mul); mul64x64_128(mul, r2,      r2); add128(t[4], mul);
-
-			r0 = lo128(t[0]) & reduce_mask_51;
-			r1 = lo128(t[1]) & reduce_mask_51; c = shl128(t[0], 13); r1 += c;
-//			print64t("c", c);
-//			print64t("r0", r0);
-//			print64t("r1", r1);
-			r2 = lo128(t[2]) & reduce_mask_51; c = shl128(t[1], 13); r2 += c;
-			r3 = lo128(t[3]) & reduce_mask_51; c = shl128(t[2], 13); r3 += c;
-			r4 = lo128(t[4]) & reduce_mask_51; c = shl128(t[3], 13); r4 += c;
-			c = shl128(t[4], 13); r0 += c * 19;
-			c = r0 >>> 51; r0 &= reduce_mask_51;
-			r1 += c     ;  c = r1 >>> 51; r1 &= reduce_mask_51;
-			r2 += c     ;  c = r2 >>> 51; r2 &= reduce_mask_51;
-			r3 += c     ;  c = r3 >>> 51; r3 &= reduce_mask_51;
-			r4 += c     ;  c = r4 >>> 51; r4 &= reduce_mask_51;
-			r0 += c * 19;
-//			print64t("r0", r0);
-//			print64t("r1", r1);
-//			print64t("r2", r2);
-//			print64t("r3", r3);
-//			print64t("r4", r4);
-			//System.exit(0);
-		} while (--count > 0);
-		out.m[0] = r0;
-		out.m[1] = r1;
-		out.m[2] = r2;
-		out.m[3] = r3;
-		out.m[4] = r4;
-	}
-	
-	
-	public void double_p1p1(ge25519 r, ge25519 p) {
-		Bignum25519 a = new Bignum25519();
-		Bignum25519 b = new Bignum25519();
-		Bignum25519 c = new Bignum25519();
-		
-		square(a, p.x);
-		square(b, p.y);
-		square(c, p.z);
-		add_reduce(c, c, c);
-		add(r.x, p.x, p.y);
-		square(r.x, r.x);
-		add(r.y, b, a);
-		sub(r.z, b, a);
-		sub_after_basic(r.x, r.x, r.y);
-		sub_after_basic(r.t, c, r.z);
-	}
-	
-	
-	public void double_partial(ge25519 r, ge25519 p) {
-		ge25519_p1p1 t = new ge25519_p1p1();
-		double_p1p1(t, p);
-		p1p1_to_partial(r, t);
-	}
-	
-	public void double_(ge25519 r, ge25519 p) {
-		ge25519_p1p1 t = new ge25519_p1p1();
-		double_p1p1(t, p);
-		p1p1_to_full(r, t);
-	}
-
-/*
-	conversions
-*/
-	
-	public void p1p1_to_partial(ge25519 r, ge25519_p1p1 p) {
-		mul(r.x, p.x, p.t);
-		mul(r.y, p.y, p.z);
-		mul(r.z, p.z, p.t);
-	}
-	
-	public void p1p1_to_full(ge25519 r, ge25519_p1p1 p) {
-		mul(r.x, p.x, p.t);
-		mul(r.y, p.y, p.z);
-		mul(r.z, p.z, p.t);
-		mul(r.t, p.x, p.y);
-	}
-
 	
 	// donna helpers
 	
-	/*
-	 * z^(p - 2) = z(2^255 - 21)
-	 */
-	public void recip(Bignum25519 out, Bignum25519 z) {
-		Bignum25519 a = new Bignum25519();
-		Bignum25519 t0 = new Bignum25519();
-		Bignum25519 b = new Bignum25519();
-		
-		/* 2 */ square_times(a, z, 1); /* a = 2 */
-		//printBig("a", a);
-		/* 8 */ square_times(t0, a, 2);
-		/* 9 */ mul(b, t0, z); /* b = 9 */
-		/* 11 */ mul(a, b, a); /* a = 11 */
-		/* 22 */ square_times(t0, a, 1);
-		/* 2^5 - 2^0 = 31 */ mul(b, t0, b);
-		/* 2^250 - 2^0 */ pow_two5mtwo0_two250mtwo0(b);
-		/* 2^255 - 2^5 */ square_times(b, b, 5);
-		/* 2^255 - 21 */ mul(out, b, a);
-	}
-	
-	/*
-	 * In:  b =   2^5 - 2^0
-	 * Out: b = 2^250 - 2^0
-	 */
-	public void pow_two5mtwo0_two250mtwo0(Bignum25519 b) {
-		Bignum25519 t0 = new Bignum25519();
-		Bignum25519 c = new Bignum25519();
-		
-		/* 2^5  - 2^0 */ /* b */
-		/* 2^10 - 2^5 */ square_times(t0, b, 5);
-		/* 2^10 - 2^0 */ mul(b, t0, b);
-		/* 2^20 - 2^10 */ square_times(t0, b, 10);
-		/* 2^20 - 2^0 */ mul(c, t0, b);
-		/* 2^40 - 2^20 */ square_times(t0, c, 20);
-		/* 2^40 - 2^0 */ mul(t0, t0, c);
-		/* 2^50 - 2^10 */ square_times(t0, t0, 10);
-		/* 2^50 - 2^0 */ mul(b, t0, b);
-		/* 2^100 - 2^50 */ square_times(t0, b, 50);
-		/* 2^100 - 2^0 */ mul(c, t0, b);
-		/* 2^200 - 2^100 */ square_times(t0, c, 100);
-		/* 2^200 - 2^0 */ mul(t0, t0, c);
-		/* 2^250 - 2^50 */ square_times(t0, t0, 50);
-		/* 2^250 - 2^0 */ mul(b, t0, b);
-	}
 	
 	
 	

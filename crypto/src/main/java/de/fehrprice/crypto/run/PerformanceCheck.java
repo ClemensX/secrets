@@ -95,7 +95,7 @@ public class PerformanceCheck {
      */
     private static void perfED25519Compare() {
         
-        int count = 1000;
+        int count = 100;
         // prep
         Ed25519 edNaive = new Ed25519();
         ED25519 edDonna = new ED25519();

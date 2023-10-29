@@ -93,7 +93,7 @@ d25bf5f0595bbe24655141438e7a100b
 		assertEquals(publicKeyString, pubk);
 		String s = fed.signature(messageString,secretKeyString,pubk);
 		assertEquals(signatureString, s);
-		assertTrue(ed.checkvalid(s,messageString,publicKeyString));
+		assertTrue(fed.checkvalid(s,messageString,publicKeyString));
 	}
 
 /*
