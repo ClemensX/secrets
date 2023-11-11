@@ -92,14 +92,6 @@ public class ED25519DonnaImpl {
 	
 	public void nielsadd2_p1p1(ge25519_p1p1 r, ge25519 p, ge25519_niels q, byte signbit_b) {
 		int signbit = signbit_b & 0xff;
-		printBig("p.y", p.y);
-		printBig("p.x", p.x);
-		printBig("p.t", p.t);
-		printBig("p.z", p.z);
-		printBig("q.y", q.ysubx);
-		printBig("q.x", q.xaddy);
-		printBig("q.t", q.t2d);
-		System.out.println("signbit: " + signbit);
 		//const bignum25519 *qb = (const bignum25519 *)q;
 		//bignum25519 *rb = (bignum25519 *)r;
 		Bignum25519 a = new Bignum25519();
@@ -126,10 +118,6 @@ public class ED25519DonnaImpl {
 		Bignum25519 b = new Bignum25519();
 		Bignum25519 c = new Bignum25519();
 		
-//		printBig("p.y", p.y);
-//		printBig("p.x", p.x);
-//		printBig("p.t", p.t);
-//		printBig("p.z", p.z);
 		curve25519.sub(a, p.y, p.x);
 		curve25519.add(b, p.y, p.x);
 		curve25519.mul(a, a, q.viaIndex(signbit)); /* ysubx for +, xaddy for - */
@@ -140,13 +128,8 @@ public class ED25519DonnaImpl {
 		curve25519.mul(r.t, p.z, q.z);
 		curve25519.add_reduce(r.t, r.t, r.t);
 		curve25519.copy(r.z, r.t);
-//		printBig("r.y", r.y);
-//		printBig("r.x", r.x);
-//		printBig("r.t", r.t);
-//		printBig("r.z", r.z);
 		curve25519.add(r.viaIndex(2+signbit), r.viaIndex(2+signbit), c); /* z for +, t for - */
 		curve25519.sub(r.viaIndex(2+(signbit^1)), r.viaIndex(2+(signbit^1)), c); /* t for +, z for - */
-		//System.exit(0);
 	}
 	
 	public void double_partial(ge25519 r, ge25519 p) {
@@ -270,7 +253,7 @@ public class ED25519DonnaImpl {
 		curve25519.mul(t, t, den);
 		curve25519.sub_reduce(root, t, num);
 		curve25519.contract(check, root);
-		printBig("root", root);
+		//printBig("root", root);
 		if (verify(check, zero, 32) == 0) {
 			curve25519.add_reduce(t, t, num);
 			curve25519.contract(check, t);
@@ -285,7 +268,7 @@ public class ED25519DonnaImpl {
 			curve25519.neg(r.x, t);
 		}
 		curve25519.mul(r.t, r.x, r.y);
-		printBig("mul", r.t);
+		//printBig("mul", r.t);
 		return 1;
 	}
 
@@ -311,9 +294,7 @@ public class ED25519DonnaImpl {
 		int i;
 		
 		modm.contract256_slidingwindow_modm(slide1, s1, S1_SWINDOWSIZE);
-		printB256modm("s2", s2);
 		modm.contract256_slidingwindow_modm(slide2, s2, S2_SWINDOWSIZE);
-		printN("slide2", slide2, 256);
 		
 		double_(d1, p1);
 		full_to_pniels(pre1[0], p1);
@@ -332,12 +313,6 @@ public class ED25519DonnaImpl {
 		
 		for (; i >= 0; i--) {
 			double_p1p1(t, r);
-			System.out.println(i + " " + slide1[i] +  " " + slide2[i]);
-			printBig("t.y", t.y);
-			printBig("t.x", t.x);
-			printBig("t.t", t.t);
-			printBig("t.z", t.z);
-//			System.exit(0);
 			if (slide1[i] != 0) {
 				p1p1_to_full(r, t);
 				pnielsadd_p1p1(t, r, pre1[Math.abs(slide1[i]) / 2], (byte)((int)(slide1[i] & 0xff) >>> 7));
@@ -345,16 +320,10 @@ public class ED25519DonnaImpl {
 			
 			if (slide2[i] != 0) {
 				p1p1_to_full(r, t);
-				if (i == 231) {
-					System.out.println();//i = 231;// TODO error here
-				}
 				nielsadd2_p1p1(t, r, ConstDef.ge25519_niels_sliding_multiples[Math.abs(slide2[i]) / 2], (byte)((int)(slide2[i] & 0xff) >>> 7));
 			}
 			
 			p1p1_to_partial(r, t);
-			if (i < 231) {
-				//System.exit(0);
-			}
 		}
 	}
 	

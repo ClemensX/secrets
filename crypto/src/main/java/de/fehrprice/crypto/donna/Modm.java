@@ -173,7 +173,7 @@ public class Modm {
 		Bignum256modm q1 = new Bignum256modm();
 		
 		System.arraycopy(in, in_startpos, work, 0, len);
-		printN("modm", work, len);
+		//printN("modm", work, len);
 		x[0] = U8TO64_LE(work,0);
 		x[1] = U8TO64_LE(work,8);
 		x[2] = U8TO64_LE(work,16);
@@ -205,7 +205,7 @@ public class Modm {
 		q1.m[4] = ((x[ 7] >>> 24)                );
 		
 		barrett_reduce256_modm(out, q1, out);
-		printB256modm("q b256", out);
+		//printB256modm("q b256", out);
 	}
 	
 	// unsigned char out[32]
