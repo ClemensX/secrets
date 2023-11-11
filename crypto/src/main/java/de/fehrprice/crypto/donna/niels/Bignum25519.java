@@ -12,7 +12,15 @@ public class Bignum25519 extends Bignum256modm {
 		m[3] = l3;
 		m[4] = l4;
 	}
+	public Bignum25519(Bignum25519 c) {
+		this(c.m[0], c.m[1], c.m[2], c.m[3], c.m[4]);
+	}
+	
 	public Bignum25519() {
 		super();
+	}
+	
+	public void memsetZero() {
+		m[4] = m[3] = m[2] = m[1] = m[0] = 0L;
 	}
 }

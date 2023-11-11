@@ -8,4 +8,12 @@ public class ge25519 {
 	public Bignum25519 y = new Bignum25519();
 	public Bignum25519 z = new Bignum25519();
 	public Bignum25519 t = new Bignum25519();
+	
+	
+	public void memsetZero() {
+		x.memsetZero();
+		y.memsetZero();
+		z.memsetZero();
+		t.memsetZero();
+	}
 }

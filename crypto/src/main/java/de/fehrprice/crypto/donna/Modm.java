@@ -9,6 +9,8 @@ import de.fehrprice.crypto.FixedPointOp;
 import de.fehrprice.crypto.fp256;
 import static de.fehrprice.crypto.donna.Curve25519.U8TO64_LE;
 import static de.fehrprice.crypto.donna.Curve25519.U64TO8_LE;
+import static de.fehrprice.crypto.donna.ED25519.printB256modm;
+import static de.fehrprice.crypto.donna.ED25519.printN;
 
 /*
 	Arithmetic modulo the group order n = 2^252 +  27742317777372353535851937790883648493 = 7237005577332262213973186563042994240857116359379907606001950938285454250989
@@ -160,13 +162,18 @@ public class Modm {
 		
 		barrett_reduce256_modm(r, q1, r1);
 	}
+	public void expand256_modm(Bignum256modm out, byte[] in, int len){
+		expand256_modm(out, in, 0, len);
+	}
+
 	
-	public void expand256_modm(Bignum256modm out, byte[] in, int len) {
+	public void expand256_modm(Bignum256modm out, byte[] in, int in_startpos, int len) {
 		byte work[] = new byte[64];
 		long x[] = new long[16];
 		Bignum256modm q1 = new Bignum256modm();
 		
-		System.arraycopy(in, 0, work, 0, len);
+		System.arraycopy(in, in_startpos, work, 0, len);
+		printN("modm", work, len);
 		x[0] = U8TO64_LE(work,0);
 		x[1] = U8TO64_LE(work,8);
 		x[2] = U8TO64_LE(work,16);
@@ -198,7 +205,7 @@ public class Modm {
 		q1.m[4] = ((x[ 7] >>> 24)                );
 		
 		barrett_reduce256_modm(out, q1, out);
-		//printB256modm("q b256", out);
+		printB256modm("q b256", out);
 	}
 	
 	// unsigned char out[32]
@@ -241,6 +248,47 @@ public class Modm {
 		r[63] += carry;
 	}
 	
+	// signed char r[256], const bignum256modm s, int windowsize
+	public void	contract256_slidingwindow_modm(byte r[], Bignum256modm s, int windowsize) {
+		int i,j,k,b;
+		int m = (1 << (windowsize - 1)) - 1, soplen = 256;
+		int bits_idx = 0; // replace signed char *bits = r with index into r
+		long v;
+		
+		/* first put the binary expansion into r  */
+		for (i = 0; i < 4; i++) {
+			v = s.m[i];
+			for (j = 0; j < 56; j++, v >>= 1)
+				r[bits_idx++] = (byte) (v & 1);
+		}
+		v = s.m[4];
+		for (j = 0; j < 32; j++, v >>= 1)
+			r[bits_idx++] = (byte) (v & 1);
+		
+		/* Making it sliding window */
+		for (j = 0; j < soplen; j++) {
+			if (r[j] == 0)
+				continue;
+			
+			for (b = 1; (b < (soplen - j)) && (b <= 6); b++) {
+				if ((r[j] + (r[j + b] << b)) <= m) {
+					r[j] += r[j + b] << b;
+					r[j + b] = 0;
+				} else if ((r[j] - (r[j + b] << b)) >= -m) {
+					r[j] -= r[j + b] << b;
+					for (k = j + b; k < soplen; k++) {
+						if (r[k] == 0) {
+							r[k] = 1;
+							break;
+						}
+						r[k] = 0;
+					}
+				} else if (r[j + b] != 0) {
+					break;
+				}
+			}
+		}
+	}
 	
 	
 }

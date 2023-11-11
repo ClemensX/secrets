@@ -39,6 +39,14 @@ public class ED25519 {
 		System.out.println();
 	}
 	
+	public static void printN(String name, byte[] b, int length) {
+		System.out.print(name + " ");
+		for (int i = 0; i < length; i++) {
+			System.out.printf("%02x", b[i]);
+		}
+		System.out.println();
+	}
+	
 	private void print128(String txt, fp256 f) {
 		System.out.printf("%s ", txt); for (int i = 1; i >= 0; i--) printLong(f.getInternalLongArray()[i]); System.out.println();
 	}
@@ -180,7 +188,7 @@ public class ED25519 {
 	public int sign_open (byte[] m, int mlen, Key pk, Signature RS) {
 		ge25519 R = new ge25519();
 		ge25519 A = new ge25519();
-		byte[] hash = new byte[64];
+		//byte[] hash = new byte[64];
 		Bignum256modm hram = new Bignum256modm();
 		Bignum256modm S = new Bignum256modm();
 		byte[] checkR = new byte[32];
@@ -190,17 +198,18 @@ public class ED25519 {
 		
 		/* hram = H(R,A,m) */
 		//ed25519_hram(hash, RS, pk, m, mlen);
-		//expand256_modm(hram, hash, 64);
+		byte[] hash = h(concat_r_pk_m(RS.k, pk.k, m));
+		modm.expand256_modm(hram, hash, 64);
 		
 		/* S */
-		//expand256_modm(S, RS + 32, 32);
+		modm.expand256_modm(S, RS.k, 32, 32);
 		
 		/* SB - H(R,A,m)A */
-		//ge25519_double_scalarmult_vartime(&R, &A, hram, S);
-		//ge25519_pack(checkR, &R);
+		ge25519impl.double_scalarmult_vartime(R, A, hram, S);
+		ge25519impl.pack(checkR, R);
 		
 		/* check that R = SB - H(R,A,m)A */
-		return -1 ;//ed25519_verify(RS, checkR, 32) ? 0 : -1;
+		return ge25519impl.verify(RS.k, checkR, 32) == 0 ? 0 : -1;
 	}
 
 	

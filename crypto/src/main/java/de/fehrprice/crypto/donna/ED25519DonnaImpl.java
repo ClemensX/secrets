@@ -2,9 +2,15 @@ package de.fehrprice.crypto.donna;
 
 import de.fehrprice.crypto.Long4;
 import de.fehrprice.crypto.donna.niels.Bignum25519;
+import de.fehrprice.crypto.donna.niels.ConstDef;
 import de.fehrprice.crypto.donna.niels.ge25519;
 import de.fehrprice.crypto.donna.niels.ge25519_niels;
 import de.fehrprice.crypto.donna.niels.ge25519_p1p1;
+import de.fehrprice.crypto.donna.niels.ge25519_pniels;
+
+import static de.fehrprice.crypto.donna.ED25519.printB256modm;
+import static de.fehrprice.crypto.donna.ED25519.printBig;
+import static de.fehrprice.crypto.donna.ED25519.printN;
 
 public class ED25519DonnaImpl {
 	
@@ -19,9 +25,25 @@ public class ED25519DonnaImpl {
 		this.modm = modm;
 	}
 	
-	public static final Bignum25519 ge25519_ecd = new Bignum25519(0x00034dca135978a3L,0x0001a8283b156ebdL,
-			0x0005e7a26001c029L,0x000739c663a03cbbL,0x00052036cee2b6ffL);
+	public static final Bignum25519 ge25519_ecd = new Bignum25519(
+			0x00034dca135978a3L,0x0001a8283b156ebdL,0x0005e7a26001c029L,0x000739c663a03cbbL,0x00052036cee2b6ffL);
+	public static final Bignum25519 ge25519_ec2d = new Bignum25519(
+			0x00069b9426b2f159L,0x00035050762add7aL,0x0003cf44c0038052L,0x0006738cc7407977L,0x0002406d9dc56dffL);
+	public static final Bignum25519 ge25519_sqrtneg1 = new Bignum25519(
+			0x00061b274a0ea0b0L,0x0000d5a5fc8f189dL,0x0007ef5e9cbd0c60L,0x00078595a6804c9eL,0x0002b8324804fc1dL);
 	
+	
+	/*
+		Timing safe memory compare
+	*/
+	public int verify(byte[] x, byte[] y, int length) {
+		long differentbits = 0;
+		for(int len = 0; len < length; len++) {
+			differentbits = ((byte) differentbits | (byte) (x[len] ^ y[len])) & 0xff;
+		}
+		return (int) (1 & ((differentbits - 1) >>> 8));
+	}
+
 	/*
 		conversions
 	*/
@@ -38,7 +60,14 @@ public class ED25519DonnaImpl {
 		curve25519.mul(r.z, p.z, p.t);
 		curve25519.mul(r.t, p.x, p.y);
 	}
-
+	
+	public void full_to_pniels(ge25519_pniels p, ge25519 r) {
+		curve25519.sub(p.ysubx, r.y, r.x);
+		curve25519.add(p.xaddy, r.y, r.x);
+		curve25519.copy(p.z, r.z);
+		curve25519.mul(p.t2d, r.t, ge25519_ec2d);
+	}
+	
 	
 	/*
 		adding & doubling
@@ -59,6 +88,65 @@ public class ED25519DonnaImpl {
 		curve25519.sub(r.z, b, a);
 		curve25519.sub_after_basic(r.x, r.x, r.y);
 		curve25519.sub_after_basic(r.t, c, r.z);
+	}
+	
+	public void nielsadd2_p1p1(ge25519_p1p1 r, ge25519 p, ge25519_niels q, byte signbit_b) {
+		int signbit = signbit_b & 0xff;
+		printBig("p.y", p.y);
+		printBig("p.x", p.x);
+		printBig("p.t", p.t);
+		printBig("p.z", p.z);
+		printBig("q.y", q.ysubx);
+		printBig("q.x", q.xaddy);
+		printBig("q.t", q.t2d);
+		System.out.println("signbit: " + signbit);
+		//const bignum25519 *qb = (const bignum25519 *)q;
+		//bignum25519 *rb = (bignum25519 *)r;
+		Bignum25519 a = new Bignum25519();
+		Bignum25519 b = new Bignum25519();
+		Bignum25519 c = new Bignum25519();
+		
+		curve25519.sub(a, p.y, p.x);
+		curve25519.add(b, p.y, p.x);
+		curve25519.mul(a, a, q.viaIndex(signbit)); /* x for +, y for - */
+		curve25519.mul(r.x, b, q.viaIndex(signbit^1)); /* y for +, x for - */
+		curve25519.add(r.y, r.x, a);
+		curve25519.sub(r.x, r.x, a);
+		curve25519.mul(c, p.t, q.t2d);
+		curve25519.add_reduce(r.t, p.z, p.z);
+		curve25519.copy(r.z, r.t);
+		curve25519.add(r.viaIndex(2+signbit), r.viaIndex(2+signbit), c); /* z for +, t for - */
+		curve25519.sub(r.viaIndex(2+(signbit^1)), r.viaIndex(2+(signbit^1)), c); /* t for +, z for - */
+	}
+	public void pnielsadd_p1p1(ge25519_p1p1 r, ge25519 p, ge25519_pniels q, byte signbit_b) {
+		int signbit = signbit_b & 0xff;
+		//Bignum25519 qb = new Bignum25519(q);
+		//Bignum25519 *rb = (bignum25519 *)r;
+		Bignum25519 a = new Bignum25519();
+		Bignum25519 b = new Bignum25519();
+		Bignum25519 c = new Bignum25519();
+		
+//		printBig("p.y", p.y);
+//		printBig("p.x", p.x);
+//		printBig("p.t", p.t);
+//		printBig("p.z", p.z);
+		curve25519.sub(a, p.y, p.x);
+		curve25519.add(b, p.y, p.x);
+		curve25519.mul(a, a, q.viaIndex(signbit)); /* ysubx for +, xaddy for - */
+		curve25519.mul(r.x, b, q.viaIndex(signbit^1)); /* xaddy for +, ysubx for - */
+		curve25519.add(r.y, r.x, a);
+		curve25519.sub(r.x, r.x, a);
+		curve25519.mul(c, p.t, q.t2d);
+		curve25519.mul(r.t, p.z, q.z);
+		curve25519.add_reduce(r.t, r.t, r.t);
+		curve25519.copy(r.z, r.t);
+//		printBig("r.y", r.y);
+//		printBig("r.x", r.x);
+//		printBig("r.t", r.t);
+//		printBig("r.z", r.z);
+		curve25519.add(r.viaIndex(2+signbit), r.viaIndex(2+signbit), c); /* z for +, t for - */
+		curve25519.sub(r.viaIndex(2+(signbit^1)), r.viaIndex(2+(signbit^1)), c); /* t for +, z for - */
+		//System.exit(0);
 	}
 	
 	public void double_partial(ge25519 r, ge25519 p) {
@@ -92,6 +180,37 @@ public class ED25519DonnaImpl {
 		curve25519.mul(r.z, g, f);
 		curve25519.mul(r.t, e, h);
 	}
+	
+	public void	pnielsadd(ge25519_pniels r, ge25519 p, ge25519_pniels q) {
+		Bignum25519 a = new Bignum25519();
+		Bignum25519 b = new Bignum25519();
+		Bignum25519 c = new Bignum25519();
+		Bignum25519 x = new Bignum25519();
+		Bignum25519 y = new Bignum25519();
+		Bignum25519 z = new Bignum25519();
+		Bignum25519 t = new Bignum25519();
+		
+		curve25519.sub(a, p.y, p.x);
+		curve25519.add(b, p.y, p.x);
+		curve25519.mul(a, a, q.ysubx);
+		curve25519.mul(x, b, q.xaddy);
+		curve25519.add(y, x, a);
+		curve25519.sub(x, x, a);
+		curve25519.mul(c, p.t, q.t2d);
+		curve25519.mul(t, p.z, q.z);
+		curve25519.add(t, t, t);
+		curve25519.add_after_basic(z, t, c);
+		curve25519.sub_after_basic(t, t, c);
+		curve25519.mul(r.xaddy, x, t);
+		curve25519.mul(r.ysubx, y, z);
+		curve25519.mul(r.z, z, t);
+		curve25519.mul(r.t2d, x, y);
+		curve25519.copy(y, r.ysubx);
+		curve25519.sub(r.ysubx, r.ysubx, r.xaddy);
+		curve25519.add(r.xaddy, r.xaddy, y);
+		curve25519.mul(r.t2d, r.t2d, ge25519_ec2d);
+	}
+
 
 	/*
 		pack & unpack
@@ -140,32 +259,103 @@ public class ED25519DonnaImpl {
 		curve25519.square(r.x, d3);
 		curve25519.mul(r.x, r.x, den);
 		curve25519.mul(r.x, r.x, num);
-		//pow_two252m3(r.x, r.x);
-//
-//		/* 2. computation of r->x = num * den^3 * (num*den^7)^((p-5)/8) */
-//		curve25519_mul(r->x, r->x, d3);
-//		curve25519_mul(r->x, r->x, num);
-//
-//		/* 3. Check if either of the roots works: */
-//		curve25519_square(t, r->x);
-//		curve25519_mul(t, t, den);
-//		curve25519_sub_reduce(root, t, num);
-//		curve25519_contract(check, root);
-//		if (!ed25519_verify(check, zero, 32)) {
-//			curve25519_add_reduce(t, t, num);
-//			curve25519_contract(check, t);
-//			if (!ed25519_verify(check, zero, 32))
-//				return 0;
-//			curve25519_mul(r->x, r->x, ge25519_sqrtneg1);
-//		}
-//
-//		curve25519_contract(check, r->x);
-//		if ((check[0] & 1) == parity) {
-//			curve25519_copy(t, r->x);
-//			curve25519_neg(r->x, t);
-//		}
-//		curve25519_mul(r->t, r->x, r->y);
+		curve25519.pow_two252m3(r.x, r.x);
+
+		/* 2. computation of r->x = num * den^3 * (num*den^7)^((p-5)/8) */
+		curve25519.mul(r.x, r.x, d3);
+		curve25519.mul(r.x, r.x, num);
+
+		/* 3. Check if either of the roots works: */
+		curve25519.square(t, r.x);
+		curve25519.mul(t, t, den);
+		curve25519.sub_reduce(root, t, num);
+		curve25519.contract(check, root);
+		printBig("root", root);
+		if (verify(check, zero, 32) == 0) {
+			curve25519.add_reduce(t, t, num);
+			curve25519.contract(check, t);
+			if (verify(check, zero, 32) == 0)
+				return 0;
+			curve25519.mul(r.x, r.x, ge25519_sqrtneg1);
+		}
+
+		curve25519.contract(check, r.x);
+		if ((check[0] & 1) == parity) {
+			curve25519.copy(t, r.x);
+			curve25519.neg(r.x, t);
+		}
+		curve25519.mul(r.t, r.x, r.y);
+		printBig("mul", r.t);
 		return 1;
+	}
+
+/*
+	scalarmults
+*/
+
+	private final static int S1_SWINDOWSIZE = 5;
+	private final static int S1_TABLE_SIZE = (1<<(S1_SWINDOWSIZE-2));
+	private final static int S2_SWINDOWSIZE = 7;
+	private final static int S2_TABLE_SIZE = (1<<(S2_SWINDOWSIZE-2));
+	
+	/* computes [s1]p1 + [s2]basepoint */
+	public void double_scalarmult_vartime(ge25519 r, ge25519 p1, Bignum256modm s1, Bignum256modm s2) {
+		byte[] slide1 = new byte[256];
+		byte[] slide2 = new byte[256];
+		ge25519_pniels pre1[] = new ge25519_pniels[S1_TABLE_SIZE];
+		for (int i = 0; i < pre1.length; i++) {
+			pre1[i] = new ge25519_pniels();
+		}
+		ge25519 d1 = new ge25519();
+		ge25519_p1p1 t = new ge25519_p1p1();
+		int i;
+		
+		modm.contract256_slidingwindow_modm(slide1, s1, S1_SWINDOWSIZE);
+		printB256modm("s2", s2);
+		modm.contract256_slidingwindow_modm(slide2, s2, S2_SWINDOWSIZE);
+		printN("slide2", slide2, 256);
+		
+		double_(d1, p1);
+		full_to_pniels(pre1[0], p1);
+		for (i = 0; i < S1_TABLE_SIZE - 1; i++)
+			pnielsadd(pre1[i+1], d1, pre1[i]);
+		
+		/* set neutral */
+		//memset(r, 0, sizeof(ge25519));
+		r.memsetZero();
+		r.y.m[0] = 1;
+		r.z.m[0] = 1;
+		
+		i = 255;
+		while ((i >= 0) && (slide1[i] | slide2[i]) == 0)
+			i--;
+		
+		for (; i >= 0; i--) {
+			double_p1p1(t, r);
+			System.out.println(i + " " + slide1[i] +  " " + slide2[i]);
+			printBig("t.y", t.y);
+			printBig("t.x", t.x);
+			printBig("t.t", t.t);
+			printBig("t.z", t.z);
+//			System.exit(0);
+			if (slide1[i] != 0) {
+				p1p1_to_full(r, t);
+				pnielsadd_p1p1(t, r, pre1[Math.abs(slide1[i]) / 2], (byte)((int)(slide1[i] & 0xff) >>> 7));
+			}
+			
+			if (slide2[i] != 0) {
+				p1p1_to_full(r, t);
+				if (i == 231) {
+					System.out.println();//i = 231;// TODO error here
+				}
+				nielsadd2_p1p1(t, r, ConstDef.ge25519_niels_sliding_multiples[Math.abs(slide2[i]) / 2], (byte)((int)(slide2[i] & 0xff) >>> 7));
+			}
+			
+			p1p1_to_partial(r, t);
+			if (i < 231) {
+				//System.exit(0);
+			}
+		}
 	}
 	
 	private Long4 long4 = new Long4();

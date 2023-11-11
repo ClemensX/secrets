@@ -404,6 +404,25 @@ public class Curve25519 {
 		/* 2^255 - 21 */ mul(out, b, a);
 	}
 	
+	/*
+	 * z^((p-5)/8) = z^(2^252 - 3)
+	 */
+	public void pow_two252m3(Bignum25519 two252m3, Bignum25519 z) {
+		Bignum25519 c = new Bignum25519();
+		Bignum25519 t0 = new Bignum25519();
+		Bignum25519 b = new Bignum25519();
+		
+		/* 2 */ square_times(c, z, 1); /* c = 2 */
+		/* 8 */ square_times(t0, c, 2); /* t0 = 8 */
+		/* 9 */ mul(b, t0, z); /* b = 9 */
+		/* 11 */ mul(c, b, c); /* c = 11 */
+		/* 22 */ square_times(t0, c, 1);
+		/* 2^5 - 2^0 = 31 */ mul(b, t0, b);
+		/* 2^250 - 2^0 */ pow_two5mtwo0_two250mtwo0(b);
+		/* 2^252 - 2^2 */ square_times(b, b, 2);
+		/* 2^252 - 3 */ mul(two252m3, b, z);
+	}
+	
 	// 128 bit support methods
 	
 	
