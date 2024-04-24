@@ -1,7 +1,7 @@
 # run maven build first! then use docker-compose up to run docker-composer.yml
 # test this Dockerfile with: docker build .
 # java -cp .\target\secrets-0.0.1-SNAPSHOT-jar-with-dependencies.jar de.fehrprice.secrets.Server
-FROM openjdk:14
+FROM openjdk:17
 copy ./target/server-0.0.1-SNAPSHOT-jar-with-dependencies.jar /usr/myapp/
 WORKDIR /usr/myapp
 #EXPOSE 8000
