@@ -85,6 +85,7 @@ class FP256Test {
 
 	@Test
 	void testAdditions() {
+		// case 1:
 		fp256 a = fp.fromBigInteger(new BigInteger("7fffffffffffffff", 16));
 		fp256 b = fp.fromBigInteger(new BigInteger("1"));
 		fp256 r = fp.zero();
@@ -92,11 +93,19 @@ class FP256Test {
 		fp.add(r, a, b);
 		//System.out.println(fp.dump(r));
 		assertEquals(new BigInteger("8000000000000000", 16), fp.toBigInteger(r));
-		// if (true) return;
+
+		// case 2:
+//		BigInteger bigm = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed", 16);
+//		BigInteger ad = new BigInteger("d7248fa0bfd7e6183e72f957a1bfc26140c6ab608c9b8fa26a58752e0868ff48", 16);
+//		a = fp.fromBigInteger(ad);
+//		b = fp.fromBigInteger(bigm);
+//		r = fp.zero();
+//		fp.add(r, a, b);
+//		assertEquals(ad.add(bigm).mod(bigm), fp.toBigInteger(r));
 
 		// test with random numbers:
-		for (int i = 0; i < 1000; i++) {
-			// first make add ition with BigInteger:
+		for (int i = 0; i < 100000; i++) {
+			// first make addition with BigInteger:
 			String h = Conv.toString(aes.random(32));
 			BigInteger big = new BigInteger(h, 16);
 			h = Conv.toString(aes.random(32));
@@ -287,12 +296,13 @@ class FP256Test {
     }
 
     /**
-     * Test 256 bit multiplication
+     * Test 256 bit mod
      */
     @Test
     void testMod() {
     	BigInteger bigm = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed", 16);
         fp256 m = fp.fromBigInteger(bigm);
+        aes.setSeed(new byte[32]); // use fixed zero seed for repeatable number generation
 		// test with random numbers:
 		for (long i = 0; i < 1000; i++) {
 			// first make multiplication with BigInteger:
@@ -305,12 +315,12 @@ class FP256Test {
 			fp256 r = fp.zero();
 			fp.modh(r, a, m);
 	        //System.out.println(fp.dump(r));
-			if (!bigr.equals(fp.toBigInteger(a))) {
+			if (!bigr.equals(fp.toBigInteger(r))) {
 				System.out.println("error on run " + (i + 1));
-				System.out.println("a " + fp.dump(a));
+				System.out.println("r " + fp.dump(r));
 				System.out.println(fp.dump(fp.fromBigInteger(bigr)));
 			}
-			assertEquals(bigr, fp.toBigInteger(a));
+			assertEquals(bigr, fp.toBigInteger(r));
 		}
     }
 }

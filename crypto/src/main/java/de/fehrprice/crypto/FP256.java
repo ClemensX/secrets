@@ -68,6 +68,18 @@ public class FP256 {
         }
     }
     
+    /**
+     * Copy source fp256 into result
+     * @param r
+     * @param s
+     */
+    public void copy(fp256 r, fp256 s) {
+    	r.d[0] = s.d[0];
+    	r.d[1] = s.d[1];
+    	r.d[2] = s.d[2];
+    	r.d[3] = s.d[3];
+    }
+    
     public fp256 fromString(String s) {
         if (s.length() != 64) {
             throw new NumberFormatException("BigInteger outside allowed range");
@@ -97,7 +109,7 @@ public class FP256 {
     
     /**
      * Return Hex String representation of fp256 value.
-     * Separarted into 4 parts with space in between
+     * Separated into 4 parts with space in between
      * @param f
      * @return
      */
@@ -117,20 +129,28 @@ public class FP256 {
      * if used for ed25519 or curve25519
      * @param f
      * @param modulo
+     * @return r
      */
     public void modh(fp256 r, fp256 f, fp256 modulo) {
     	assert(modulo.d[3] != 0L);
     	if (compare(f, modulo) < 0) {
     		// nothing to do - we are already smaller than  modulo
+    		copy(r, f);
     		return;
     	}
-    	add(r, f, modulo);
-    	assert(compare(f, modulo) < 0);
+    	subtract(r, f, modulo);
+    	assert(compare(r, modulo) < 0);
     }
     
+    /**
+     * compare fp256 numbers
+     * @param f
+     * @param modulo
+     * @return
+     */
     private int compare(fp256 f, fp256 modulo) {
     	int c;
-    	for( int i = 0; i < 4; i++) {
+    	for( int i = 3; i >= 0; i--) {
         	c = Long.compareUnsigned(f.d[i], modulo.d[i]);
         	if (c != 0) return c;
     	}
