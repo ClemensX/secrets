@@ -105,8 +105,8 @@ public class Long4 {
 	 * @param startIndex
 	 * @return
 	 */
-	private long toLong(byte[] b, int startIndex) {
-		assert(b.length == 32);
+	public long toLong(byte[] b, int startIndex) {
+		//assert(b.length == 32);
 		byte[] b8 = new byte[8];
 		int index = startIndex;
 		for (int i = 0; i < 8; i++) {
@@ -121,7 +121,7 @@ public class Long4 {
 	 * @param b
 	 * @return
 	 */
-	private long toLong(byte[] b) {
+	public long toLong(byte[] b) {
 		long l = ((long) b[7] << 56)
 			       | ((long) b[6] & 0xff) << 48
 			       | ((long) b[5] & 0xff) << 40

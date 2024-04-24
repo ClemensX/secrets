@@ -64,7 +64,7 @@ login.github.pw=geheim
 Full client help page:
 
 ```
-sc - The Secrets! Client. See details at http://fehrprice.de:5000/secrets
+sc - The Secrets! Client. See details at http://www.fehrprice.com:5000/secrets/index.html
 
 usage: sc command [<options>]
 

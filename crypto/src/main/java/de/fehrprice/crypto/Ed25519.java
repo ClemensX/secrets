@@ -226,7 +226,7 @@ public class Ed25519 extends Curve25519 {
 		return keygen(secretKeyString).publicKey;
 	}
 
-	private byte[] concat_r_pk_m(byte[] enc_r, byte[] pk, byte[] m) {
+	public byte[] concat_r_pk_m(byte[] enc_r, byte[] pk, byte[] m) {
 		byte[] concat = new byte[enc_r.length + pk.length + m.length];
 		System.arraycopy(enc_r, 0, concat, 0, enc_r.length);
 		System.arraycopy(pk, 0, concat, enc_r.length, pk.length);
@@ -234,6 +234,13 @@ public class Ed25519 extends Curve25519 {
 		return concat;
 	}
 	
+	
+	/**
+	 * @param messageString hex string coded message
+	 * @param secretKeyString hex string coded private key
+	 * @param pubk hex string coded public key
+	 * @return
+	 */
 	public String signature(String messageString, String secretKeyString, String pubk) {
 		byte[] m = Conv.toByteArray(messageString);
 		return signature(m, secretKeyString, pubk);

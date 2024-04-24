@@ -5,6 +5,15 @@ import java.nio.charset.StandardCharsets;
 public class Conv {
 	
 	/**
+	 * Convert input String to hex string representation.
+	 * @param plaintext
+	 * @return
+	 */
+	public static String plaintextToHexString(String plaintext) {
+		return toString(plaintext.getBytes(StandardCharsets.UTF_8));
+	}
+	
+	/**
 	 * Convert input String to byte array using UTF_8 charset.
 	 * @param plaintext
 	 * @return

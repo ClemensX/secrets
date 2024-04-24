@@ -2,6 +2,11 @@ package de.fehrprice.crypto;
 
 import java.math.BigInteger;
 
+import de.fehrprice.crypto.edu25519.Montgomery;
+import static de.fehrprice.crypto.edu25519.Field.s64Array;
+import static de.fehrprice.crypto.edu25519.Field.s64Array.*;
+import static de.fehrprice.crypto.edu25519.Serialize.serialize;
+
 /**
  * Curve25519 implementation.
  * 
@@ -170,6 +175,15 @@ public class Curve25519 {
 	}
 	
 	public BigInteger x25519( BigInteger k, BigInteger u, int bits) {
+		FixedPointOp fp = new FixedPointOp();
+		//print_s64("crv bp", Field.s64Array.fromFP256(fp.fromBigInteger(u)));
+		var scalar = decodeFromBigIntegerLittleEndian(k);
+//		System.out.print("crv sc ");
+//		for (int i = 31; i >= 0; --i) {
+//			byte cur_byte = scalar[i];
+//			System.out.printf("%02x ", cur_byte);
+//		}
+//		System.out.print("\n");
 		BigInteger x_1, x_2, z_2, x_3, z_3, swap;
 		x_1 = u;
 		x_2 = BigInteger.ONE;
@@ -243,6 +257,44 @@ public class Curve25519 {
 		return ret;
 	}
 	
+	
+	public BigInteger x25519Eff(byte[] scalar, s64Array uIn) {
+		FixedPointOp fp = new FixedPointOp();
+		//print_s64("crv bp", uIn);
+//		System.out.print("crv sc ");
+//		for (int i = 31; i >= 0; --i) {
+//			byte cur_byte = scalar[i];
+//			System.out.printf("%02x ", cur_byte);
+//		}
+//		System.out.print("\n");
+		fp256 reduced = fp.zero();
+		s64Array z_inv = new s64Array();
+		Montgomery.point P = new Montgomery.point();
+		//assert(false);
+		assert(scalar.length == 32);
+		byte[] e = new byte[32];
+		System.arraycopy(scalar, 0, e, 0, 32);
+		
+		// set lowest 3 bits to zero to get multiple of 8, to avoid small subgroups
+		e[0] &= 0xF8;
+		
+		// discard highest bit
+		e[31] &= 0x7F;
+		e[31] |= 0x40;
+		
+		Montgomery.montgomery_ladder(P, e, uIn);
+		invert(z_inv, P.z);
+		mul_reduced(P.z, P.x, z_inv);
+		//print_s64("Px", result.x);
+		//print_s64("Pz", P.z);
+		byte[] out = new byte[32];
+		serialize(out, P.z);
+		//System.out.println("out " + asString(out) );
+		BigInteger big = decodeLittleEndian(out, 255);
+		return big;
+	}
+	
+	
 	private BigInteger[] cswap(BigInteger swap, BigInteger x_2, BigInteger x_3) {
 		// swap is 0 or 1
 		//out(x_2, "swap a");
@@ -307,5 +359,5 @@ public class Curve25519 {
 		BigInteger uOut = x25519(scalar, uIn, 255);
 		return asLittleEndianHexString(uOut);
 	}
-
+	
 }
