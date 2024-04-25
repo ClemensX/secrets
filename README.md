@@ -211,7 +211,7 @@ server {
 ### Preparations
 
  * build 5 modules with mvn clean install in parent folder (OpenJDK 11 needed)
- * **Disable** build time tests by setting dryRun to true in top level pom.xml
+ * **Disable** build time tests by setting dryRun to true in top level pom.xml or use mvn install -DskipTests
  * use client to generate private keys, select one and put to ./secrets/private/keyfile_private
  * set environment vars in local .env file. Example for bash:
  * cd to this folder: /server/docker/secrets/server
